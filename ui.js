@@ -27,11 +27,11 @@
   ];
 
   var TRACKS = [
-    { title: '夜诞的花冠',     artist: 'HOYO-MiX · 挪德卡莱', src: 'assets/music/nights-crown.mp3' },
-    { title: '晚祷的钟声',     artist: 'HOYO-MiX · 晨昏之庭', src: 'assets/music/vespers-bells.mp3' },
-    { title: '渡鸦与温柔月色', artist: 'HOYO-MiX · 夜之组曲', src: 'assets/music/raven-tender-moon.mp3' },
-    { title: '雪国主题',       artist: 'HOYO-MiX · 至冬印象', src: 'assets/music/snezhnaya-theme.m4a' },
-    { title: '自由之颂',       artist: 'HOYO-MiX · 蒙德纪念', src: 'assets/music/ode-to-liberty.m4a' }
+    { title: '夜诞的花冠',     artist: 'HOYO-MiX · 挪德卡莱', src: 'assets/music/nights-crown.webm' },
+    { title: '晚祷的钟声',     artist: 'HOYO-MiX · 晨昏之庭', src: 'assets/music/vespers-bells.webm' },
+    { title: '渡鸦与温柔月色', artist: 'HOYO-MiX · 夜之组曲', src: 'assets/music/raven-tender-moon.webm' },
+    { title: '雪国主题',       artist: 'HOYO-MiX · 至冬印象', src: 'assets/music/snezhnaya-theme.webm' },
+    { title: '自由之颂',       artist: 'HOYO-MiX · 蒙德纪念', src: 'assets/music/ode-to-liberty.webm' }
   ];
 
   function pageFile() {
