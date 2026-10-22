@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>友链 · 东芽果 DYG</title>
+<meta name="description" content="联系方式与友链说明。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>友链</h1>
+      <p class="lead">这里还没有别人的站，先放我自己的几个入口。想交换友链的话，往下看。</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+
+      <div class="sec-head">
+        <h2>找我</h2>
+        <span class="more">随时可以来</span>
+      </div>
+
+      <div class="links">
+        <a class="link-card" href="https://www.bilibili.com" target="_blank" rel="noopener">
+          <b>Bilibili</b>
+          <span>偶尔投点游戏录屏和番剧吐槽。</span>
+          <i>VIDEO</i>
+        </a>
+        <a class="link-card" href="mailto:1310617762@qq.com">
+          <b>写邮件</b>
+          <span>1310617762@qq.com　正经事走这里最稳。</span>
+          <i>MAIL</i>
+        </a>
+        <a class="link-card" href="#">
+          <b>QQ</b>
+          <span>1310617762　加的时候说一声从哪看到的。</span>
+          <i>IM</i>
+        </a>
+        <a class="link-card" href="index.html?m=start">
+          <b>起始页</b>
+          <span>把这里设成浏览器主页，打开就是它。</span>
+          <i>HOME</i>
+        </a>
+      </div>
+
+      <div style="margin-top:clamp(48px,6vw,72px);max-width:var(--wrap-narrow)">
+        <div class="sec-head">
+          <h2>换友链</h2>
+          <span class="more">开放</span>
+        </div>
+        <div class="prose" style="font-size:15px;line-height:1.95">
+          <p>没什么门槛，只要你的站还在认真更新就行。发邮件给我，附上站名、地址和一句话介绍。</p>
+          <p>我这边会放在这一页，顺序按加的时间排。</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

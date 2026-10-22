@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>关于 · 东芽果 DYG</title>
+<meta name="description" content="关于我，以及这个站是怎么做出来的。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>关于</h1>
+      <p class="lead">一个普通人，喜欢在游戏里瞎逛。</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+      <div class="about-grid">
+
+        <div class="prose" style="margin-top:0">
+          <p>我叫东芽果，网上一般写 DYG。</p>
+
+          <p>白天上班，晚上打游戏。原神、星穹铁道、绝区零都在玩，属于那种地图上的每一个传送点都要点开看看的类型。看到好看的光，会停下来截图——这个站里的照片基本都是这么来的。</p>
+
+          <p>喜欢听游戏原声。HOYO-MiX 的曲子循环了很多遍，尤其是夜里写东西的时候。歌单里那五首是我最常放的。</p>
+
+          <p>看番口味偏日常和喜剧，不太追热门。上一部让我看完想写点什么的，是《学生会也有洞！》。</p>
+
+          <h2>关于这个站</h2>
+          <p>它有两个形态。</p>
+          <p>打开的时候是<b>起始页</b>——一个安静的地方，只有时间、一个搜索框和几个入口。你可以把它设成浏览器主页，每次开新标签页都会看到它。</p>
+          <p>按右上角的「博客」，它就变成现在这个样子。两个形态在同一个页面里，切换不需要重新加载。</p>
+          <p>整个站是手写的 HTML 和 CSS，没有框架，没有构建步骤，没有后端。想改什么就打开文件改。</p>
+
+          <blockquote><p>「不追热点，不赶更新。写下来只是因为想记住。」</p></blockquote>
+        </div>
+
+        <aside>
+          <img class="portrait" src="assets/img/avatar.webp" alt="东芽果的头像" />
+          <div class="about-meta">
+            <b>东芽果 DYG</b><br>
+            游戏 / 动画 / 原声<br>
+            QQ　1310617762<br>
+            <a href="mailto:1310617762@qq.com" style="color:var(--accent);border-bottom:1px solid var(--accent-w)">写邮件</a>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

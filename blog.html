@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>文章 · 东芽果 DYG</title>
+<meta name="description" content="全部文章，按时间倒序。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>文章</h1>
+      <p class="lead">看过的番、逛过的地图、循环过的曲子。写得不快，但每篇都认真写。</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+
+      <div class="sec-head">
+        <h2>共 1 篇</h2>
+        <span class="more">按时间倒序</span>
+      </div>
+
+      <div class="rows">
+        <a class="row has-cover" href="post.html">
+          <span class="row-date">2026.10.10</span>
+          <span class="row-main">
+            <h3>《学生会也有洞！》：理科废柴的学生会求生记</h3>
+            <p>一个理科差到要留级的文学青年被塞进学生会，然后发现这屋子没一个正常人。十月新番里最让我意外的一部。</p>
+            <span class="row-tags"><span>新番</span><span>动画推荐</span><span>校园喜剧</span></span>
+          </span>
+          <img class="row-cover" src="assets/img/cover-anime.webp" alt="" loading="lazy" />
+        </a>
+      </div>
+
+      <p style="margin-top:clamp(36px,5vw,52px);font-size:13px;color:var(--muted);letter-spacing:.04em">
+        更多在写。想第一时间看到，可以先翻翻<a href="gallery.html" style="color:var(--accent);border-bottom:1px solid var(--accent-w)">图集</a>。
+      </p>
+
+    </div>
+  </section>
+
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

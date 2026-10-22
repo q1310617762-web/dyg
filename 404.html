@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>页面不存在 · 东芽果 DYG</title>
+<meta name="description" content="这个页面不存在。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+  <section class="nf">
+    <p class="nf-num">404</p>
+    <h1>这个页面不存在</h1>
+    <p class="nf-desc">可能是链接写错了，或者那篇文章被我删了。</p>
+    <div class="nf-act">
+      <a class="btn" href="index.html?m=start">回起始页</a>
+      <a class="btn btn-ghost" href="blog.html">看文章</a>
+    </div>
+  </section>
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

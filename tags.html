@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>标签 · 东芽果 DYG</title>
+<meta name="description" content="按标签浏览文章。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>标签</h1>
+      <p class="lead">写得还少，标签先这么几个。以后会慢慢长出来。</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+
+      <div class="tag-cloud">
+        <a href="#t1">新番 <sup>1</sup></a>
+        <a href="#t1">动画推荐 <sup>1</sup></a>
+        <a href="#t1">校园喜剧 <sup>1</sup></a>
+        <a href="#t1">学生会也有洞 <sup>1</sup></a>
+      </div>
+
+      <div id="t1" style="margin-top:clamp(40px,5vw,60px)">
+        <div class="sec-head">
+          <h2>新番</h2>
+          <span class="more">1 篇</span>
+        </div>
+        <div class="rows">
+          <a class="row" href="post.html">
+            <span class="row-date">2026.10.10</span>
+            <span class="row-main">
+              <h3>《学生会也有洞！》：理科废柴的学生会求生记</h3>
+              <p>一个理科差到要留级的文学青年被塞进学生会，然后发现这屋子没一个正常人。</p>
+            </span>
+            <span class="row-go">→</span>
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

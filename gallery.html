@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>图集 · 东芽果 DYG</title>
+<meta name="description" content="游戏截图相册，共 41 张。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>图集</h1>
+      <p class="lead">收着的 12 张插画。点开可以看大图。</p>
+    </div>
+  </section>
+
+  <section class="sec" style="padding-top:0">
+    <div class="wrap">
+
+      <div class="g-bar">
+        <button class="chip on" type="button" data-filter="all">全部 <span class="chip-n">12</span></button>
+        <button class="chip" type="button" data-filter="genshin">原神 <span class="chip-n">4</span></button>
+        <button class="chip" type="button" data-filter="zzz">绝区零 <span class="chip-n">2</span></button>
+        <button class="chip" type="button" data-filter="other">其他 <span class="chip-n">6</span></button>
+        <span class="g-count" data-count>12 张</span>
+      </div>
+
+      <div class="g-wall" data-wall></div>
+
+      <div class="empty" data-empty hidden>
+        <p class="empty-i">—</p>
+        <p class="empty-t">这个相册还是空的</p>
+        <p class="empty-d">换个筛选看看别的。</p>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<div class="lightbox" data-lb>
+  <button class="lb-btn lb-close" type="button" data-lb-close aria-label="关闭">×</button>
+  <button class="lb-btn lb-prev" type="button" data-lb-prev aria-label="上一张">‹</button>
+  <button class="lb-btn lb-next" type="button" data-lb-next aria-label="下一张">›</button>
+  <div style="display:grid;place-items:center">
+    <img alt="" data-lb-img />
+    <p class="lightbox-cap" data-lb-cap></p>
+  </div>
+</div>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script>
+(function () {
+  var wall = document.querySelector('[data-wall]');
+  var emptyBox = document.querySelector('[data-empty]');
+  var countEl = document.querySelector('[data-count]');
+  var cur = 'all', shown = [];
+
+  /* 照片数据：[文件名, 标题, 相册, 说明, 是否竖幅]
+   换成自己的图：改这个数组就行，筛选按钮的篇数会自动跟着变。 */
+var ITEMS = [
+    ['0aa9365f23a1','金发角色','genshin','金发角色 · 2026-08-25',true],
+    ['119fdd8ad6ae','星见雅','zzz','星见雅 · 2026-02-03',true],
+    ['16e17750ef1a','绯色立绘','other','绯色立绘 · 2026-02-02',true],
+    ['1e1e6e33aa62','海色立绘','other','海色立绘 · 2026-05-21',true],
+    ['490b2380b210','妮可立绘','other','妮可立绘 · 2026-02-02',true],
+    ['64a916330c0f','碧色立绘','other','碧色立绘 · 2026-09-17',true],
+    ['9bae97d1c2dc','偶像合影','zzz','偶像合影 · 2026-02-07',true],
+    ['df17a986c77a','娜维娅海报','other','娜维娅海报 · 2026-08-24',true],
+    ['e09681216e8d','巷口的光','genshin','巷口的光 · 2026-08-28',true],
+    ['fe40761251ce','紫发特写','other','紫发特写 · 2026-09-17',true],
+    ['0621547bba79','晨曦平原','genshin','晨曦平原 · 2026-08-25',false],
+    ['0e2d4eb9f711','雪村广场','genshin','雪村广场 · 2026-08-17',false]
+  ];
+
+  /* 数组 → 对象：后面 render / 灯箱都按字段取值 */
+  ITEMS = ITEMS.map(function (r) {
+    return { src: 'assets/photos/' + r[0] + '.webp', title: r[1], album: r[2], cap: r[3], tall: r[4] };
+  });
+
+  function render() {
+    shown = ITEMS.filter(function (i) { return cur === 'all' || i.album === cur; });
+    wall.innerHTML = shown.map(function (i, k) {
+      return '<figure class="g-item" data-k="' + k + '">' +
+        '<img src="' + i.src + '" alt="' + i.title + '" loading="lazy" />' +
+        '<figcaption class="g-cap">' + i.title + '</figcaption></figure>';
+    }).join('');
+    emptyBox.hidden = shown.length > 0;
+    countEl.textContent = shown.length + ' 张';
+  }
+
+  [].slice.call(document.querySelectorAll('[data-filter]')).forEach(function (b) {
+    b.addEventListener('click', function () {
+      [].slice.call(document.querySelectorAll('[data-filter]')).forEach(function (x) { x.classList.remove('on'); });
+      b.classList.add('on');
+      cur = b.dataset.filter;
+      render();
+    });
+  });
+
+  /* ---------- 灯箱 ---------- */
+  var lb = document.querySelector('[data-lb]');
+  var img = document.querySelector('[data-lb-img]');
+  var cap = document.querySelector('[data-lb-cap]');
+  var at = -1;
+
+  function show(k) {
+    if (k < 0 || k >= shown.length) return;
+    at = k;
+    var it = shown[k];
+    img.src = it.src;
+    cap.textContent = it.cap + '　（' + (k + 1) + '/' + shown.length + '）';
+    lb.classList.add('open');
+    document.documentElement.style.overflow = 'hidden';
+  }
+  function hide() {
+    lb.classList.remove('open');
+    document.documentElement.style.overflow = '';
+  }
+
+  wall.addEventListener('click', function (e) {
+    var f = e.target.closest('.g-item');
+    if (f) show(Number(f.dataset.k));
+  });
+
+  document.querySelector('[data-lb-close]').addEventListener('click', hide);
+  document.querySelector('[data-lb-prev]').addEventListener('click', function () { show(at - 1); });
+  document.querySelector('[data-lb-next]').addEventListener('click', function () { show(at + 1); });
+  lb.addEventListener('click', function (e) { if (e.target === lb) hide(); });
+
+  // 路由会换掉整个 lightbox 节点，所以把当期实例挂在元素上，
+  // 键盘监听只挂一次、每次现查 —— 否则每跳一次页面就多一条监听。
+  lb.__gal = { show: show, hide: hide, at: function () { return at; } };
+  if (!window.__galKeys) {
+    window.__galKeys = true;
+    document.addEventListener('keydown', function (e) {
+      var box = document.querySelector('[data-lb]');
+      if (!box || !box.classList.contains('open') || !box.__gal) return;
+      if (e.key === 'Escape') box.__gal.hide();
+      if (e.key === 'ArrowLeft') box.__gal.show(box.__gal.at() - 1);
+      if (e.key === 'ArrowRight') box.__gal.show(box.__gal.at() + 1);
+    });
+  }
+
+  render();
+})();
+</script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>

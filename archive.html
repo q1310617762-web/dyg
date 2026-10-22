@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>归档 · 东芽果 DYG</title>
+<meta name="description" content="按年份归档的全部文章。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261022123754" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    var t = localStorage.getItem('dyg-theme');
+    /* 没记录、或记录的是未知值 → 报纸（默认皮肤） */
+    if (t !== 'dark' && t !== 'neu') t = 'paper';
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'paper');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+
+  <section class="page-head">
+    <div class="wrap">
+      <h1>归档</h1>
+      <p class="lead">所有写过的，按时间摊开。目前只有一年。</p>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="wrap">
+
+      <div class="year" style="border-top:1px solid var(--line)">
+        <div class="year-h"><b>2026</b><span>1 篇</span></div>
+
+        <a class="arow" href="post.html">
+          <time datetime="2026-10-10">10.10</time>
+          <span>《学生会也有洞！》：理科废柴的学生会求生记</span>
+          <span class="cat">新番</span>
+        </a>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261022123754"></script>
+<script src="ui.js?v=20261022123754"></script>
+<script src="fx.js?v=20261022123754"></script>
+</body>
+</html>
