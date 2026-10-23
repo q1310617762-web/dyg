@@ -130,14 +130,41 @@
 
       var cur = root.getAttribute('data-theme') || THEMES[0].id;
       var next = THEMES[(themeIndex(cur) + 1) % THEMES.length].id;
-      var reduced = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      if (typeof document.startViewTransition !== 'function') {
 
-      if (typeof document.startViewTransition === 'function' && !reduced) {
-        var vt = document.startViewTransition(function () { applyTheme(next, true); });
-        vt.finished.catch(function () {});
-      } else {
         applyTheme(next, true);
+
+        return;
+
       }
+
+
+
+      /* 和换页、形态切换共用同一套圆形揭示：圆心落在刚点的那颗按钮上。
+
+         减弱动效时退成短淡入，而不是硬切。 */
+
+      if (motionOff()) {
+
+        root.setAttribute('data-vt', 'soft');
+
+      } else {
+
+        var g = rippleGeom(b);
+
+        injectRipple(g.cx, g.cy, g.radius, RIP_THEME_DUR, 'linear');
+
+        root.setAttribute('data-vt', 'ripple');
+
+      }
+
+      var vt = document.startViewTransition(function () { applyTheme(next, true); });
+
+      vt.finished.catch(function () {}).then(function () {
+
+        root.removeAttribute('data-vt');
+
+      });
     });
   }
 
@@ -538,6 +565,8 @@
       )
     };
   }
+
+  var RIP_THEME_DUR = 760;   // 换肤只换颜色，比换页更轻
 
   var RIP_PAGE_DUR = 900;   // 换页波纹时长；形态切换是 1100，这里稍快一点
 
