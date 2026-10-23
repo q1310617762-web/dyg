@@ -429,6 +429,25 @@
     if (tocWired) return;                 // 监听只挂一次，否则每跳一页多一条
     tocWired = true;
     document.addEventListener('scroll', syncToc, { passive: true });
+
+    /* 页内锚点用 scrollIntoView 自己滚，不靠浏览器的 hash 行为。
+       实测 location.hash = '#s3' 在这套布局里根本不会滚动（scrollY 一直是 0），
+       但 scrollIntoView 有效。用 replaceState 而不是 pushState：
+       后者会进历史记录，后退时触发 popstate，路由会把整页重新 fetch 一遍。 */
+    document.addEventListener('click', function (e) {
+      var a = e.target.closest ? e.target.closest('[data-toc] a[href^="#"]') : null;
+      if (!a) return;
+      var id = a.getAttribute('href').slice(1);
+      var el = document.getElementById(id);
+      if (!el) return;
+      e.preventDefault();
+      el.scrollIntoView({
+        behavior: motionOff() ? 'auto' : 'smooth',
+        block: 'start'
+      });
+      try { history.replaceState(null, '', '#' + id); } catch (err) {}
+      syncToc();
+    }, true);
   }
 
   /* ============================================================

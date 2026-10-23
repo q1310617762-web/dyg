@@ -2563,3 +2563,6 @@ html[data-theme="soft"] .clock-time { color: var(--accent); }
 
 /* 夜色皮肤把这一层让出来，星野才有地方画 */
 html[data-theme="dark"] body { background: #0b0b0d; }
+
+/* 页内锚点跳转时给固定导航让出空间，否则标题会被压在胶囊下面 */
+.prose h2, .prose h3 { scroll-margin-top: 104px; }
