@@ -53,14 +53,20 @@
   /* 皮肤图标显示的是「当前这套」，不是「点一下会变成什么」 */
   var ICON_MOON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.6 9.8A5.9 5.9 0 0 1 6.2 2.4a5.9 5.9 0 1 0 7.4 7.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   var ICON_SUN  = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.1" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.1v1.7M8 13.2v1.7M1.1 8h1.7M13.2 8h1.7M3.1 3.1l1.2 1.2M11.7 11.7l1.2 1.2M12.9 3.1l-1.2 1.2M4.3 11.7l-1.2 1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+  var ICON_FLAT = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.6" y="2.6" width="10.8" height="10.8" stroke="currentColor" stroke-width="1.8"/></svg>';
+  var ICON_ORGANIC = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.2 2.8c0 5.2-3.6 8.2-7.1 8.2-1.3 0-2.4-.4-3.2-1.2C2 6.6 5.2 2.8 13.2 2.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.6 13.4C5 9.8 7.9 7.2 11.4 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
+  var ICON_SOFT = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.4" y="2.4" width="11.2" height="11.2" rx="4" stroke="currentColor" stroke-width="1.6"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/></svg>';
   var ICON_PAPER = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="2.1" y="2.8" width="11.8" height="10.4" rx="1.2" stroke="currentColor" stroke-width="1.4"/><path d="M4.7 5.9h6.6M4.7 8.2h6.6M4.7 10.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
 
   /* 顺序决定循环顺序；第 0 个是默认皮肤。
      报纸是默认，夜幕（原来的暗色）退成可切换的一套。 */
   var THEMES = [
-    { id: 'paper', name: '报纸',   icon: ICON_PAPER, color: '#faf9f5' },
-    { id: 'dark',  name: '夜幕',   icon: ICON_MOON,  color: '#0b0b0d' },
-    { id: 'neu',   name: '新拟物', icon: ICON_SUN,   color: '#e0e5ec' }
+    { id: 'soft',    name: '柔和',   icon: ICON_SOFT,    color: '#f8fafc' },
+    { id: 'paper',   name: '报纸',   icon: ICON_PAPER,   color: '#faf9f5' },
+    { id: 'flat',    name: '扁平',   icon: ICON_FLAT,    color: '#ffffff' },
+    { id: 'organic', name: '有机',   icon: ICON_ORGANIC, color: '#faf6f1' },
+    { id: 'dark',    name: '夜幕',   icon: ICON_MOON,    color: '#0b0b0d' },
+    { id: 'neu',     name: '新拟物', icon: ICON_SUN,     color: '#e0e5ec' }
   ];
 
   function themeIndex(id) {
@@ -78,6 +84,9 @@
     return '<button class="th-btn" type="button" data-theme-btn' +
            ' aria-label="切换皮肤" title="切换皮肤">' +
            '<span class="th-i th-paper">' + ICON_PAPER + '</span>' +
+           '<span class="th-i th-flat">' + ICON_FLAT + '</span>' +
+           '<span class="th-i th-organic">' + ICON_ORGANIC + '</span>' +
+           '<span class="th-i th-soft">' + ICON_SOFT + '</span>' +
            '<span class="th-i th-moon">' + ICON_MOON + '</span>' +
            '<span class="th-i th-sun">' + ICON_SUN + '</span>' +
            '</button>';
@@ -98,6 +107,15 @@
     }
     var mt = document.querySelector('meta[name="theme-color"]');
     if (mt) mt.setAttribute('content', t.color);
+    syncSky(id);
+  }
+
+  /* 星野只在「夜幕」下开。减弱动效时画一帧静态的——
+     完全关掉会让人以为坏了，静态星野既不晃眼又还在。 */
+  function syncSky(id) {
+    if (!window.__dygSky) return;
+    if (id !== 'dark') { window.__dygSky.stop(); return; }
+    window.__dygSky.start(motionOff());
   }
 
   function initTheme() {
@@ -735,6 +753,7 @@
     initMenu();
     initPlayer();
     initTheme();
+    syncSky(root.getAttribute('data-theme') || 'soft');
     fileModeTip();
     motionTip();
     initToc();

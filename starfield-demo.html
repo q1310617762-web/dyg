@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>星野背景 demo</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{
+    background:#0b0f1a;
+    font-family:system-ui,"Microsoft YaHei",sans-serif;
+    color:#e8eaf2;
+  }
+  #sky{position:fixed;inset:0;width:100%;height:100%;display:block}
+  .stage{position:relative;z-index:1;height:100%;display:grid;place-items:center;text-align:center}
+  h1{font-size:clamp(40px,7vw,96px);margin:0 0 12px;letter-spacing:-.03em;font-weight:600}
+  p{color:#9aa4bd;margin:0;font-size:14px}
+</style></head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<div class="stage"><div><h1>Hello World</h1><p>星野背景 · 绕轴旋转 · Canvas 2D · 约 2 KB</p></div></div>
+<div id="hint" style="position:fixed;left:16px;bottom:14px;z-index:2;font-size:12px;color:#8b95b0;display:none"></div>
+<script>
+(function () {
+  var cv = document.getElementById('sky');
+  var ctx = cv.getContext('2d', { alpha: true });
+  ctx.imageSmoothingQuality = 'high';
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0, CX = 0, CY = 0;
+  var FOCAL = 820;                 // 焦距，越小纵深越夸张
+  var COUNT = 1300;
+  var stars = [];
+  /* demo 里强制播放：系统开着「减少动画效果」时 matchMedia 会返回 true，
+     照规范应该降级成静态帧，但那样在 demo 里就完全看不到效果，
+     容易被误判成「代码坏了」。正式集成时再按规范还原降级。 */
+  var reduce = false;
+  var systemReduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 立方体分布，和参考站一致（球壳是旋转对称的，转起来看着像没动）。
+     范围必须比直觉大得多：远处的星被透视缩到 k≈0.25，
+     想让它们够到屏幕边缘（半宽 720），x 就得到 ±2900 左右。
+     原来只给了 ±1100，投影后全挤在中间那块，四周是空的。 */
+  function makeStar() {
+    return {
+      x: (Math.random() - 0.5) * 3000,
+      y: (Math.random() - 0.5) * 1700,
+      z: (Math.random() - 0.5) * 3000,
+      r: Math.random() * 1.5 + 0.35,
+      a: Math.random() * 0.55 + 0.35,
+      tw: Math.random() * Math.PI * 2,
+      hue: Math.random() < 0.22 ? 1 : 0,
+      shape: Math.random() < 0.24 ? 1 : 0,
+      /* 每颗星自己的呼吸节奏：相位随机、周期 2.6–5.2 秒、幅度 22%–40%。
+         三样都随机，整片星野才不会像同一个开关在同步闪。 */
+      pPh: Math.random() * 6.28318,
+      pSp: 0.0012 + Math.random() * 0.0012,
+      pAmp: 0.22 + Math.random() * 0.18
+    };
+  }
+
+  /* 光点精灵：每颗星不是画圆，而是把一张「中心亮、边缘化开」的贴图缩放贴上去。
+     硬边 arc 看起来就是一个个圆球；径向渐变才有星光那种散开的光晕。
+     预渲染一次，之后每帧只做 drawImage，比逐颗建渐变快得多。 */
+  function makeSprite(size, tint) {
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    var g = c.getContext('2d');
+    var r = size / 2;
+    var grd = g.createRadialGradient(r, r, 0, r, r, r);
+    /* 锐化的关键在「过渡带有多短」：
+       核心一路保持纯白到 30%，接着 10% 的距离内掉到 55%，
+       之后才慢慢收尾。原来核心只有 12%、衰减拖到 100%，
+       整颗星就是一团雾。 */
+    grd.addColorStop(0.00, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.30, 'rgba(255,255,255,0.98)');
+    grd.addColorStop(0.40, tint.replace('A', '0.55'));
+    grd.addColorStop(0.58, tint.replace('A', '0.14'));
+    grd.addColorStop(0.80, tint.replace('A', '0.03'));
+    grd.addColorStop(1.00, tint.replace('A', '0'));
+    g.fillStyle = grd;
+    g.beginPath();
+    g.arc(r, r, r, 0, 6.28318);
+    g.fill();
+    return c;
+  }
+
+  /* 四芒星：四个尖角向外拉，腰身收得很细，边缘同样用渐变化开。
+     圆形光点是「远景的星尘」，菱形是「近处会闪的亮星」，
+     两者混着来，画面才不整齐得像贴图。 */
+  function makeStarSprite(size, tint) {
+    var c = document.createElement('canvas');
+    c.width = c.height = size;
+    var g = c.getContext('2d');
+    var r = size / 2;
+    var grd = g.createRadialGradient(r, r, 0, r, r, r);
+    grd.addColorStop(0.00, 'rgba(255,255,255,1)');
+    grd.addColorStop(0.26, 'rgba(255,255,255,0.95)');
+    grd.addColorStop(0.38, tint.replace('A', '0.62'));
+    grd.addColorStop(0.60, tint.replace('A', '0.14'));
+    grd.addColorStop(1.00, tint.replace('A', '0'));
+    g.fillStyle = grd;
+
+    var waist = r * 0.125;         // 腰部收细才有星芒感，太细会显得扎眼
+    var tip = r * 0.98;
+    g.beginPath();
+    g.moveTo(r, r - tip);                                          // 上尖
+    g.quadraticCurveTo(r + waist, r - waist, r + tip, r);           // 右上内凹到右尖
+    g.quadraticCurveTo(r + waist, r + waist, r, r + tip);           // 右下到尖
+    g.quadraticCurveTo(r - waist, r + waist, r - tip, r);           // 左下到尖
+    g.quadraticCurveTo(r - waist, r - waist, r, r - tip);           // 左上回到尖
+    g.closePath();
+    g.fill();
+    return c;
+  }
+
+  var SPR_W, SPR_B, SPR4_W, SPR4_B;
+  var SPRITE = 96;
+
+  function resize() {
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = Math.round(W * DPR);
+    cv.height = Math.round(H * DPR);
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    CX = W / 2; CY = H / 2;
+  }
+
+  function init() {
+    resize();
+    SPR_W = makeSprite(SPRITE, 'rgba(226,234,255,A)');
+    SPR_B = makeSprite(SPRITE, 'rgba(150,170,255,A)');
+    SPR4_W = makeStarSprite(SPRITE, 'rgba(226,234,255,A)');
+    SPR4_B = makeStarSprite(SPRITE, 'rgba(150,170,255,A)');
+    stars = [];
+    for (var i = 0; i < COUNT; i++) stars.push(makeStar());
+    if (reduce) draw(0);
+  }
+
+  var ANGLE_PER_MS = 0.00012;    // 约 7°/秒，一圈 52 秒。参考站约 3.4°/秒，这里给足一点
+
+  function draw(t) {
+    ctx.clearRect(0, 0, W, H);
+    var ang = reduce ? 0 : t * ANGLE_PER_MS;
+    var ca = Math.cos(ang), sa = Math.sin(ang);
+
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      /* 绕 Y 轴转：x' = x·cos − z·sin，z' = x·sin + z·cos */
+      var rx = s.x * ca - s.z * sa;
+      var rz = s.x * sa + s.z * ca;
+
+      /* 整体推到相机前方，保证 depth 永远是正的 */
+      var depth = rz + 2200;
+      var k = FOCAL / depth;
+      var sx = CX + rx * k;
+      var sy = CY + s.y * k;
+      if (sx < -30 || sx > W + 30 || sy < -30 || sy > H + 30) continue;
+
+      /* 呼吸：尺寸涨落 ±22~40%，亮度跟着一起起伏，
+         看起来就是光晕在「聚起来又散开」 */
+      var pulse = reduce ? 1 : 1 + s.pAmp * Math.sin(t * s.pSp + s.pPh);
+      var tw = reduce ? 1 : 0.7 + 0.3 * Math.sin(t * 0.0012 + s.tw);
+      var alpha = Math.min(0.95, s.a * k * 2.3) * tw * (0.72 + 0.28 * pulse);
+
+      var d = Math.max(3.2, s.r * k * 20) * pulse;
+      var img;
+      if (s.shape) {
+        img = s.hue ? SPR4_B : SPR4_W;
+        /* 菱形只是点缀：放大 1.18 倍即可，再加一个上限，
+           否则飞到眼前那颗会突然变成一个大十字 */
+        d = Math.min(24, Math.max(5, d * 1.18));
+      } else {
+        img = s.hue ? SPR_B : SPR_W;
+      }
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, sx - d / 2, sy - d / 2, d, d);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  function loop(now) {
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize', function () {
+    resize();
+    if (reduce) draw(0);
+  });
+
+  init();
+  requestAnimationFrame(loop);
+
+  if (systemReduce) {
+    var h = document.getElementById('hint');
+    h.style.display = 'block';
+    h.textContent = '检测到系统「减少动画效果」已开启，这里强制播放；正式版本会自动降级为静态。';
+  }
+})();
+</script>
+</body></html>

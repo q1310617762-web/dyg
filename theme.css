@@ -1,4 +1,18 @@
 /* ============================================================
+   字体：刊头用的展示字体
+   Playfair Display（OFL 开源，Latin 900 字重，22KB woff2）。
+   只用于 Hello World 这类装饰性大字，正文一律系统字体，
+   避免中文 fallback 时字重对不上。
+   ============================================================ */
+@font-face {
+  font-family: "Playfair Display";
+  src: url("assets/fonts/playfair-display.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ============================================================
    东芽果 DYG · v7
    风格参照 haowallpaper.com：深色底 + 图片密集的大圆角瓦片 +
    悬浮胶囊导航 + 鼠标跟随的 3D 倾斜。
@@ -1755,6 +1769,18 @@ html[data-theme="dark"] .th-btn .th-paper { display: none; }
 html[data-theme="dark"] .th-btn .th-moon { display: grid; }
 html[data-theme="neu"] .th-btn .th-paper { display: none; }
 html[data-theme="neu"] .th-btn .th-sun { display: grid; }
+html[data-theme="flat"] .th-btn .th-paper { display: none; }
+html[data-theme="flat"] .th-btn .th-flat { display: grid; }
+html[data-theme="organic"] .th-btn .th-paper { display: none; }
+html[data-theme="organic"] .th-btn .th-organic { display: grid; }
+html[data-theme="soft"] .th-btn .th-paper { display: none; }
+html[data-theme="soft"] .th-btn .th-soft { display: grid; }
+html[data-theme="dark"] .th-btn .th-flat,
+html[data-theme="dark"] .th-btn .th-organic,
+html[data-theme="dark"] .th-btn .th-soft { display: none; }
+html[data-theme="neu"] .th-btn .th-flat,
+html[data-theme="neu"] .th-btn .th-organic,
+html[data-theme="neu"] .th-btn .th-soft { display: none; }
 
 /* ---------- 新拟物细化：把还平着的块做成同一种材料 ---------- */
 
@@ -1914,7 +1940,7 @@ html[data-theme="neu"] .file-tip .act {
   text-align: left;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 4px 0 12px;
+  padding: 4px 0 8px;
 }
 
 .st-mast,
@@ -1930,15 +1956,15 @@ html[data-theme="neu"] .file-tip .act {
 /* 刊头：两行，第二行右移，像报纸的错落标题 */
 .st-hello {
   margin: 0;
-  font-family: "Arial Black", "Helvetica Neue", Impact, system-ui, sans-serif;
+  font-family: "Playfair Display", Georgia, "Songti SC", serif;
   font-weight: 900;
-  font-size: clamp(46px, 7.4vw, 88px);
-  line-height: .86;
+  font-size: clamp(54px, 9.6vw, 122px);
+  line-height: .78;
   letter-spacing: -.045em;
   color: var(--text);
 }
 .st-hello span { display: block; }
-.st-hello span:last-child { text-align: right; margin-right: 6%; }
+.st-hello span:last-child { text-align: right; margin-right: 2%; }
 
 /* 刊头和搜索栏之间不画线，靠留白分档 */
 .st-kicker {
@@ -1954,7 +1980,7 @@ html[data-theme="neu"] .file-tip .act {
 /* 圆环时钟：结构取自下载里的那张表盘图，底色换成纸白 */
 .st-clock {
   position: relative;
-  width: min(158px, 44%);
+  width: min(142px, 40%);
   aspect-ratio: 1;
   margin: clamp(14px, 2.2vh, 22px) auto 0;
   display: grid;
@@ -1980,7 +2006,7 @@ html[data-theme="neu"] .file-tip .act {
 .clock-face { text-align: center; padding-top: 4px; }
 .clock-time {
   margin: 0;
-  font-size: clamp(26px, 3.8vw, 34px);
+  font-size: clamp(24px, 3.4vw, 31px);
   font-weight: 300;
   line-height: 1;
   letter-spacing: -.02em;
@@ -2013,7 +2039,7 @@ html[data-theme="neu"] .file-tip .act {
 .start-core .bm-g { break-inside: auto; margin-bottom: 0; }
 .start-core .bm-l {
   font-size: 13px;
-  padding: 4px 8px 4px 6px;
+  padding: 3px 8px 3px 6px;
   gap: 8px;
 }
 .start-core .bm-l span { line-height: 1.4; }
@@ -2136,3 +2162,678 @@ html[data-theme="paper"] .bm-l i {
   gap: 12px;
   margin-bottom: 2px;
 }
+
+/* ============================================================
+   19. 皮肤四：极简扁平（Minimalist Flat）
+   ────────────────────────────────────────────────────────────
+   零阴影、零渐变、零圆角，只靠 2px 黑边和留白建立结构。
+   hover 用「黑白反色」而不是改变明暗，过渡接近瞬时（75ms）。
+   这是唯一一套把 --layer-* 语义整个换掉的皮肤：
+   原来那些半透明叠层在这里全部变成实心黑或实心白。
+   ============================================================ */
+html[data-theme="flat"] {
+  --bg:        #ffffff;
+  --bg-lift:   #ffffff;
+  --card:      #ffffff;
+  --card-2:    #ffffff;
+
+  --text:      #000000;
+  --text-2:    #000000;
+  --text-3:    #575757;   /* 只有弱化文字允许灰，5.9:1 */
+
+  --accent:    #ff3366;
+  --on-accent: #ffffff;
+
+  --line:      #000000;
+  --line-2:    #000000;
+
+  --layer-1:   #ffffff;
+  --layer-2:   #000000;
+  --layer-3:   #000000;
+  --hair:      #000000;
+  --hair-2:    #000000;
+
+  --surface-glass:   #ffffff;
+  --surface-panel:   #ffffff;
+  --surface-scrim:   rgba(0, 0, 0, .72);
+  --surface-overlay: #ffffff;
+  --surface-start:   #ffffff;
+
+  --shadow-color: transparent;
+  --shadow:    none;
+  --shadow-sm: none;
+
+  /* 一整条圆角都不许有 */
+  --r-card: 0;
+  --r-tile: 0;
+  --r-pill: 0;
+
+  --flat-dur: 75ms;
+}
+
+html[data-theme="flat"] body::before,
+html[data-theme="flat"] body::after { display: none; }
+html[data-theme="flat"] body { background: #fff; }
+
+/* 导航：白底 + 2px 黑框，没有模糊没有阴影 */
+html[data-theme="flat"] .nav-inner {
+  background: #fff;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: 2px solid #000;
+  box-shadow: none;
+  border-radius: 0;
+}
+html[data-theme="flat"] .nav-links a {
+  background: transparent;
+  color: #000;
+  border-radius: 0;
+  transition: background var(--flat-dur) steps(1, end), color var(--flat-dur) steps(1, end);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="flat"] .nav-links a:hover { background: #000; color: #fff; }
+}
+html[data-theme="flat"] .nav-links a[aria-current="page"] { background: #000; color: #fff; }
+html[data-theme="flat"] .nav-links a:active { background: var(--accent); color: #fff; }
+
+/* 所有带阴影的块一律拍平 */
+html[data-theme="flat"] .g-item,
+html[data-theme="flat"] .row,
+html[data-theme="flat"] .tag,
+html[data-theme="flat"] .chip,
+html[data-theme="flat"] .tag-cloud a,
+html[data-theme="flat"] .three > *,
+html[data-theme="flat"] .toc,
+html[data-theme="flat"] .np-menu,
+html[data-theme="flat"] .eng-menu,
+html[data-theme="flat"] .menu {
+  box-shadow: none;
+  border-radius: 0;
+}
+html[data-theme="flat"] .g-item { border: 2px solid #000; }
+html[data-theme="flat"] .row { border: 2px solid #000; }
+html[data-theme="flat"] .tag,
+html[data-theme="flat"] .chip { border: 2px solid #000; background: #fff; color: #000; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="flat"] .g-item:hover,
+  html[data-theme="flat"] .row:hover { background: #000; color: #fff; }
+  html[data-theme="flat"] .tag:hover,
+  html[data-theme="flat"] .chip:hover { background: #000; color: #fff; }
+}
+html[data-theme="flat"] .chip.on,
+html[data-theme="flat"] .tag.on { background: #000; color: #fff; }
+
+/* 播放器与开关 */
+html[data-theme="flat"] .np-btn,
+html[data-theme="flat"] .th-btn,
+html[data-theme="flat"] .burger,
+html[data-theme="flat"] .lb-btn {
+  background: #fff;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="flat"] .np-btn:hover,
+  html[data-theme="flat"] .th-btn:hover,
+  html[data-theme="flat"] .burger:hover,
+  html[data-theme="flat"] .lb-btn:hover { background: #000; color: #fff; }
+}
+html[data-theme="flat"] .modesw { background: #fff; border: 2px solid #000; border-radius: 0; }
+html[data-theme="flat"] .modesw-thumb { background: #000; border-radius: 0; box-shadow: none; }
+html[data-theme="flat"] .modesw a,
+html[data-theme="flat"] .modesw button { border-radius: 0; }
+html[data-theme="flat"] .modesw a.on,
+html[data-theme="flat"] .modesw button.on,
+html[data-theme="flat"] .modesw a[aria-current="page"] { color: #fff; }
+
+/* 起始页：搜索框变成一条下划线输入框 */
+html[data-theme="flat"] .search {
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 0;
+  box-shadow: none;
+}
+html[data-theme="flat"] .search:focus-within {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+html[data-theme="flat"] .search kbd { background: #000; color: #fff; border-radius: 0; }
+
+/* 收藏条目：hover 整行反色 */
+html[data-theme="flat"] .bm-l {
+  border-radius: 0;
+  padding: 6px 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="flat"] .bm-l:hover { background: #000; color: #fff; }
+  html[data-theme="flat"] .bm-l:hover i { background: #fff; color: #000; }
+}
+html[data-theme="flat"] .bm-l i { background: #000; color: #fff; border-radius: 0; }
+html[data-theme="flat"] .bm-l:active { background: var(--accent); color: #fff; }
+
+/* 刊头与时钟 */
+html[data-theme="flat"] .st-hello { color: #000; letter-spacing: -.03em; }
+html[data-theme="flat"] .st-kicker { color: #575757; letter-spacing: .18em; }
+html[data-theme="flat"] .clock-ring .cr-track { stroke: #000; stroke-width: 2; }
+html[data-theme="flat"] .clock-ring .cr-fill { stroke: var(--accent); stroke-width: 4; }
+html[data-theme="flat"] .clock-time { color: #000; font-weight: 700; }
+html[data-theme="flat"] .clock-date { color: #575757; }
+html[data-theme="flat"] .st-greet { color: #000; }
+
+/* 页脚 */
+html[data-theme="flat"] .start-foot { color: #575757; }
+html[data-theme="flat"] .start-foot kbd { background: #000; color: #fff; border-radius: 0; }
+
+/* 正文与链接 */
+html[data-theme="flat"] .prose a { color: #000; border-bottom: 2px solid #000; }
+html[data-theme="flat"] .prose a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+html[data-theme="flat"] .nav-prog i { background: #000; }
+html[data-theme="flat"] ::selection { background: #000; color: #fff; }
+
+/* 减弱动效之外的过渡都压到 75ms */
+html[data-theme="flat"] * {
+  transition-duration: var(--flat-dur) !important;
+  transition-timing-function: steps(1, end) !important;
+}
+
+/* ============================================================
+   20. 皮肤五：自然有机（Natural Organic）
+   ────────────────────────────────────────────────────────────
+   大地色、大圆角、衬线标题、缓慢的过渡。
+   底色 #faf6f1 是暖米（不是奶油+赤陶那套），强调色用苔绿 #8b9d77。
+   这里的「慢」是刻意的：过渡 500ms ease-in-out，模拟植物舒展。
+   ============================================================ */
+html[data-theme="organic"] {
+  --bg:        #faf6f1;
+  --bg-lift:   #f3ece2;
+  --card:      #ffffff;
+  --card-2:    #f7f1e8;
+
+  --text:      #292524;   /* stone-800，不是纯黑 */
+  --text-2:    #57534e;   /* stone-600 */
+  --text-3:    #78716c;   /* stone-500 */
+
+  --accent:    #6f7f5c;   /* 苔绿的深一档，白底上 4.8:1 */
+  --on-accent: #ffffff;
+
+  --line:      #e5dccd;
+  --line-2:    #d6c9b5;
+
+  --layer-1:   #f3ece2;
+  --layer-2:   #ece3d6;
+  --layer-3:   #e2d7c6;
+  --hair:      #d6c9b5;
+  --hair-2:    #e5dccd;
+
+  --surface-glass:   rgba(250, 246, 241, .92);
+  --surface-panel:   #fffdfa;
+  --surface-scrim:   rgba(41, 37, 36, .55);
+  --surface-overlay: #fffdfa;
+  --surface-start:   transparent;
+
+  --shadow-color: #5c4033;
+  --shadow:    0 18px 38px -24px rgba(92, 64, 51, .38);
+  --shadow-sm: 0 10px 24px -16px rgba(92, 64, 51, .32);
+
+  /* 有机形状：大而不规则的圆角 */
+  --r-card: 2rem;
+  --r-tile: 1.75rem;
+  --r-pill: 999px;
+
+  --organic-dur: 500ms;
+}
+
+html[data-theme="organic"] body::before,
+html[data-theme="organic"] body::after { display: none; }
+html[data-theme="organic"] body {
+  background: #faf6f1;
+  /* 极淡的纸纤维质感，用重复渐变叠出纹理，不用图片 */
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(212, 163, 115, .05) 0 1px, transparent 1px),
+    radial-gradient(circle at 70% 60%, rgba(139, 157, 119, .05) 0 1px, transparent 1px);
+  background-size: 22px 22px, 26px 26px;
+}
+
+/* 衬线标题 */
+html[data-theme="organic"] .hero h1,
+html[data-theme="organic"] .page-head h1,
+html[data-theme="organic"] .sec-head h2,
+html[data-theme="organic"] .bm-g h3,
+html[data-theme="organic"] .row-main h3 {
+  font-family: Georgia, "Songti SC", "STSong", "SimSun", serif;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+
+/* 导航：奶白胶囊 + 轻阴影 */
+html[data-theme="organic"] .nav-inner {
+  background: rgba(255, 253, 250, .94);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="organic"] .nav-links a:hover { background: var(--layer-2); color: var(--text); }
+}
+html[data-theme="organic"] .nav-links a { border-radius: 999px; }
+html[data-theme="organic"] .nav-links a[aria-current="page"] {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 卡片与瓦片：大圆角 + 柔和阴影，hover 微微下沉 */
+html[data-theme="organic"] .g-item,
+html[data-theme="organic"] .row,
+html[data-theme="organic"] .tag,
+html[data-theme="organic"] .chip {
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--line);
+  transition: transform var(--organic-dur) ease-in-out,
+              box-shadow var(--organic-dur) ease-in-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="organic"] .g-item:hover,
+  html[data-theme="organic"] .row:hover {
+    transform: translateY(2px);
+    box-shadow: var(--shadow);
+  }
+  html[data-theme="organic"] .tag:hover,
+  html[data-theme="organic"] .chip:hover { background: var(--layer-2); }
+}
+html[data-theme="organic"] .chip.on,
+html[data-theme="organic"] .tag.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+html[data-theme="organic"] .g-item img { border-radius: var(--r-card); }
+
+/* 按钮与开关 */
+html[data-theme="organic"] .np-btn,
+html[data-theme="organic"] .th-btn,
+html[data-theme="organic"] .burger,
+html[data-theme="organic"] .lb-btn {
+  background: #fffdfa;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  transition: background var(--organic-dur) ease-in-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="organic"] .np-btn:hover,
+  html[data-theme="organic"] .th-btn:hover,
+  html[data-theme="organic"] .burger:hover,
+  html[data-theme="organic"] .lb-btn:hover { background: var(--layer-2); }
+}
+html[data-theme="organic"] .modesw { background: var(--layer-1); border: 1px solid var(--line); }
+html[data-theme="organic"] .modesw-thumb { background: #fffdfa; box-shadow: var(--shadow-sm); }
+html[data-theme="organic"] .modesw a.on,
+html[data-theme="organic"] .modesw button.on { color: var(--accent); }
+
+/* 搜索框：胶囊 + 柔边 */
+html[data-theme="organic"] .search {
+  background: #fffdfa;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+}
+html[data-theme="organic"] .search:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(111, 127, 92, .18);
+}
+html[data-theme="organic"] .search kbd { background: var(--layer-2); border-radius: 999px; }
+
+/* 收藏条目：圆角 + 悬停米色底 */
+html[data-theme="organic"] .bm-l {
+  border-radius: 999px;
+  transition: background var(--organic-dur) ease-in-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="organic"] .bm-l:hover { background: var(--layer-2); color: var(--text); }
+}
+html[data-theme="organic"] .bm-l i {
+  background: var(--layer-3);
+  color: #4a3f36;
+  border-radius: 999px;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="organic"] .bm-l:hover i { background: var(--accent); color: #fff; }
+}
+
+/* 刊头与时钟 */
+html[data-theme="organic"] .st-kicker { color: var(--text-3); letter-spacing: .16em; }
+html[data-theme="organic"] .clock-ring .cr-track { stroke: var(--line-2); }
+html[data-theme="organic"] .clock-ring .cr-fill {
+  stroke: var(--accent);
+  stroke-width: 3;
+  transition: stroke-dashoffset 1200ms ease-in-out;
+}
+html[data-theme="organic"] .clock-time {
+  font-family: Georgia, "Songti SC", serif;
+  font-weight: 400;
+  color: var(--text);
+}
+html[data-theme="organic"] .clock-date { color: var(--text-3); }
+html[data-theme="organic"] .st-greet { color: var(--text-2); }
+
+/* 页脚与链接 */
+html[data-theme="organic"] .start-foot { color: var(--text-3); }
+html[data-theme="organic"] .start-foot kbd { background: var(--layer-2); border-radius: 999px; }
+html[data-theme="organic"] .prose a { color: var(--accent); border-bottom-color: var(--line-2); }
+html[data-theme="organic"] .nav-prog i { background: var(--accent); }
+html[data-theme="organic"] ::selection { background: var(--accent); color: #fff; }
+
+/* 过渡放慢到自然生长的速度（环境光层与动画层不受影响） */
+html[data-theme="organic"] .bm-l,
+html[data-theme="organic"] .tag,
+html[data-theme="organic"] .chip,
+html[data-theme="organic"] .nav-links a {
+  transition-duration: var(--organic-dur) !important;
+  transition-timing-function: ease-in-out !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="organic"] .g-item:hover,
+  html[data-theme="organic"] .row:hover { transform: none; }
+}
+
+/* ============================================================
+   21. 皮肤六：柔和界面（Soft UI）
+   ────────────────────────────────────────────────────────────
+   低饱和 indigo + 浅灰蓝底 + 大圆角 + 带颜色的柔阴影。
+   三个硬约束：不用纯黑（用 gray-800）、不用硬边框（靠阴影分层）、
+   hover 上浮而不是变色——触感像按在柔软的东西上。
+   ============================================================ */
+html[data-theme="soft"] {
+  --bg:        #f8fafc;   /* slate-50 */
+  --bg-lift:   #f1f5f9;
+  --card:      #ffffff;
+  --card-2:    #ffffff;
+
+  --text:      #1f2937;   /* gray-800，不是纯黑 */
+  --text-2:    #475569;
+  --text-3:    #64748b;   /* 4.8:1 */
+
+  --accent:    #4f46e5;   /* indigo-600，白底上 5.9:1 */
+  --on-accent: #ffffff;
+
+  --line:      #e2e8f0;
+  --line-2:    #cbd5e1;
+
+  --layer-1:   rgba(79, 70, 229, .06);
+  --layer-2:   rgba(79, 70, 229, .10);
+  --layer-3:   rgba(79, 70, 229, .16);
+  --hair:      #cbd5e1;
+  --hair-2:    #e2e8f0;
+
+  --surface-glass:   rgba(255, 255, 255, .92);
+  --surface-panel:   #ffffff;
+  --surface-scrim:   rgba(30, 41, 59, .45);
+  --surface-overlay: #ffffff;
+  --surface-start:   transparent;
+
+  /* 阴影一律带色：灰蓝或 indigo，绝不出现纯黑硬影 */
+  --shadow-color: rgba(79, 70, 229, .18);
+  --shadow:    0 24px 48px -24px rgba(51, 65, 85, .28);
+  --shadow-sm: 0 12px 28px -14px rgba(51, 65, 85, .22);
+  --shadow-soft: 0 20px 44px -18px rgba(79, 70, 229, .28);
+
+  --r-card: 24px;
+  --r-tile: 20px;
+  --r-pill: 999px;
+
+  --soft-dur: 300ms;
+  --soft-ease: cubic-bezier(.4, 0, .2, 1);
+}
+
+html[data-theme="soft"] body::before,
+html[data-theme="soft"] body::after { display: none; }
+html[data-theme="soft"] body {
+  background: #f8fafc;
+  background-image:
+    radial-gradient(60% 46% at 18% 0%, rgba(99, 102, 241, .10), transparent 70%),
+    radial-gradient(52% 40% at 86% 12%, rgba(236, 72, 153, .07), transparent 72%);
+  background-repeat: no-repeat;
+}
+
+/* 导航：浮起来的白胶囊，阴影带 indigo 味道 */
+html[data-theme="soft"] .nav-inner {
+  background: rgba(255, 255, 255, .96);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 0;
+  box-shadow: 0 18px 40px -18px rgba(51, 65, 85, .25),
+              0 2px 8px -2px rgba(79, 70, 229, .10);
+}
+html[data-theme="soft"] .nav-links a {
+  border-radius: 999px;
+  transition: background var(--soft-dur) var(--soft-ease),
+              color var(--soft-dur) var(--soft-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .nav-links a:hover { background: var(--layer-2); color: var(--accent); }
+}
+html[data-theme="soft"] .nav-links a[aria-current="page"] {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 8px 18px -8px rgba(79, 70, 229, .6);
+}
+
+/* 卡片 / 瓦片：大圆角 + 上浮 */
+html[data-theme="soft"] .g-item,
+html[data-theme="soft"] .row,
+html[data-theme="soft"] .tag,
+html[data-theme="soft"] .chip {
+  border: 0;
+  border-radius: var(--r-card);
+  background: #fff;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--soft-dur) var(--soft-ease),
+              box-shadow var(--soft-dur) var(--soft-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .g-item:hover,
+  html[data-theme="soft"] .row:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-soft);
+  }
+  html[data-theme="soft"] .tag:hover,
+  html[data-theme="soft"] .chip:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+    color: var(--accent);
+  }
+}
+html[data-theme="soft"] .g-item img { border-radius: var(--r-card); }
+html[data-theme="soft"] .chip.on,
+html[data-theme="soft"] .tag.on {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 10px 22px -10px rgba(79, 70, 229, .65);
+}
+
+/* 按钮：圆形底、悬浮 */
+html[data-theme="soft"] .np-btn,
+html[data-theme="soft"] .th-btn,
+html[data-theme="soft"] .burger,
+html[data-theme="soft"] .lb-btn {
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--text-2);
+  box-shadow: var(--shadow-sm);
+  transition: transform 200ms var(--soft-ease), box-shadow 200ms var(--soft-ease),
+              color 200ms var(--soft-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .np-btn:hover,
+  html[data-theme="soft"] .th-btn:hover,
+  html[data-theme="soft"] .burger:hover,
+  html[data-theme="soft"] .lb-btn:hover {
+    transform: translateY(-2px);
+    color: var(--accent);
+    box-shadow: var(--shadow-soft);
+  }
+}
+html[data-theme="soft"] .np-btn:active,
+html[data-theme="soft"] .th-btn:active,
+html[data-theme="soft"] .burger:active { transform: scale(.95); }
+
+html[data-theme="soft"] .modesw {
+  background: rgba(241, 245, 249, .9);
+  border: 0;
+  box-shadow: inset 0 1px 3px rgba(51, 65, 85, .10);
+}
+html[data-theme="soft"] .modesw-thumb {
+  background: #fff;
+  box-shadow: 0 6px 14px -6px rgba(51, 65, 85, .35);
+}
+html[data-theme="soft"] .modesw a.on,
+html[data-theme="soft"] .modesw button.on,
+html[data-theme="soft"] .modesw a[aria-current="page"] { color: var(--accent); }
+
+/* 搜索框：浅灰底 + focus 柔光环，不用边框 */
+html[data-theme="soft"] .search {
+  background: #fff;
+  border: 0;
+  border-radius: var(--r-pill);
+  box-shadow: 0 10px 26px -14px rgba(51, 65, 85, .28);
+  transition: box-shadow var(--soft-dur) var(--soft-ease);
+}
+html[data-theme="soft"] .search:focus-within {
+  box-shadow: 0 0 0 4px rgba(79, 70, 229, .18),
+              0 16px 34px -16px rgba(79, 70, 229, .35);
+}
+html[data-theme="soft"] .search kbd {
+  background: var(--layer-2);
+  color: var(--accent);
+  border-radius: 999px;
+}
+html[data-theme="soft"] .eng-menu {
+  border: 0;
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow);
+}
+html[data-theme="soft"] .eng-menu button { border-radius: 999px; }
+
+/* 收藏条目：整行圆角 + 悬停浅 indigo */
+html[data-theme="soft"] .bm-l {
+  border-radius: 14px;
+  transition: background var(--soft-dur) var(--soft-ease),
+              color var(--soft-dur) var(--soft-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .bm-l:hover { background: var(--layer-1); color: var(--accent); }
+}
+html[data-theme="soft"] .bm-l:active { background: var(--layer-2); }
+html[data-theme="soft"] .bm-l i {
+  background: var(--layer-2);
+  color: var(--accent);
+  border-radius: 999px;
+  font-weight: 600;
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .bm-l:hover i {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 6px 14px -6px rgba(79, 70, 229, .6);
+  }
+}
+
+/* 刊头与时钟 */
+html[data-theme="soft"] .st-hello { color: var(--text); letter-spacing: -.035em; }
+html[data-theme="soft"] .st-kicker { color: var(--text-3); letter-spacing: .14em; }
+html[data-theme="soft"] .clock-ring .cr-track { stroke: #e2e8f0; stroke-width: 6; }
+html[data-theme="soft"] .clock-ring .cr-fill {
+  stroke: var(--accent);
+  stroke-width: 6;
+  filter: drop-shadow(0 0 6px rgba(79, 70, 229, .45));
+  transition: stroke-dashoffset 800ms var(--soft-ease);
+}
+html[data-theme="soft"] .clock-time { color: var(--text); font-weight: 600; }
+html[data-theme="soft"] .clock-date { color: var(--text-3); }
+html[data-theme="soft"] .st-greet { color: var(--text-2); }
+
+/* 页脚与链接 */
+html[data-theme="soft"] .start-foot { color: var(--text-3); }
+html[data-theme="soft"] .start-foot kbd { background: var(--layer-2); color: var(--accent); border-radius: 999px; }
+html[data-theme="soft"] .prose a { color: var(--accent); border-bottom-color: rgba(79, 70, 229, .3); }
+html[data-theme="soft"] .nav-prog i { background: var(--accent); }
+html[data-theme="soft"] ::selection { background: var(--accent); color: #fff; }
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="soft"] .g-item:hover,
+  html[data-theme="soft"] .row:hover,
+  html[data-theme="soft"] .tag:hover,
+  html[data-theme="soft"] .chip:hover,
+  html[data-theme="soft"] .np-btn:hover,
+  html[data-theme="soft"] .th-btn:hover { transform: none; }
+}
+
+/* ---------- 柔和皮肤：给收藏分组上色 ----------
+   Soft UI 规范允许 indigo / pink / emerald 作为强调色。
+   四个分组各配一色，标题和图标跟着走，页面就不再是单一紫灰。
+   颜色都取深一档，保证在浅底上过 4.5:1。 */
+html[data-theme="soft"] .bm-g:nth-child(1) { --g: #4f46e5; }   /* indigo-600 */
+html[data-theme="soft"] .bm-g:nth-child(2) { --g: #db2777; }   /* pink-600 */
+html[data-theme="soft"] .bm-g:nth-child(3) { --g: #047857; }   /* emerald-700 */
+html[data-theme="soft"] .bm-g:nth-child(4) { --g: #0e7490; }   /* cyan-700 */
+
+html[data-theme="soft"] .bm-g h3 {
+  color: var(--g, var(--text-2));
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+html[data-theme="soft"] .bm-g .bm-l i {
+  background: color-mix(in srgb, var(--g, #4f46e5) 12%, #fff);
+  color: var(--g, #4f46e5);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="soft"] .bm-g .bm-l:hover {
+    background: color-mix(in srgb, var(--g, #4f46e5) 7%, #fff);
+    color: var(--g, #4f46e5);
+  }
+  html[data-theme="soft"] .bm-g .bm-l:hover i {
+    background: var(--g, #4f46e5);
+    color: #fff;
+    box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--g, #4f46e5) 65%, transparent);
+  }
+}
+html[data-theme="soft"] .bm-g .bm-l:active {
+  background: color-mix(in srgb, var(--g, #4f46e5) 14%, #fff);
+}
+
+/* 分组标题前的一小段色条，代替分割线 */
+html[data-theme="soft"] .bm-g h3::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 999px;
+  margin-right: 8px;
+  vertical-align: middle;
+  background: var(--g, var(--text-3));
+}
+
+/* 时钟：环底留白、时间数字用强调色。
+   这里本来想给数字做渐变，但规范明令禁止渐变文字（background-clip: text），
+   所以改成纯 indigo——有颜色，但不违规。 */
+html[data-theme="soft"] .clock-ring .cr-track { stroke: #e2e8f0; }
+html[data-theme="soft"] .clock-time { color: var(--accent); }
+
+
+/* ---------- 星野背景（夜色皮肤专属）----------
+   canvas 由 assets/starfield.js 动态插入 body，
+   层级夹在 body::before（背景光，z 0）和 .blog（内容，z 50）之间。
+   其他皮肤下 .on 类名不会被加上，元素不显示，也不占性能。 */
+#dyg-sky {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: none;
+}
+#dyg-sky.on { display: block; }
+
+/* 夜色皮肤把这一层让出来，星野才有地方画 */
+html[data-theme="dark"] body { background: #0b0b0d; }
