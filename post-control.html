@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>《控制：共振》：把主角换掉之后，反而更像 Remedy 了 · 东芽果 DYG</title>
+<meta name="description" content="《控制：共振》推荐：Remedy 把续作主角从杰西换成她弟弟迪伦，舞台从封闭的太古屋搬到被「格式化」扭曲的曼哈顿。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261023135114" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    /* 只认已知皮肤 */
+    var OK = { soft: 1, organic: 1, dark: 1, neu: 1 };
+
+    /* 本次会话手动选过，就听用户的 */
+    var t = sessionStorage.getItem('dyg-theme');
+
+    /* 否则按时段决定默认皮肤：
+       06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
+       只写 sessionStorage 不写 localStorage —— 这样关掉标签页，
+       下次打开又会回到时段默认，而不是永久固定成手动选的那套。 */
+    if (!OK[t]) {
+      var h = new Date().getHours();
+      t = (h >= 6 && h < 18) ? 'soft' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'soft');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+  <article class="article">
+    <div class="article-grid">
+
+      <div>
+        <header class="art-head">
+          <h1>《控制：共振》：把主角换掉之后，反而更像 Remedy 了</h1>
+          <div class="art-meta">
+            <span>东芽果 DYG</span>
+            <span class="dot">/</span>
+            <span>2026.10.23</span>
+            <span class="dot">/</span>
+            <span>约 5 分钟</span>
+          </div>
+        </header>
+
+        <figure class="art-cover">
+          <img src="assets/img/cover-control.webp" alt="《控制：共振》官方主视觉：迪伦手持异变者站在扭曲的曼哈顿前" />
+        </figure>
+
+        <div class="prose">
+          <p>《控制：共振》九月底发售了。它是 2019 年那部《控制》的正统续作，但 Remedy 做了个不太常规的决定——<strong>把主角换了</strong>。</p>
+
+          <p>前作的主角杰西·法登这次只在背景里存在：她下落不明。镜头交给她的弟弟，迪伦。</p>
+
+          <blockquote><p>「一个被关了七年的人，走出门发现世界已经烂透了。」</p></blockquote>
+
+          <h2 id="s1">先说一下前作</h2>
+          <p>2019 年的《控制》，舞台是联邦控制局（FBC）的总部「太古屋」——一栋内部无限延伸、空间规则随时会变的建筑。杰西为了找失踪的弟弟闯进去，莫名其妙成了新任局长，顺带收拾了一场由异界实体「希斯」引发的烂摊子。</p>
+          <p>那部游戏的气质很特别：粗野主义建筑、超自然档案、办公室政治，再加上 Remedy 一贯的怪。它拿了当年的多个年度游戏提名，也成了 Remedy 最有辨识度的作品之一。</p>
+
+          <h2 id="s2">七年之后，烂摊子更大了</h2>
+          <p>《共振》的故事发生在七年之后。封锁希斯的行动失败，它泄露到了外面的世界，在所到之处引发一种叫「格式化」的现象——建筑被随机重组、物体成倍增殖，整座城市变成一个物理规则失效的迷宫。</p>
+          <p>这次的地图是<strong>曼哈顿</strong>。不是前作那种封闭的大楼，而是开阔的街道、屋顶，以及向内折叠的街区。这个变化不只是场景更大，它直接改变了玩法。</p>
+
+          <div class="note">前作里你在一栋楼里上上下下，本作你可以跳上屋顶、在空中冲刺、用抓钩荡过街道。地形从「容器」变成了「游乐场」。</div>
+
+          <h2 id="s3">迪伦：和前作主角完全相反的一个人</h2>
+          <p>迪伦在前作里是「6 号实验体」——从小被 FBC 当研究对象关着，后来被希斯控制，第一天就杀了五百多人。杰西打败希斯之后，他陷入昏迷。</p>
+          <p>这一作他醒了。<strong>昏迷了七年</strong>，醒来时姐姐不见了，而全世界都记得他干过什么。</p>
+          <p>他的性格和杰西几乎是反的：杰西果断、主动、一路向前；迪伦犹豫、害羞、不太会和人打交道。游戏里一部分对话可以<strong>替他做选择</strong>，这些选择会塑造他性格的走向。</p>
+          <p>搭档是 FBC 派来对接他的特工佐伊。一个做事不计后果，一个敷衍了事，两人的互动是这作比较有意思的部分。</p>
+
+          <h2 id="s4">玩起来变了多少</h2>
+          <ul>
+            <li><strong>机动性</strong>：二段跳之后按住跳跃还能继续升空，闪避变成空中冲刺，连按两次会拖出残影。后期能解锁抓钩，探索时相当好用。</li>
+            <li><strong>武器</strong>：迪伦的装备叫「异变者」，能把体内的能量转成武器并切换形态——双手锤、双刀等等，不再是前作那种「枪 + 超能力」的组合。</li>
+            <li><strong>叙事</strong>：除了主线，还有一些可选小任务，用场景里的物件重现记忆或童年片段。比如救下两只不会动的猫，替迪伦摆出他画过的猫咪野餐场景。</li>
+            <li><strong>档案</strong>：系列传统，很多背景要靠主动翻档案拼出来，不会直接喂给你。</li>
+          </ul>
+
+          <h2 id="s5">谁做的</h2>
+          <ul>
+            <li>开发：<strong>Remedy Entertainment</strong>（芬兰，《心灵杀手》《控制》）</li>
+            <li>创意总监：<strong>Sam Lake</strong>（本名 Sami Järvi）</li>
+            <li>游戏总监：<strong>Mikael Kasurinen</strong></li>
+            <li>剧本：<strong>Ashley Smith</strong></li>
+            <li>发售：<strong>2026 年 9 月 24 日</strong>，PS5 / Xbox Series X|S / PC</li>
+          </ul>
+          <p>技术上是这代比较激进的一个：支持路径追踪，光影在扭曲空间里的表现是卖点之一；PC 版支持 DLSS 4.5。</p>
+
+          <h2 id="s6">值不值得入</h2>
+          <p>玩过前作的话，这作基本是必看的——不是因为它「更大」，而是因为它用一个完全不同的视角重新看那个世界。杰西是闯进去的外来者，迪伦是从里面被放出来的囚徒，两个人的处境差得很远。</p>
+          <p>没玩过前作也能进，游戏准备了一段回顾短片。但要有心理准备：故事信息量很大，一开始会被砸得有点懵。</p>
+          <p>如果冲着「Remedy 式怪」来的，这作没让人失望。街区虽然开了，但那种「所有东西都不对劲」的不安感一直还在。</p>
+
+          <p style="margin-top:32px;font-size:12px;color:var(--text-3)">题图来自官方主视觉，版权归 Remedy Entertainment 所有。</p>
+        </div>
+      </div>
+
+      <aside>
+        <nav class="toc" data-toc aria-label="目录">
+          <h5>目录</h5>
+          <a href="#s1">先说一下前作</a>
+          <a href="#s2">七年之后，烂摊子更大了</a>
+          <a href="#s3">迪伦：相反的那个人</a>
+          <a href="#s4">玩起来变了多少</a>
+          <a href="#s5">谁做的</a>
+          <a href="#s6">值不值得入</a>
+        </nav>
+
+        <div class="block" style="margin-top:36px">
+          <h4>关于这篇</h4>
+          <dl class="facts">
+            <div class="fact"><dt>发售</dt><dd>2026.09.24</dd></div>
+            <div class="fact"><dt>平台</dt><dd>PS5 / XSX / PC</dd></div>
+            <div class="fact"><dt>开发</dt><dd>Remedy</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+    </div>
+  </article>
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261023135114"></script>
+<script src="assets/starfield.js"></script>
+<script src="ui.js?v=20261023135114"></script>
+<script src="fx.js?v=20261023135114"></script>
+</body>
+</html>
