@@ -8,15 +8,25 @@
 <meta name="color-scheme" content="light" />
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
-<link rel="stylesheet" href="theme.css?v=20261023114015" />
+<link rel="stylesheet" href="theme.css?v=20261023120659" />
 <script>
 /* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
 (function () {
   try {
-    var t = localStorage.getItem('dyg-theme');
-    /* 只认已知皮肤；没记录或未知值 → 默认皮肤 */
+    /* 只认已知皮肤 */
     var OK = { paper: 1, flat: 1, organic: 1, soft: 1, dark: 1, neu: 1 };
-    if (!OK[t]) t = 'soft';
+
+    /* 本次会话手动选过，就听用户的 */
+    var t = sessionStorage.getItem('dyg-theme');
+
+    /* 否则按时段决定默认皮肤：
+       06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
+       只写 sessionStorage 不写 localStorage —— 这样关掉标签页，
+       下次打开又会回到时段默认，而不是永久固定成手动选的那套。 */
+    if (!OK[t]) {
+      var h = new Date().getHours();
+      t = (h >= 6 && h < 18) ? 'soft' : 'dark';
+    }
     document.documentElement.setAttribute('data-theme', t);
   } catch (e) {
     document.documentElement.setAttribute('data-theme', 'soft');
@@ -74,9 +84,9 @@
 <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261023114015"></script>
+<script src="cursor.js?v=20261023120659"></script>
 <script src="assets/starfield.js"></script>
-<script src="ui.js?v=20261023114015"></script>
-<script src="fx.js?v=20261023114015"></script>
+<script src="ui.js?v=20261023120659"></script>
+<script src="fx.js?v=20261023120659"></script>
 </body>
 </html>

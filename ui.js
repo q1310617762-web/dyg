@@ -96,7 +96,9 @@
   function applyTheme(id, save) {
     if (themeIndex(id) === 0 && id !== THEMES[0].id) id = THEMES[0].id;
     root.setAttribute('data-theme', id);
-    if (save) { try { localStorage.setItem('dyg-theme', id); } catch (e) {} }
+    /* 只写 sessionStorage：手动选择只在本次会话有效，
+       下次打开仍按「白天柔和 / 夜晚星空」的时段规则。 */
+    if (save) { try { sessionStorage.setItem('dyg-theme', id); } catch (e) {} }
 
     var t = themeOf(id);
     /* 起始页和博客各有一颗按钮，两处都要同步 */
