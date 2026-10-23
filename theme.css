@@ -2356,9 +2356,12 @@ html[data-theme="soft"] .chip {
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="soft"] .g-item:hover,
   html[data-theme="soft"] .row:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-soft);
-  }
+  transform: translateY(-3px);
+  /* 白卡叠在白底上，只靠阴影几乎看不出变化：
+     底色压成极淡的薰衣草，再加一圈 indigo 描边。 */
+  background: #f7f7ff;
+  box-shadow: 0 0 0 1px rgba(79, 70, 229, .22), var(--shadow-soft);
+}
   html[data-theme="soft"] .tag:hover,
   html[data-theme="soft"] .chip:hover {
     transform: translateY(-2px);
