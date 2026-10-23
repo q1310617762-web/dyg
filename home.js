@@ -41,24 +41,30 @@
 
   function tick() {
     var d = new Date();
-    if (elTime)  elTime.textContent = pad(d.getHours()) + ':' + pad(d.getMinutes());
-    /* 圆环只有 158px 宽，写全年月日会把「星期几」挤出圆外。
-       报纸式短日期：10 月 22 日 周四 */
-    if (elDate)  elDate.textContent = (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日　' +
+
+    /* 三卡片时钟：时 / 分 / 秒各自一个数字。元素每次现查，
+       因为起始页节点会被路由整体换掉。 */
+    var eh = document.querySelector('[data-hour]');
+    var em = document.querySelector('[data-minute]');
+    var es = document.querySelector('[data-second]');
+    if (eh) eh.textContent = pad(d.getHours());
+    if (em) em.textContent = pad(d.getMinutes());
+    if (es) es.textContent = pad(d.getSeconds());
+
+    /* 日期用短式：10 月 22 日 周四 */
+    if (elDate)  elDate.textContent = (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日 ' +
                                       WEEK[d.getDay()].replace('星期', '周');
     if (elHello) elHello.textContent = greet(d.getHours());
 
-    /* 圆环上那道蓝弧 = 这一天已经过去的比例。
-       每分钟挪一次就够——1/1440 的变化肉眼看不出来，没必要每秒重排。 */
+    /* 旧圆环的进度弧（结构已换掉，这里留着兼容，匹配不到就跳过） */
     var arc = document.querySelector('[data-clock-arc]');
     if (arc) {
       var pct = (d.getHours() * 3600 + d.getMinutes() * 60) / 86400;
       arc.style.strokeDashoffset = (703.72 * (1 - pct)).toFixed(2);
     }
 
-    // 对齐到下一分钟再刷新，不用每秒空转
-    var ms = (60 - d.getSeconds()) * 1000 - d.getMilliseconds();
-    setTimeout(tick, Math.max(1000, ms));
+    /* 有秒位，按秒对齐刷新。只改三个 textContent，开销可以忽略。 */
+    setTimeout(tick, 1000 - d.getMilliseconds());
   }
   tick();
 

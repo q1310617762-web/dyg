@@ -2566,3 +2566,139 @@ html[data-theme="dark"] body { background: #0b0b0d; }
 
 /* 页内锚点跳转时给固定导航让出空间，否则标题会被压在胶囊下面 */
 .prose h2, .prose h3 { scroll-margin-top: 104px; }
+
+/* ============================================================
+   22. 起始页时钟 v2：时分秒三卡片
+   ────────────────────────────────────────────────────────────
+   取代原来的圆环表盘。三张胶囊卡并排，中间「分」用深底 + 青色数字突出，
+   左右两张是白卡，各自带一圈彩色外发光（橙 / 薄荷）。
+   数字用 tabular-nums，秒位每秒跳一次不会左右抖。
+   ============================================================ */
+.st-clock {
+  position: relative;
+  display: flex;
+  gap: clamp(8px, 1.2vw, 12px);
+  width: min(560px, 100%);
+  aspect-ratio: auto;          /* 覆盖旧圆环的 1:1 */
+  place-items: initial;
+  margin: clamp(12px, 1.8vh, 18px) auto 0;
+}
+
+.tc {
+  flex: 1;
+  min-width: 0;
+  height: clamp(102px, 12.4vh, 118px);
+  border-radius: 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: #fff;
+  color: #14161a;
+  transition: box-shadow .3s ease, transform .3s ease;
+}
+
+.tc-k {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  color: #14161a;
+  opacity: .88;
+}
+
+.tc-n {
+  font-size: clamp(32px, 4.2vw, 50px);
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-f {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 7.5px;
+  letter-spacing: .15em;
+  color: #9aa1ab;
+}
+.tc-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+/* 左右两张：白卡 + 彩色外发光 */
+.tc-h {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .9),
+    0 0 0 3px rgba(255, 138, 61, .26),
+    0 16px 34px -18px rgba(255, 138, 61, .62);
+}
+.tc-h .tc-dot { background: #ff8a3d; }
+
+.tc-s {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .9),
+    0 0 0 3px rgba(56, 201, 182, .26),
+    0 16px 34px -18px rgba(56, 201, 182, .58);
+}
+.tc-s .tc-dot { background: #38c9b6; }
+
+/* 中间「分」：深底 + 青色数字，略放大一档 */
+.tc-m {
+  background: linear-gradient(160deg, #24252b, #141519);
+  color: #e9ebf0;
+  transform: scale(1.045);
+  z-index: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .12),
+    0 0 0 3px rgba(255, 138, 61, .34),
+    0 22px 44px -20px rgba(255, 122, 61, .68);
+}
+.tc-m .tc-k { color: #e9ebf0; opacity: .92; }
+.tc-m .tc-n { color: #3dd6c4; }
+.tc-m .tc-f { color: #868c96; }
+.tc-m .tc-dot { background: #3dd6c4; }
+
+/* 日期 + 问候合成一行 */
+.st-greet {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 9px 0 0;
+  font-size: 12.5px;
+  color: var(--text-3);
+  text-align: center;
+}
+.st-sep { opacity: .45; }
+
+/* 夜色下卡片要反色，否则白卡在黑底上太刺眼 */
+html[data-theme="dark"] .tc-h,
+html[data-theme="dark"] .tc-s {
+  background: #17181d;
+  color: #e9ebf0;
+}
+html[data-theme="dark"] .tc-h .tc-k,
+html[data-theme="dark"] .tc-s .tc-k { color: #e9ebf0; }
+html[data-theme="dark"] .tc-h .tc-f,
+html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
+
+/* 新拟物：卡片跟着底色走，别用纯白 */
+html[data-theme="neu"] .tc-h,
+html[data-theme="neu"] .tc-s {
+  background: #e0e5ec;
+  box-shadow:
+    6px 6px 14px #b8bcc2,
+    -6px -6px 14px #ffffff;
+}
+
+@media (max-width: 560px) {
+  .tc { height: 92px; border-radius: 18px; }
+  .tc-n { font-size: 34px; }
+  .tc-k { font-size: 8px; }
+  .tc-f { font-size: 7px; }
+}

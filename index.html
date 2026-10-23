@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261023135114" />
+<link rel="stylesheet" href="theme.css?v=20261023173532" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -105,18 +105,25 @@
       </div>
     </form>
 
-    <div class="st-clock">
-      <svg class="clock-ring" viewBox="0 0 240 240" aria-hidden="true">
-        <circle class="cr-track" cx="120" cy="120" r="112"></circle>
-        <circle class="cr-fill" cx="120" cy="120" r="112" data-clock-arc></circle>
-      </svg>
-      <div class="clock-face">
-        <p class="clock-time" data-time>--:--</p>
-        <p class="clock-date" data-date>—</p>
+    <div class="st-clock" role="timer" aria-label="当前时间">
+      <div class="tc tc-h">
+        <span class="tc-k">HOUR</span>
+        <span class="tc-n" data-hour>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>HOURS</span>
+      </div>
+      <div class="tc tc-m">
+        <span class="tc-k">MINUTE</span>
+        <span class="tc-n" data-minute>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>MINUTES</span>
+      </div>
+      <div class="tc tc-s">
+        <span class="tc-k">SECOND</span>
+        <span class="tc-n" data-second>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>SECONDS</span>
       </div>
     </div>
 
-    <p class="st-greet" data-hello>你好</p>
+    <p class="st-greet"><span data-date>—</span><span class="st-sep">·</span><span data-hello>你好</span></p>
 
     <section class="bm" aria-label="收藏">
 
@@ -280,10 +287,10 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261023135114"></script>
+<script src="cursor.js?v=20261023173532"></script>
 <script src="assets/starfield.js"></script>
-<script src="ui.js?v=20261023135114"></script>
-<script src="home.js?v=20261023135114"></script>
+<script src="ui.js?v=20261023173532"></script>
+<script src="home.js?v=20261023173532"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。 */
 (function () {
@@ -304,6 +311,6 @@
   }).join('');
 })();
 </script>
-<script src="fx.js?v=20261023135114"></script>
+<script src="fx.js?v=20261023173532"></script>
 </body>
 </html>
