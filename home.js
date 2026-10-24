@@ -217,6 +217,21 @@
     if (window.__dygGallery) window.__dygGallery();
   }
 
+  /* 和上面那个方向相反、道理一样的一份：起始页专属的大件（看板娘动图）
+     在博客形态落地时不该下载。
+     反面案例是直接或间接量到了：博客形态下 miko.webp（159KB）照样被请求，
+     而它在博客里根本不显示 —— 这条路上 GitHub Pages 的有效吞吐只有几十 KB/s，
+     这一张图就是 5.7 秒纯浪费，用户感知到的只有「别的东西变慢了」。
+     写法必须和 hydrateBlogImages 完全对称（幂等、可重跑），
+     因为两处都要能在路由换页之后补刀。 */
+  function hydrateStartArt() {
+    var n = document.querySelectorAll('.start [data-src]');
+    for (var i = 0; i < n.length; i++) {
+      var d = n[i].getAttribute('data-src');
+      if (d) { n[i].setAttribute('src', d); n[i].removeAttribute('data-src'); }
+    }
+  }
+
   function setMode(m, push) {
     if (m !== 'blog') m = 'start';
     var was = root.getAttribute('data-mode');
@@ -238,6 +253,9 @@
     if (m === 'blog') {
       hydrateBlogImages();
       if (was !== 'blog') window.scrollTo(0, 0);
+    } else {
+      /* 切回起始页才轮到看板娘。幂等，重复切不会重复劳动 */
+      hydrateStartArt();
     }
 
     if (push) {
@@ -442,13 +460,22 @@
        于是 hydrateBlogImages() 也永远不会跑，博客里所有只有 data-src 的图
        （hero 横幅、文章封面、相册条）一张都不显示，表现就是「图片全没了」。
        这里补一次：只补状态，不走 setMode（那会触发波纹和 1.6s 点击锁）。 */
-    if (root.getAttribute('data-mode') === 'blog') {
+    var landing = root.getAttribute('data-mode');
+    if (landing === 'blog') {
       syncChrome('blog');
       hydrateBlogImages();
       /* 相册脚本排在 home.js 后面，此刻 __dygGallery 还没定义 ——
          等解析完再补一次，否则相册条是空的。 */
       if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', hydrateBlogImages);
+      }
+    } else {
+      /* 起始页落地：把看板娘的图补上。
+         它在 HTML 里只写了 data-src（博客形态不该为它买单），
+         所以这里不补的话，直接以起始页进站时角色就是不显示的。 */
+      hydrateStartArt();
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hydrateStartArt);
       }
     }
 

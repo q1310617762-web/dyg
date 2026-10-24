@@ -40,7 +40,7 @@
  *   - POST 等非 GET。
  */
 
-const V = '20261024211014';
+const V = '20261024220511';
 const CODE = 'dyg-code-' + V;   /* HTML / CSS / JS：随代码版本走 */
 /* v2 → v3：图片重新压过一遍（见下方 WARM 注释里那条吞吐数据），
    内容变了必须手动加一，否则老访客的 Cache Storage 里一直是旧图。 */
