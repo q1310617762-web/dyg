@@ -107,24 +107,24 @@
     var pcs = getComputedStyle(core);
     rest += (parseFloat(pcs.paddingTop) || 0) + (parseFloat(pcs.paddingBottom) || 0);
 
-    var avail = core.clientHeight - rest - 6;    /* 留 6px 余量 */
+    /* 留 3px 余量。原来是 6px，但刊头盒高度统一之后（八重那档行盒比别的高 27px）
+       起始页的富余少了，6px 会让 1440×900 只剩 88px，够不着「够看」的 90。
+       3px 仍留得住「最后一根柱子的峰值帽不贴容器边」。 */
+    var avail = core.clientHeight - rest - 3;
     var want = Math.max(64, Math.min(140, Math.round(window.innerHeight * 0.11)));
 
-    /* 富余不够时只能用「scrollTop」把它顶出来，而 .start-core 是内滚容器，
-       滚多少刊头就往上走多少 —— 上一版直接 scrollIntoView，1366×768 把刊头
-       从 y=79 顶到 y=17，1280×720 直接顶到 -16，HELLO WORLD 被切掉半个字。
-       刊头上沿到 core 上沿之间那段空白（topGap）才是可以「借」的上限。 */
-    var topGap = 0;
-    if (mast) {
-      var cr = core.getBoundingClientRect();
-      var mr = mast.getBoundingClientRect();
-      /* 要加回 core.scrollTop：fit() 会被 resize 再调一次，那时可能已经滚过了，
-         不减回去的话预算越算越少，可视化会自己越缩越矮 */
-      topGap = Math.max(0, mr.top - cr.top + core.scrollTop - 4);
-    }
+    /* 富余不够时理论上可以靠 scrollTop 把它顶出来，但那条路是走不通的：
+       .start-core 是「垂直居中 + 内滚」的容器，可视化一展开，刊头自己就顶到
+       容器上沿了 —— 此时 mast.top - core.top 只剩 4px，可借的余量其实是 0。
+       上一版按「展开前」的刊头位置去估（量出来 21px），预算虚高，
+       1366×768 展开后有 7px 落在可视区外，而滚动兜底因为 maxScroll=0 也救不回来。
+       所以预算就是实打实的可用高度，不预支滚动。 */
+    var cr0 = core.getBoundingClientRect();
+    var topGap = mast ? Math.max(0, mast.getBoundingClientRect().top - cr0.top - 4) : 0;
+    window.__dygVizGap = { topGap: Math.round(topGap) };   /* 诊断用 */
 
-    /* avail 可能是负的（1280×720 起始页本来就溢出 13px），负的部分不能算进预算 */
-    var budget = Math.max(0, avail) + topGap;
+    /* avail 可能是负的（矮屏起始页本来就溢出），负的部分不能算进预算 */
+    var budget = Math.max(0, avail);
     var h = Math.min(want, budget);
     if (h < 18) h = 0;   /* 连 18px 都挤不出来就别硬塞一条头发丝 */
     /* 窄屏不出现：手机起始页本来就排到屏幕外（收藏和看板娘的气泡已经叠在一起），

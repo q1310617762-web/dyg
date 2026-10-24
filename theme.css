@@ -477,6 +477,10 @@ html[data-switching] * { pointer-events: none !important; }
   gap: clamp(14px, 2.6vw, 32px);
   padding-top: 14px;
 }
+/* 收藏四列的内边距放在基础样式里，不给某一套皮肤单独开。
+   之前只有「乐园」写了 padding（为了不让它那条 2.5px 描边贴住最后一行），
+   结果四套皮肤的方框高度差 13px，切皮肤时收藏区会往下弹一下。 */
+.bm-g { padding: 4px 9px 5px; }
 .bm-g h3 { font-size: 12.5px; font-weight: 600; color: var(--text-3); margin-bottom: 6px; }
 
 .bm-l {
@@ -903,7 +907,11 @@ html[data-soft-switch]::view-transition-new(root) {
   color: var(--text-2);
 }
 
-.hero-fig { margin: 0; position: relative; }
+/* hero 大图的内衬放到基础样式里，不给某一套皮肤单独开。
+   「乐园」原来在这里自己写了 padding:8px + 2.5px 描边（白底黑框的图片），
+   结果这套皮肤的 hero 比别的高 10.8px，下面的文章行一路累积到 19.7px。
+   统一成 8px 内衬 + 卡片底色，四套皮肤的框一样大。 */
+.hero-fig { margin: 0; position: relative; padding: 8px; background: var(--card); border-radius: var(--r-card); }
 .hero-fig img {
   width: 100%;
   /* 必须显式 height:auto —— HTML 上的 height 属性会当 CSS 高度用，
@@ -1135,6 +1143,10 @@ html[data-soft-switch]::view-transition-new(root) {
   position: relative;
   margin: 0;
   overflow: hidden;
+  /* 内衬放在基础样式里：原来只有「乐园」写了 6px（白底黑框的贴纸感），
+     这套皮肤的瓦片就比别的高 3px，一路累积到文章行差 9px。
+     四套统一 6px，图片大小才不会换肤时变。 */
+  padding: 6px;
   border-radius: var(--r-tile);
   background: var(--card);
   box-shadow: var(--shadow-sm);
@@ -1164,7 +1176,8 @@ html.imgfade .g-item img:not(.loaded) { opacity: 0; }
 
 .g-cap {
   position: absolute;
-  inset: auto 0 0 0;
+  /* 跟着 .g-item 的 6px 内衬往里收，别压在留白上 */
+  inset: auto 6px 6px 6px;
   padding: 34px 12px 11px;
   font-size: 12px;
   color: var(--accent);
@@ -1272,12 +1285,14 @@ html.imgfade .g-item img:not(.loaded) { opacity: 0; }
   color: var(--text-2);
 }
 
-.toc { position: sticky; top: 96px; font-size: 13px; }
+/* 内衬和链接缩进都放在基础样式里：原来只有「乐园」写了 padding（描边卡要留边），
+   这套皮肤的目录就比别的高 14px。四套统一之后目录块一样大、链接一样齐。 */
+.toc { position: sticky; top: 96px; font-size: 13px; padding: 6px 8px 8px; }
 .toc h5 { font-size: 12.5px; font-weight: 600; color: var(--text-3); margin-bottom: 10px; }
 .toc a {
   display: block;
   padding: 6px 10px;
-  margin-left: -10px;
+  margin-left: 0;
   border-radius: 9px;
   color: var(--text-3);
   line-height: 1.5;
@@ -1675,7 +1690,12 @@ html[data-theme="ly"] body::before,
 html[data-theme="ly"] body::after { display: none; }
 html[data-theme="ly"] .start { background: transparent; }
 
-/* ---------- 通用：卡片的黑边 + 硬投影 ---------- */
+/* ---------- 通用：卡片的黑边 + 硬投影 ----------
+   描边一律用 outline，不用 border：border 会占布局空间，
+   2.5px 的框让每个卡片外圈胖 5px、内容再内缩 5px，
+   一切到这套皮肤整页的卡位和行高就跟着挪（实测文章行 +4px、相册瓦片 +4px、
+   导航胶囊 +6px）—— 也就是用户说的「切换皮肤 UI 会闪动」。
+   outline 画在盒子外面，不进盒模型，尺寸和位置跟其他皮肤一模一样。 */
 html[data-theme="ly"] .g-item,
 html[data-theme="ly"] .row,
 html[data-theme="ly"] .tag,
@@ -1686,7 +1706,8 @@ html[data-theme="ly"] .toc,
 html[data-theme="ly"] .prose blockquote,
 html[data-theme="ly"] .lb-btn {
   background: #fff;
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard-sm);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1705,10 +1726,12 @@ html[data-theme="ly"] .tag.on {
 
 /* 文章行里的分类标签是裸 span（.row-tags span），不在上面的名单里。
    基础样式只有一层淡底，白卡上几乎看不见，补成小描边块。 */
+/* 内边距沿用基础 .row-tags span 的 3px 9px，不要在这里改 ——
+   一改这个裸 span 就比别套皮肤矮一点，整行跟着动。 */
 html[data-theme="ly"] .row-tags span {
-  padding: 1px 7px;
   background: #fff;
-  border: 2px solid var(--ink);
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
   border-radius: 7px;
   color: var(--text-2);
 }
@@ -1716,7 +1739,8 @@ html[data-theme="ly"] .row-tags span {
 /* ---------- 导航胶囊：玻璃 → 实心白块 ---------- */
 html[data-theme="ly"] .nav-inner {
   background: #fff;
-  border: 3px solid var(--ink);
+  outline: 3px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard-sm);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
@@ -1739,10 +1763,11 @@ html[data-theme="ly"] .np-btn,
 html[data-theme="ly"] .np-meta,
 html[data-theme="ly"] .burger {
   background: #fff;
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard-sm);
 }
-html[data-theme="ly"] .modesw-thumb { background: var(--acc-fill); border: 2px solid var(--ink); }
+html[data-theme="ly"] .modesw-thumb { background: var(--acc-fill); outline: 2px solid var(--ink); outline-offset: 0; }
 /* 滑块是荧光黄绿，选中的那个图标必须是黑字。
    基础规则给的是 --on-accent（白），压在这块黄绿上只有 1.5:1，
    而且起始页用的是 <button> 不是 <a>，所以两条都要写。 */
@@ -1760,7 +1785,7 @@ html[data-theme="ly"] .np-btn:active,
 html[data-theme="ly"] .burger:active { transform: translate(3px, 3px); box-shadow: none; }
 /* 触摸端没有 hover，:active 是唯一反馈，按下这块也得上黄绿 */
 html[data-theme="ly"] .np-btn:active { background: var(--acc-fill); }
-html[data-theme="ly"] .menu { background: #fff; border: 2.5px solid var(--ink); box-shadow: var(--hard); }
+html[data-theme="ly"] .menu { background: #fff; outline: 2.5px solid var(--ink); outline-offset: 0; box-shadow: var(--hard); }
 html[data-theme="ly"] .menu-link { background: transparent; }
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="ly"] .menu-link:hover { background: var(--acc-fill); }
@@ -1773,14 +1798,15 @@ html[data-theme="ly"] .np-btn { border-radius: var(--r-pill); }
 /* ---------- 搜索 ---------- */
 html[data-theme="ly"] .search {
   background: #fff;
-  border: 3px solid var(--ink);
+  outline: 3px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard);
 }
 html[data-theme="ly"] .search:focus-within { box-shadow: var(--hard); }
-html[data-theme="ly"] .eng-menu { background: #fff; border: 2.5px solid var(--ink); box-shadow: var(--hard-sm); }
+html[data-theme="ly"] .eng-menu { background: #fff; outline: 2.5px solid var(--ink); outline-offset: 0; box-shadow: var(--hard-sm); }
 html[data-theme="ly"] .eng-menu button.on,
 html[data-theme="ly"] .eng-menu button[aria-current="true"] { background: var(--acc-fill); color: var(--text); }
-html[data-theme="ly"] .search kbd { background: var(--acc-fill); border: 2px solid var(--ink); color: var(--text); }
+html[data-theme="ly"] .search kbd { background: var(--acc-fill); outline: 2px solid var(--ink); outline-offset: 0; color: var(--text); }
 
 /* ---------- 起始页刊头：粗黑 + 黄绿硬投影 ---------- */
 html[data-theme="ly"] .st-mast { --mast-font: "Arial Black", "Segoe UI Black", Impact, Georgia, serif; }
@@ -1794,14 +1820,12 @@ html[data-theme="ly"] .mast-petals { display: none; }
 /* ---------- 收藏四列 ---------- */
 html[data-theme="ly"] .bm-g {
   background: rgba(255, 255, 255, .72);
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   border-radius: var(--r-card);
   box-shadow: var(--hard-sm);
-  /* 基础样式里 .bm-g 无边框无内边距。加了 2.5px 边框之后，
-     最后一行正好贴着描边（量出来差 0.5px），看起来像被裁了一半，
-     所以补一圈内边距把它顶回来。上下合计只给 9px ——
-     1280×720 这种矮屏，收藏区每长 16px 就会压到页脚上去。 */
-  padding: 4px 9px 5px;
+  /* padding 挪到基础 .bm-g 里了：四套皮肤共用同一圈内边距，
+     方框高度才不会一套一个样（之前这套比别的高 13px）。 */
 }
 /* 让每张卡按自己的条目数收高，不要被 grid 拉成一样高 ——
    拉齐之后条目少的栏底下会空出一大块（素材只有 4 条时要空 200px）。 */
@@ -1871,15 +1895,15 @@ html[data-theme="ly"] .btn-ghost { background: #fff; color: var(--text-2); }
 /* ---------- 正文 ---------- */
 html[data-theme="ly"] .prose a { color: var(--accent); border-bottom-color: rgba(74, 115, 0, .35); }
 html[data-theme="ly"] .prose code { background: var(--acc-fill); color: var(--text); }
-html[data-theme="ly"] .prose blockquote { border-left: 5px solid var(--acc-fill); }
-html[data-theme="ly"] .toc a.on { background: var(--acc-fill); color: var(--text); }
-/* 目录条的链接带 -8px 左外边距（基础样式是整行通栏的设计），
-   套上描边卡之后这块会顶穿左边框，所以补内边距并归零外边距 */
-html[data-theme="ly"] .toc {
-  padding: 6px 8px 8px;
-  border-radius: var(--r-card);
+/* 左竖条用 inset 阴影，不用 border-left：border 会把正文挤过去 5px，
+   引用块里每行字都跟着右移。inset 画在 padding 里，不占布局。 */
+html[data-theme="ly"] .prose blockquote {
+  box-shadow: inset 5px 0 0 var(--acc-fill), var(--hard-sm);
 }
-html[data-theme="ly"] .toc a { margin-left: 0; border-radius: 7px; }
+html[data-theme="ly"] .toc a.on { background: var(--acc-fill); color: var(--text); }
+/* 内衬已在基础 .toc 里，这里只管圆角 */
+html[data-theme="ly"] .toc { border-radius: var(--r-card); }
+html[data-theme="ly"] .toc a { border-radius: 7px; }
 html[data-theme="ly"] .foot-bar { border-top-color: var(--line-2); }
 html[data-theme="ly"] ::selection { background: var(--acc-fill); color: var(--text); }
 html[data-theme="ly"] .g-cap { color: #fff; }
@@ -1914,22 +1938,20 @@ html[data-theme="ly"] .th-btn .th-miko { display: none; }
 html[data-theme="ly"] .hero-meta span {
   background: #fff;
   color: var(--text-2);
-  border: 2px solid var(--ink);
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
   box-shadow: 2px 2px 0 var(--ink);
 }
 
-/* 图片瓦片：白底黑边，图片压在边框里 */
+/* 图片瓦片：白底黑边。内衬沿用基础的 6px，这里只换底色和描边 */
 html[data-theme="ly"] .g-item {
-  padding: 6px;
   background: #fff;
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard-sm);
 }
 html[data-theme="ly"] .g-item img { border-radius: 7px; }
-html[data-theme="ly"] .g-cap {
-  inset: auto 6px 6px 6px;
-  border-radius: 0 0 7px 7px;
-}
+html[data-theme="ly"] .g-cap { border-radius: 0 0 7px 7px; }
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="ly"] .g-item:hover {
     transform: translate(-2px, -2px);
@@ -1952,18 +1974,20 @@ html[data-theme="ly"] .lb-close { color: var(--text); }
 
 /* hero 大图同样嵌进面板，和下面瓦片用同一种厚度 */
 html[data-theme="ly"] .hero-fig {
-  padding: 8px;
   background: #fff;
-  border: 2.5px solid var(--ink);
-  border-radius: var(--r-card);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard);
 }
 html[data-theme="ly"] .hero-fig img {
-  border: 2px solid var(--ink);
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
   border-radius: 8px;
   box-shadow: none;
 }
-html[data-theme="ly"] .hero-fig figcaption { margin: 10px 6px 2px; }
+/* margin-bottom 也要跟着基础走：原来这里写的是 10px 6px 2px，
+   多出来的 2px 会让 hero 比别的高一点。 */
+html[data-theme="ly"] .hero-fig figcaption { margin: 10px 0 0; }
 
 /* 文章封面小图也收进圆角，别在浅底上露出直角 */
 html[data-theme="ly"] .row-cover { border-radius: 12px; }
@@ -1975,18 +1999,21 @@ html[data-theme="ly"] .three img { border-radius: 14px; }
    换到黄绿底上就只剩一块白，所以要统一补描边。 */
 html[data-theme="ly"] .note {
   background: #fff;
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   border-radius: var(--r-card);
   box-shadow: var(--hard-sm);
 }
 html[data-theme="ly"] .prose img {
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   border-radius: var(--r-card);
   box-shadow: var(--hard-sm);
 }
 html[data-theme="ly"] .link-card {
   background: #fff;
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   box-shadow: var(--hard-sm);
   transition: background .18s var(--ease), box-shadow .18s var(--ease),
               transform .14s var(--ease-out);
@@ -1999,7 +2026,8 @@ html[data-theme="ly"] .link-card {
   }
 }
 html[data-theme="ly"] .portrait {
-  border: 2.5px solid var(--ink);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
   border-radius: var(--r-card);
   box-shadow: var(--hard-sm);
 }
@@ -2161,6 +2189,13 @@ html[data-theme="ly"] .file-tip .act {
   font-weight: 900;
   font-size: calc(var(--mast-f) * var(--mast-scale, 1));
   line-height: .74;
+  /* 行盒高度钉死，不许跟着字体度量走。
+     Cherry Bomb One 的 ascent+descent 比 Playfair 高出约 26px（900 高视口下实测
+     193 对 166），不钉的话一切到八重皮肤，刊头就长高一截 —— 而刊头在
+     .start-core 里是垂直居中的，多出来的高度一半往上顶一半往下压，
+     结果副标题、搜索框、收藏四列、可视化整排上下跳 13px。
+     钉成 1.16 × --mast-f（就是八重那一档的高度），四套皮肤的刊头盒一样高。 */
+  height: calc(var(--mast-f) * 1.16);
   letter-spacing: -.045em;
   color: var(--text);
   text-transform: uppercase;
@@ -2405,6 +2440,17 @@ html[data-theme="miko"] .mast-miko-wrap { display: block; }
   .start-core .bm-l i { width: 20px; height: 20px; }
 }
 
+/* 矮屏（高 ≤790px）：把刊头统一高度多占的那截还回来。
+   刊头盒钉成八重那一档之后，1280×720 会溢出 22px（八重本来就溢 13px），
+   1366×768 的音乐可视化会被挤到 0 高度。这里两处一起收：
+   字号基数降一档（角色定位全用 --mast-f 算，跟着一起缩，不会脱钩），
+   收藏四列的上下内边距也去掉，只留左右。
+   阈值取 790：768 要收，800 不收（800 一屏本来就放得下）。 */
+@media (max-height: 790px) {
+  .st-mast { --mast-f: clamp(52px, 16.2vh, 186px); }
+  .bm-g { padding: 0 9px; }
+}
+
 /* 报纸皮肤下，起始页的刊头线更实一点 */
 
 /* 收藏区的标题行：计数紧挨「收藏」，不要被 1040 的宽度甩到最右 */
@@ -2489,7 +2535,8 @@ html[data-theme="organic"] .nav-inner {
   backdrop-filter: blur(18px) saturate(150%);
   -webkit-backdrop-filter: blur(18px) saturate(150%);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--line);
+  outline: 1px solid var(--line);
+  outline-offset: 0;
 }
 @media (hover: hover) and (pointer: fine) {
   html[data-theme="organic"] .nav-links a:hover { background: var(--layer-2); color: var(--text); }
@@ -2501,13 +2548,16 @@ html[data-theme="organic"] .nav-links a[aria-current="page"] {
 }
 
 /* 卡片与瓦片：大圆角 + 柔和阴影，hover 微微下沉 */
+/* 发丝描边同样用 outline：1px 的 border 看着不起眼，
+   但它让文章行整行高 2px、导航右侧控件宽 2px，切皮肤时照样是能看出来的挪动。 */
 html[data-theme="organic"] .g-item,
 html[data-theme="organic"] .row,
 html[data-theme="organic"] .tag,
 html[data-theme="organic"] .chip {
   border-radius: var(--r-card);
   box-shadow: var(--shadow-sm);
-  border: 1px solid var(--line);
+  outline: 1px solid var(--line);
+  outline-offset: 0;
   transition: transform var(--organic-dur) ease-in-out,
               box-shadow var(--organic-dur) ease-in-out;
 }
@@ -2521,7 +2571,7 @@ html[data-theme="organic"] .chip {
   html[data-theme="organic"] .chip:hover { background: var(--layer-2); }
 }
 html[data-theme="organic"] .chip.on,
-html[data-theme="organic"] .tag.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+html[data-theme="organic"] .tag.on { background: var(--accent); color: #fff; outline-color: var(--accent); }
 html[data-theme="organic"] .g-item img { border-radius: var(--r-card); }
 
 /* 按钮与开关 */
@@ -2530,7 +2580,8 @@ html[data-theme="organic"] .th-btn,
 html[data-theme="organic"] .burger,
 html[data-theme="organic"] .lb-btn {
   background: #fffdfa;
-  border: 1px solid var(--line);
+  outline: 1px solid var(--line);
+  outline-offset: 0;
   box-shadow: var(--shadow-sm);
   transition: background var(--organic-dur) ease-in-out;
 }
@@ -2540,7 +2591,7 @@ html[data-theme="organic"] .lb-btn {
   html[data-theme="organic"] .burger:hover,
   html[data-theme="organic"] .lb-btn:hover { background: var(--layer-2); }
 }
-html[data-theme="organic"] .modesw { background: var(--layer-1); border: 1px solid var(--line); }
+html[data-theme="organic"] .modesw { background: var(--layer-1); outline: 1px solid var(--line); outline-offset: 0; }
 html[data-theme="organic"] .modesw-thumb { background: #fffdfa; box-shadow: var(--shadow-sm); }
 html[data-theme="organic"] .modesw a.on,
 html[data-theme="organic"] .modesw button.on { color: var(--accent); }
