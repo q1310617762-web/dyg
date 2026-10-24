@@ -1457,7 +1457,10 @@ html.reveal .rv.in { opacity: 1; transform: none; }
 }
 
 @media (max-width: 900px) {
-  .np-meta { display: none; }
+  /* 原来这里把歌单按钮整个藏了，手机上等于没有音乐列表。
+     改成只留歌名一行（去掉艺人），宽度就够塞进胶囊 */
+  .np-meta { max-width: 92px; padding: 0 8px 0 6px; }
+  .np-a { display: none; }
   .hero-grid { grid-template-columns: 1fr; align-items: start; }
   .hero-fig { max-width: 460px; }
   .three { grid-template-columns: 1fr 1fr; }
@@ -1947,9 +1950,14 @@ html[data-theme="neu"] .file-tip .act {
   flex: 1;
   min-height: 0;
   width: 100%;
-  display: block;
-  /* 旧的 .start-core 是居中布局，这里必须显式改回左对齐，
-     否则刊头第一行会被继承的 text-align:center 推到中间 */
+  /* 内容竖向居中：大屏上下面不会剩一大片空白。
+     用 safe center —— 内容比容器高时退回顶端排列，不会把刊头顶出可视区。
+     align-items 必须显式 stretch，否则子元素会被压成收缩宽度；
+     text-align 还是要 left，不然刊头第一行会被居中对齐推到中间。 */
+  display: flex;
+  flex-direction: column;
+  justify-content: safe center;
+  align-items: stretch;
   text-align: left;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -1985,7 +1993,7 @@ html[data-theme="neu"] .file-tip .act {
      栏宽是死的 620，字号要是跟 vw，1024 下字缩到 117 而栏还是 620，
      看板娘又贴着 right，word 和角色之间就会裂开一百多像素 —— 跟上一版
      「World 被甩到右边」是同一个病。所以：高度定字号，角色跟 word 走。 */
-  --mast-f: clamp(60px, 17.5vh, 164px);
+  --mast-f: clamp(60px, 18.5vh, 186px);
   position: relative;
   /* z-index:0 建一个层叠上下文：里面的花瓣/刊头/看板娘自己排序，
      不会跑到同级的搜索框（z-index:1）上面 —— 否则看板娘的脚会盖住框。 */
@@ -2085,9 +2093,25 @@ html[data-theme="miko"] .mast-miko-wrap { display: block; }
   border: 7px solid transparent;
   border-top-color: var(--surface-overlay, #fff);
 }
-/* 手机上没有横向空间给它，收起（角色本身还在） */
+/* 手机上角色旁边没有横向空间（头中心到屏幕右缘只剩 ~120px），
+   索性把气泡改成屏幕底部的一行字幕：固定定位，不压刊头、不被滚动裁掉，
+   视觉上还是「角色在说话」。 */
 @media (max-width: 760px) {
-  .mast-bubble { display: none; }
+  .mast-bubble {
+    position: fixed;
+    left: 50%;
+    right: auto;
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%) translateY(6px);
+    max-width: min(84vw, 320px);
+    padding: 7px 13px;
+    font-size: 12.5px;
+    line-height: 1.4;
+    text-align: center;
+    z-index: 3;
+  }
+  .mast-bubble.on { transform: translateX(-50%); }
+  .mast-bubble::after { display: none; }   /* 不再指着头，尾巴去掉 */
 }
 
 /* 樱花层：默认不显示，只有八重皮肤打开（见 21 节）。
@@ -2197,13 +2221,14 @@ html[data-theme="miko"] .mast-miko-wrap { display: block; }
 .start-core .bm-g { break-inside: auto; margin-bottom: 0; }
 .start-core .bm-g h3 { font-size: 12px; margin-bottom: 4px; }
 .start-core .bm-l {
-  font-size: 13px;
+  /* 13 → 15.5：屏幕越高字略大，1440×900 下仍是 13，不会把一屏撑破 */
+  font-size: clamp(13px, 1.45vh, 15.5px);
   padding: 1.5px 8px 1.5px 6px;
   gap: 7px;
 }
 .start-core .bm-l i {
-  width: 18px;
-  height: 18px;
+  width: clamp(18px, 2.05vh, 22px);
+  height: clamp(18px, 2.05vh, 22px);
   font-size: 10px;
   border-radius: 6px;
 }
@@ -2846,7 +2871,7 @@ html[data-theme="dark"] body { background: #0b0b0d; }
 }
 
 .tc-n {
-  font-size: clamp(32px, 4.2vw, 50px);
+  font-size: clamp(32px, 4.2vw, 54px);
   font-weight: 700;
   line-height: 1.02;
   letter-spacing: -.03em;

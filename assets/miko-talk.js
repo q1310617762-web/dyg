@@ -61,18 +61,20 @@
   function say(text) {
     if (!bubble || !bubble.isConnected) grab();
     if (!bubble) return;
-    /* 不是八重皮肤时整块是 display:none —— 这时候别说话，也别白白占着计时器 */
-    if (!bubble.offsetParent) return;
+    /* 不是八重皮肤时整块是 display:none —— 这时候别说话，也别白白占着计时器。
+       判据用 getClientRects()：手机上气泡是 position:fixed，
+       而 fixed 元素的 offsetParent 恒为 null，用 offsetParent 会误判成「不可见」。 */
+    if (!bubble.getClientRects().length) return;
     bubble.textContent = text;
     bubble.classList.add('on');
     clearTimeout(hideTimer);
   }
 
-  /* 跳一下。减弱动效时不做 —— 位移类动画属于要去掉的部分。 */
-  var motionOff = window.matchMedia('(prefers-reduced-motion: reduce)');
+  /* 跳一下。不受 prefers-reduced-motion 影响 —— 用户要求默认就动；
+     减弱动效只作用于换页那类大面积位移。 */
   function hop() {
     if (!miko || !miko.isConnected) grab();
-    if (!miko || motionOff.matches || !miko.offsetParent) return;
+    if (!miko || !miko.getClientRects().length) return;
     miko.classList.remove('hop');
     void miko.offsetWidth;
     miko.classList.add('hop');
@@ -137,7 +139,7 @@
     if (t.closest('[data-theme-btn]')) {
       setTimeout(function () {
         grab();
-        if (bubble && bubble.offsetParent) { say(pick(LINES.idle)); touched(); }
+        if (bubble && bubble.getClientRects().length) { say(pick(LINES.idle)); touched(); }
       }, 80);
     }
   });

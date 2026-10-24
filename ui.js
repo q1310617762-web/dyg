@@ -121,7 +121,9 @@
   function syncPetals(id) {
     if (!window.__dygPetals) return;
     if (id !== 'miko') { window.__dygPetals.stop(); return; }
-    window.__dygPetals.start(motionOff());
+    /* 传 false 而不是 motionOff()：花瓣是这套皮肤的底色，用户明确要求
+       「默认强制开启动画」。减弱动效只管换页那类大面积位移动画。 */
+    window.__dygPetals.start(false);
   }
 
   function initTheme() {
