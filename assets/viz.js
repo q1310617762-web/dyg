@@ -19,15 +19,15 @@
 (function () {
   var POINTS = 150;     /* 横向采样点数：60fps 下约 2.5 秒的窗口 */
   var VBINS = 12;       /* 取前 12 个频点（约 0–1.1kHz）当低频能量 */
-  var H = 140;          /* 画布设计高度，和 CSS 里的 height 对齐 */
+  var H = 140;          /* 画布设计高度上限，只做兜底；实际高度看 --viz-h */
 
-  var box, cvs, g, W = 0, dpr = 1;
+  var box, cvs, g, W = 0, VH = H, dpr = 1;
   var hist = [];
   var petals = [];
   var raf = 0, running = false, painted = false;
   var audio = null, actx = null, anode = null, abuf = null, srcNode = null;
-  var wired = false, dead = false, zeroStreak = 0;
-  var lastPeak = 0, tPrev = 0;
+  var wired = false, dead = false, zeroStreak = 0, probeGap = 0;
+  var lastPeak = 0, tPrev = 0, scrollTimer = 0, smooth = 0;
   var colors = {};
 
   for (var i = 0; i < POINTS; i++) hist.push(0);
@@ -48,14 +48,25 @@
   }
 
   /* ---------- 尺寸 ---------- */
+  /* 绘制高度必须等于容器实际给的高度（--viz-h，由 fit 算出）。
+     之前写死 140：1440×900 容器只有 97、1366×768 只有 64，
+     而 canvas 是 bottom:0 对齐的，多出来的部分全被容器顶部裁掉 ——
+     波峰正好画在顶部，于是电平一过 0.5 就被削成一条平线。 */
+  function vizH() {
+    if (!box) return H;
+    var v = parseFloat(getComputedStyle(box).getPropertyValue('--viz-h'));
+    return (v > 0 ? v : H);
+  }
+
   function resize() {
     if (!cvs || !box) return;
     var w = box.clientWidth || 0;
     if (!w) return;
     dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = w;
+    VH = Math.round(vizH());
     cvs.width = Math.round(w * dpr);
-    cvs.height = Math.round(H * dpr);
+    cvs.height = Math.round(VH * dpr);
     g = cvs.getContext('2d');
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
@@ -87,11 +98,14 @@
 
     /* 实测：1920×1080 富余 143px，1440×900 富余 143px，1366×768 只剩 16px，
        手机 390×844 只有 45px —— 起始页本来就塞得满（刊头/时钟/搜索/问候/收藏）。
-       所以富余不够时不再放弃，而是保底给 64px，多出来的让 .start-core 内滚：
+       所以富余不够时不再放弃，而是保底给 MIN_H，多出来的让 .start-core 内滚：
        它本来就有 overflow-y:auto + overscroll-behavior:contain，
        滚一点点比「小屏上根本没有这个功能」好。
+       保底从 64 提到 80：64 减去上下留白只剩 46px 动态范围，
+       波形贴着一条细带子，看不出是在跟着音乐动。
        只有窗口小到离谱（缺口 >120px）才彻底不出现。 */
-    var h = Math.min(want, Math.max(avail, 64));
+    var MIN_H = 80;
+    var h = Math.min(want, Math.max(avail, MIN_H));
     if (avail < -120) h = 0;
     box.style.setProperty('--viz-h', h + 'px');
     /* 诊断用：空间算错了能一眼看出来 */
@@ -136,15 +150,28 @@
     /* 测试钩子：CI / 无音频设备的环境里，直接喂电平值验证绘制。
        不设置就不生效，生产路径完全不受影响。 */
     if (window.__dygVizFeed) return window.__dygVizFeed();
-    if (dead || !wired || !anode) return pseudo();
+    if (!wired || !anode) return pseudo();
+
+    /* dead 只代表「这一阵拿不到频谱」，不是永久判决。
+       音乐本来就有静音前奏、间奏、淡出，连续 1.5 秒全零就判死的话，
+       一首歌只要有一段安静，后面整首都变成假曲线了（而且换歌也不恢复）。
+       这里改成每隔 2 秒放一次探测，有声音就自己回来。 */
+    if (dead) {
+      if (++probeGap < 120) return pseudo();
+      probeGap = 0;
+    }
+
     try {
       if (actx.state === 'suspended') actx.resume().catch(function () {});
       anode.getByteFrequencyData(abuf);
       var s = 0, mx = 0;
       for (var i = 0; i < VBINS; i++) { s += abuf[i]; if (abuf[i] > mx) mx = abuf[i]; }
-      /* 连续 1.5 秒全零，说明这条路走不通（iOS 上常见），转兜底 */
-      if (mx === 0) { if (++zeroStreak > 90) dead = true; }
-      else zeroStreak = 0;
+      if (mx === 0) {
+        if (++zeroStreak > 90) dead = true;
+        return pseudo();
+      }
+      zeroStreak = 0;
+      dead = false;
       var v = s / (VBINS * 255);
       return Math.pow(v, 0.72);   /* 提一点小音量时的可见度 */
     } catch (e) {
@@ -189,7 +216,7 @@
   /* ---------- 一帧 ---------- */
   function frame(now) {
     raf = requestAnimationFrame(frame);
-    if (!g || !W) return;
+    if (!g || !W || !VH) return;
 
     /* 切到博客形态就别画了：.start 是 visibility:hidden，画了也看不见 */
     if (document.documentElement.getAttribute('data-mode') !== 'start') return;
@@ -198,15 +225,23 @@
     tPrev = now;
 
     var v = level();
+    /* 一阶低通。频谱本身有 smoothingTimeConstant=.8，但 pow(0.72)
+       会把小波动一起放大，画出来像心电图；再过一道才像山。 */
+    smooth = smooth ? smooth * 0.55 + v * 0.45 : v;
     var prev = hist[POINTS - 1];
-    hist.push(v);
+    hist.push(smooth);
     hist.shift();
 
+    /* 电平 → 屏幕 y 的映射，全用容器真实高度算。
+       PAD_T / PAD_B 是上下留白：底部留 8px 让基线不贴着裁切边，
+       顶部留 10px 让满电平的峰尖不被切到。 */
+    var PAD_T = 10, PAD_B = 8;
+    var range = Math.max(12, VH - PAD_T - PAD_B);
+    var yOf = function (lv) { return VH - PAD_B - lv * range; };
+
     /* 峰顶飘樱花：正在上涨、且过了阈值、且跟上一朵拉开距离 */
-    if (v > 0.55 && v > prev && now - lastPeak > 260) {
-      var x = W - 4;
-      var y = H - v * (H - 26) - 10;
-      spawnPetal(x, y, v);
+    if (smooth > 0.55 && smooth > prev && now - lastPeak > 260) {
+      spawnPetal(W - 4, yOf(smooth) - 6, smooth);
       lastPeak = now;
     }
 
@@ -219,30 +254,27 @@
       if (p.life <= 0 || p.y < -12) petals.splice(i, 1);
     }
 
-    g.clearRect(0, 0, W, H);
+    g.clearRect(0, 0, W, VH);
 
     /* 曲线：二次贝塞尔中点法，比直线连起来柔和 */
     var pts = [];
     for (var j = 0; j < POINTS; j++) {
-      pts.push({
-        x: j / (POINTS - 1) * W,
-        y: H - hist[j] * (H - 20)
-      });
+      pts.push({ x: j / (POINTS - 1) * W, y: yOf(hist[j]) });
     }
 
     g.beginPath();
-    g.moveTo(pts[0].x, H);
+    g.moveTo(pts[0].x, VH);
     g.lineTo(pts[0].x, pts[0].y);
     for (var m = 1; m < POINTS; m++) {
       var a = pts[m - 1], b = pts[m];
       g.quadraticCurveTo(a.x, a.y, (a.x + b.x) / 2, (a.y + b.y) / 2);
     }
     g.lineTo(pts[POINTS - 1].x, pts[POINTS - 1].y);
-    g.lineTo(W, H);
+    g.lineTo(W, VH);
     g.closePath();
 
-    var grad = g.createLinearGradient(0, H - (H - 20), 0, H);
-    grad.addColorStop(0, hexA(colors.fillTop, 0.38));
+    var grad = g.createLinearGradient(0, PAD_T, 0, yOf(0));
+    grad.addColorStop(0, hexA(colors.fillTop, 0.42));
     grad.addColorStop(1, hexA(colors.fillTop, 0.02));
     g.fillStyle = grad;
     g.fill();
@@ -255,7 +287,8 @@
     }
     g.lineTo(pts[POINTS - 1].x, pts[POINTS - 1].y);
     g.strokeStyle = colors.line;
-    g.lineWidth = 1.6;
+    /* 1.6 → 2：容器矮到 80px 时 1.6px 的线在 2 倍屏上几乎糊掉 */
+    g.lineWidth = 2;
     g.lineJoin = 'round';
     g.stroke();
 
@@ -285,21 +318,43 @@
 
     readColors();
     wire();
+    /* 顺序不能反：fit() 先把真实高度写进 --viz-h，
+       resize() 才拿得到它去建画布和绘制坐标系。 */
+    fit();
     resize();
+    /* 重新开始就别带着上一次的降级状态 */
+    dead = false; zeroStreak = 0; probeGap = 0;
     running = true;
     tPrev = 0;
-    fit();                              /* 算高度，不够就缩 / 不出现 */
     if (box) box.classList.add('on');
     if (!raf) raf = requestAnimationFrame(frame);
+
+    /* 展开后如果整块落在可视区外，就把它滚进来。
+       1366×768 和手机上起始页本来就塞满，这 80px 是硬挤出来的
+       （.start-core 内滚 64px），不滚的话用户点了播放屏幕上什么都不会多。 */
+    if (scrollTimer) clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(function () {
+      if (!running || !box) return;
+      var core = box.parentElement;
+      if (!core) return;
+      var r = box.getBoundingClientRect(), cr = core.getBoundingClientRect();
+      if (r.bottom > cr.bottom + 1 || r.top < cr.top - 1) {
+        var reduce = window.matchMedia &&
+                     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        box.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      }
+    }, 480);                       /* 等 height 过渡（450ms）走完再量 */
   }
 
   function stop() {
     if (!running) return;
     running = false;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
+    if (scrollTimer) { clearTimeout(scrollTimer); scrollTimer = 0; }
     if (box) box.classList.remove('on');
     petals.length = 0;
     for (var i = 0; i < POINTS; i++) hist[i] = 0;
+    dead = false; zeroStreak = 0; probeGap = 0; smooth = 0;
   }
 
   function mount() {
@@ -309,7 +364,8 @@
     if (!cvs) return;
 
     resize();
-    var onResize = function () { resize(); if (running) fit(); };
+    /* 先 fit 再 resize：窗口尺寸变了，--viz-h 也跟着变，画布得按新的建 */
+    var onResize = function () { if (running) fit(); resize(); };
     if (window.ResizeObserver) {
       new ResizeObserver(onResize).observe(box);
       window.addEventListener('resize', onResize);
@@ -342,6 +398,14 @@
       readColors();
       if (id !== 'miko') stop();
       else if (audio && !audio.paused) start();
+    },
+    /* 诊断用：一眼看出「挂没挂上 play」「接没接上 Web Audio」
+       「是不是在演假曲线」「画布建了多高」。排查时全靠这个。 */
+    state: function () {
+      return { hooked: !!audio, wired: wired, dead: dead, running: running,
+               vh: VH, w: W, petals: petals.length,
+               audioPaused: audio ? audio.paused : null,
+               actx: actx ? actx.state : null };
     }
   };
 

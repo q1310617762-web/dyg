@@ -559,7 +559,10 @@ html[data-switching] * { pointer-events: none !important; }
   bottom: 0;
   display: block;
   width: 100%;
-  height: 140px;
+  /* 必须跟容器同高（--viz-h 由 viz.js 实测写入）。
+     写死 140px 的时候，容器只有 64–119px 且底对齐，
+     等于把画布顶部整块裁掉 —— 波峰正好在顶部，全被切平了。 */
+  height: var(--viz-h, 140px);
 }
 /* 可视化展开后空间不够的话，让容器滚，不许把搜索框压扁 ——
    实测 1366×768 下搜索框会被 flex 从 56px 压到 24px，很难看。 */
