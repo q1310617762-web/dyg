@@ -80,12 +80,25 @@
     var core = box.parentElement;
     if (!core) return 0;
 
+    /* 量之前必须先把高度归零，而且必须先把 transition 关掉。
+       否则 fit() 会自我反馈：给了 26px → 刊头被 flex 分布顶上去 → topGap 变 0
+       → 这次算出 0 → 缩回去 → 刊头又下来 → 又算出 26……
+       更阴的是：只写 --viz-h:0 而不停 transition 的话，元素还在 450ms 的
+       过渡路上，读 offsetHeight 读到的仍是中间高度，刊头也还在上头 ——
+       归零等于没做，预算一次比一次小，最后缩没。 */
+    var animate = !box.classList.contains('on');   /* 只有首次展开要放动画 */
+    box.classList.add('measuring');
+    box.style.setProperty('--viz-h', '0px');
+    void core.offsetHeight;                        /* 强制回流，让 0 落定 */
+
     /* 不能用 scrollHeight 反推：内容比容器矮时 scrollHeight 恒等于 clientHeight，
        算出来的富余永远是 0（踩过）。只能把兄弟块的盒高一个一个加起来。 */
     var rest = 0;
+    var mast = null;
     var kids = core.children;
     for (var i = 0; i < kids.length; i++) {
       if (kids[i] === box) continue;
+      if (!mast && kids[i].classList && kids[i].classList.contains('st-mast')) mast = kids[i];
       var cs = getComputedStyle(kids[i]);
       rest += kids[i].getBoundingClientRect().height +
               (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
@@ -96,20 +109,37 @@
     var avail = core.clientHeight - rest - 6;    /* 留 6px 余量 */
     var want = Math.max(64, Math.min(140, Math.round(window.innerHeight * 0.11)));
 
-    /* 实测：1920×1080 富余 143px，1440×900 富余 143px，1366×768 只剩 16px，
-       手机 390×844 只有 45px —— 起始页本来就塞得满（刊头/时钟/搜索/问候/收藏）。
-       所以富余不够时不再放弃，而是保底给 MIN_H，多出来的让 .start-core 内滚：
-       它本来就有 overflow-y:auto + overscroll-behavior:contain，
-       滚一点点比「小屏上根本没有这个功能」好。
-       保底从 64 提到 80：64 减去上下留白只剩 46px 动态范围，
-       波形贴着一条细带子，看不出是在跟着音乐动。
-       只有窗口小到离谱（缺口 >120px）才彻底不出现。 */
-    var MIN_H = 80;
-    var h = Math.min(want, Math.max(avail, MIN_H));
-    if (avail < -120) h = 0;
+    /* 富余不够时只能用「scrollTop」把它顶出来，而 .start-core 是内滚容器，
+       滚多少刊头就往上走多少 —— 上一版直接 scrollIntoView，1366×768 把刊头
+       从 y=79 顶到 y=17，1280×720 直接顶到 -16，HELLO WORLD 被切掉半个字。
+       刊头上沿到 core 上沿之间那段空白（topGap）才是可以「借」的上限。 */
+    var topGap = 0;
+    if (mast) {
+      var cr = core.getBoundingClientRect();
+      var mr = mast.getBoundingClientRect();
+      /* 要加回 core.scrollTop：fit() 会被 resize 再调一次，那时可能已经滚过了，
+         不减回去的话预算越算越少，可视化会自己越缩越矮 */
+      topGap = Math.max(0, mr.top - cr.top + core.scrollTop - 4);
+    }
+
+    /* avail 可能是负的（1280×720 起始页本来就溢出 13px），负的部分不能算进预算 */
+    var budget = Math.max(0, avail) + topGap;
+    var h = Math.min(want, budget);
+    if (h < 18) h = 0;   /* 连 18px 都挤不出来就别硬塞一条头发丝 */
+
+    /* 写高度时 measuring 还挂着 —— 当场生效、不起过渡。
+       只有「首次展开」才回一次 0 再写 h，让 .on 加上那一刻有 0→h 的生长动画；
+       重复 fit（resize）就直接跳到新值，别把动画再放一遍。 */
     box.style.setProperty('--viz-h', h + 'px');
+    box.classList.remove('measuring');
+    if (animate) {
+      box.style.setProperty('--viz-h', '0px');
+      void box.offsetHeight;
+      box.style.setProperty('--viz-h', h + 'px');
+    }
     /* 诊断用：空间算错了能一眼看出来 */
     window.__dygVizFit = { rest: Math.round(rest), avail: Math.round(avail),
+                           topGap: Math.round(topGap), budget: Math.round(budget),
                            want: want, h: h, coreH: core.clientHeight };
     return h;
   }
@@ -234,9 +264,11 @@
 
     /* 电平 → 屏幕 y 的映射，全用容器真实高度算。
        PAD_T / PAD_B 是上下留白：底部留 8px 让基线不贴着裁切边，
-       顶部留 10px 让满电平的峰尖不被切到。 */
-    var PAD_T = 10, PAD_B = 8;
-    var range = Math.max(12, VH - PAD_T - PAD_B);
+       顶部留 10px 让满电平的峰尖不被切到。
+       但矮屏（1366×768 只剩 31px）上固定 18px 留白会把动态范围吃掉三分之二，
+       所以留白跟着高度缩，比例不变。 */
+    var PAD_T = Math.min(10, VH * 0.13), PAD_B = Math.min(8, VH * 0.10);
+    var range = Math.max(8, VH - PAD_T - PAD_B);
     var yOf = function (lv) { return VH - PAD_B - lv * range; };
 
     /* 峰顶飘樱花：正在上涨、且过了阈值、且跟上一朵拉开距离 */
@@ -316,6 +348,11 @@
     audio = window.__dygUi.audio();
     if (!audio || (audio.paused && !force)) return;
 
+    /* 路由换过页的话 .start 已经是新节点，老的 box 不在文档里 —— 重新挂 */
+    if (!box || !box.isConnected || !cvs || !cvs.isConnected) {
+      if (!mount()) return;
+    }
+
     readColors();
     wire();
     /* 顺序不能反：fit() 先把真实高度写进 --viz-h，
@@ -330,18 +367,33 @@
     if (!raf) raf = requestAnimationFrame(frame);
 
     /* 展开后如果整块落在可视区外，就把它滚进来。
-       1366×768 和手机上起始页本来就塞满，这 80px 是硬挤出来的
-       （.start-core 内滚 64px），不滚的话用户点了播放屏幕上什么都不会多。 */
+       关键：.start-core 是内滚容器，滚多少刊头就往上走多少。
+       所以必须自己算滚动量并夹在 topGap 里 —— 用 scrollIntoView 会一路滚到底，
+       1366×768 把 HELLO WORLD 顶掉 62px，1280×720 直接顶出屏幕。
+       fit() 已经把 h 控制在「avail + topGap」以内，理论上需要的滚动量不会超，
+       这里再夹一次是防过渡期间量到的中间值把预算骗过去。 */
     if (scrollTimer) clearTimeout(scrollTimer);
     scrollTimer = setTimeout(function () {
       if (!running || !box) return;
       var core = box.parentElement;
       if (!core) return;
       var r = box.getBoundingClientRect(), cr = core.getBoundingClientRect();
-      if (r.bottom > cr.bottom + 1 || r.top < cr.top - 1) {
-        var reduce = window.matchMedia &&
-                     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        box.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      var need = r.bottom - cr.bottom;
+      if (need <= 1) return;
+
+      var mast = core.querySelector('.st-mast');
+      var maxScroll = mast
+        ? Math.max(0, mast.getBoundingClientRect().top - cr.top - 4)
+        : need;
+      var delta = Math.min(need, maxScroll);
+      if (delta <= 1) return;
+
+      var reduce = window.matchMedia &&
+                   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (typeof core.scrollTo === 'function') {
+        core.scrollTo({ top: core.scrollTop + delta, behavior: reduce ? 'auto' : 'smooth' });
+      } else {
+        core.scrollTop = core.scrollTop + delta;
       }
     }, 480);                       /* 等 height 过渡（450ms）走完再量 */
   }
@@ -357,27 +409,49 @@
     dead = false; zeroStreak = 0; probeGap = 0; smooth = 0;
   }
 
+  /* 视口真的变了才重算。
+     绝不能对 box 自己挂 ResizeObserver：box 的高度是本脚本写的，观察它等于
+     自己触发自己。改观察 .start-core 也不够：core 是内滚容器，box 一变高就
+     冒出竖向滚动条、clientWidth 掉 15px，RO 又响一次 —— 照样自激，
+     实测高度会在 0→26 之间永远爬不上去。 */
+  var ro = null, lastW = 0, lastH = 0, resizeBound = false, hookedAudio = null;
+
+  function onResize() {
+    if (window.innerWidth === lastW && window.innerHeight === lastH) return;
+    lastW = window.innerWidth; lastH = window.innerHeight;
+    if (running) fit();
+    resize();
+  }
+
+  /* 可取多次：路由从子页面回起始页时，.start 是 importNode 搬进来的全新节点，
+     老的 box 已经脱离文档 —— 不重新挂就会往一个看不见的 canvas 上画，
+     表现是「歌在放、播放键也对，就是没有波」。 */
   function mount() {
-    box = document.querySelector('[data-viz]');
-    if (!box) return;
-    cvs = box.querySelector('canvas');
-    if (!cvs) return;
+    var b = document.querySelector('[data-viz]');
+    if (!b) return false;
+    var c = b.querySelector('canvas');
+    if (!c) return false;
+    box = b; cvs = c;
 
     resize();
-    /* 先 fit 再 resize：窗口尺寸变了，--viz-h 也跟着变，画布得按新的建 */
-    var onResize = function () { if (running) fit(); resize(); };
-    if (window.ResizeObserver) {
-      new ResizeObserver(onResize).observe(box);
+    if (!resizeBound) {
       window.addEventListener('resize', onResize);
-    } else {
-      window.addEventListener('resize', onResize);
+      resizeBound = true;
     }
+    if (window.ResizeObserver) {
+      if (ro) ro.disconnect();
+      ro = new ResizeObserver(onResize);
+      if (box.parentElement) ro.observe(box.parentElement);
+    }
+    lastW = window.innerWidth; lastH = window.innerHeight;
 
-    /* audio 是在 ui.js 闭包里建的那个，全局唯一一份 */
+    /* audio 是在 ui.js 闭包里建的那个，全局唯一一份。
+       重挂时不能重复加监听，否则 play 会被 start() 收好几遍。 */
     var hook = function () {
       if (!window.__dygUi || !window.__dygUi.audio) return;
       var a = window.__dygUi.audio();
-      if (!a || a === audio) return;
+      if (!a || a === hookedAudio) return;
+      hookedAudio = a;
       audio = a;
       a.addEventListener('play', function () { start(); });
       a.addEventListener('pause', stop);
@@ -388,6 +462,7 @@
     hook();
     /* ui.js 可能还没 boot 完，晚一步再试 */
     setTimeout(hook, 300);
+    return true;
   }
 
   window.__dygViz = {

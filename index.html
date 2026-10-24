@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261024164945" />
+<link rel="stylesheet" href="theme.css?v=20261024180117" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -80,6 +80,15 @@
     <a class="mark" href="index.html?m=start">东芽果 <small>DYG</small></a>
 
     <div class="start-right">
+      <!-- 起始页形态下导航栏（含博客那个播放器）是 visibility:hidden，
+           点都点不到 —— 所以这里必须有自己的播放键，否则音乐压根播不了，
+           可视化也就永远出不来。图标和 data-np-toggle 跟博客那个一模一样，
+           由 ui.js 统一绑定。 -->
+      <button class="np-btn" type="button" data-np-toggle aria-label="播放" aria-pressed="false" title="播放 / 暂停">
+        <svg class="np-i-play" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M4.2 2.6l7 4.4-7 4.4z" fill="currentColor"/></svg>
+        <svg class="np-i-pause" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><rect x="3.4" y="2.6" width="2.6" height="8.8" rx="1" fill="currentColor"/><rect x="8" y="2.6" width="2.6" height="8.8" rx="1" fill="currentColor"/></svg>
+      </button>
+
       <button class="th-btn" type="button" data-theme-btn aria-label="切换皮肤" title="切换皮肤">
         <span class="th-i th-organic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.2 2.8c0 5.2-3.6 8.2-7.1 8.2-1.3 0-2.4-.4-3.2-1.2C2 6.6 5.2 2.8 13.2 2.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.6 13.4C5 9.8 7.9 7.2 11.4 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
         <span class="th-i th-miko"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><g fill="currentColor"><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(72 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(144 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(216 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(288 8 8)"/><circle cx="8" cy="8" r=".95" fill="none" stroke="currentColor" stroke-width="1.1"/></g></svg></span>
@@ -358,13 +367,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261024164945"></script>
-<script src="assets/petals.js?v=20261024164945"></script>
-<script src="assets/starfield.js?v=20261024164945"></script>
-<script src="ui.js?v=20261024164945"></script>
-<script src="home.js?v=20261024164945"></script>
-<script src="assets/miko-talk.js?v=20261024164945"></script>
-<script src="assets/viz.js?v=20261024164945"></script>
+<script src="cursor.js?v=20261024180117"></script>
+<script src="assets/petals.js?v=20261024180117"></script>
+<script src="assets/starfield.js?v=20261024180117"></script>
+<script src="ui.js?v=20261024180117"></script>
+<script src="home.js?v=20261024180117"></script>
+<script src="assets/miko-talk.js?v=20261024180117"></script>
+<script src="assets/viz.js?v=20261024180117"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -387,6 +396,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261024164945"></script>
+<script src="fx.js?v=20261024180117"></script>
 </body>
 </html>

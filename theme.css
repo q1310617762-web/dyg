@@ -579,6 +579,10 @@ html[data-theme="miko"] .start-viz.on {
 @media (prefers-reduced-motion: reduce) {
   .start-viz { transition: opacity .28s linear; }
 }
+/* viz.js 量高度时会临时挂上这个类：不停掉 height 过渡的话，
+   写 --viz-h:0 之后元素还在过渡路上，量到的刊头位置是中间值，
+   预算一次比一次小，可视化会自己越缩越没。 */
+.start-viz.measuring { transition: none !important; }
 
 /* ---------- 形态切换器：Material 分段按钮 ----------
    两个图标段 + 一个滑动的白色指示器。按下时指示器滑到另一段，
@@ -998,9 +1002,33 @@ html[data-soft-switch]::view-transition-new(root) {
   .np-btn:hover { background: var(--layer-3); }
 }
 .np-btn .np-i-pause { display: none; }
-.np.playing .np-btn { background: var(--accent); color: var(--on-accent); }
-.np.playing .np-i-play { display: none; }
-.np.playing .np-i-pause { display: block; }
+/* 播放键有两处：导航栏里那颗挂在 .np 下，起始页那颗是独立的 <button>。
+   起始页形态下 .nav 是 visibility:hidden，只有后者点得到，
+   所以两套选择器都写 —— 少一套起始页那颗就永远停在 ▶ 不变 ⏸。 */
+.np.playing .np-btn,
+.np-btn.playing { background: var(--accent); color: var(--on-accent); }
+.np.playing .np-i-play,
+.np-btn.playing .np-i-play { display: none; }
+.np.playing .np-i-pause,
+.np-btn.playing .np-i-pause { display: block; }
+
+/* 起始页右上那颗：和皮肤键、形态切换同一排，尺寸与圆角对齐它们 */
+.start-right .np-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-pill);
+  background: var(--layer-1);
+  color: var(--text-2);
+  transition: background .18s var(--ease), color .18s var(--ease), transform .12s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .start-right .np-btn:hover { background: var(--layer-3); color: var(--text); }
+}
+.start-right .np-btn:active { background: var(--layer-3); color: var(--text); }
+.start-right .np-btn.playing {
+  background: var(--accent);
+  color: var(--on-accent);
+}
 
 .np-meta {
   display: flex;

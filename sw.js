@@ -17,7 +17,7 @@
  *   - POST 等非 GET。
  */
 
-const V = '20261024164945';
+const V = '20261024180117';
 const CORE = 'dyg-core-' + V;      /* 预缓存：首屏就要用的 */
 const RUNTIME = 'dyg-rt-' + V;     /* 运行时：图片等按需攒下来的 */
 

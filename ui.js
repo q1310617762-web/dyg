@@ -295,6 +295,7 @@
   var cur = -1;
 
   function initPlayer() {
+    if (audio) return;                 /* boot 可能被调多次，<audio> 只能建一份 */
     var np = document.querySelector('[data-np]');
     var menu = document.querySelector('[data-np-menu]');
     var bar = document.querySelector('[data-np-bar]');
@@ -302,7 +303,16 @@
 
     var titleEl = np.querySelector('[data-np-title]');
     var artistEl = np.querySelector('[data-np-artist]');
-    var btn = np.querySelector('[data-np-toggle]');
+    /* 播放键有两处：博客导航栏里那颗，还有起始页顶部那颗。
+       起始页形态下整个 .nav 是 visibility:hidden（不接收点击），
+       没有起始页这颗就根本播不了歌，可视化也永远出不来。
+       两颗共用同一个 <audio>，状态一起同步。
+       注意不能在这里一次性 querySelectorAll 存成数组：起始页那个 .start
+       是路由时 importNode 搬进来的，boot 的时候 DOM 里可能还没有它。
+       所以「取按钮」写成函数，点击走 document 上的事件委托。 */
+    var npBtns = function () {
+      return [].slice.call(document.querySelectorAll('[data-np-toggle]'));
+    };
     var metaBtn = np.querySelector('[data-np-list]');
 
     audio = new Audio();
@@ -321,8 +331,12 @@
     function paint() {
       var playing = audio && !audio.paused && cur >= 0;
       np.classList.toggle('playing', !!playing);
-      btn.setAttribute('aria-label', playing ? '暂停' : '播放');
-      btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      /* 两颗键的图标和 aria 都要跟着走 */
+      npBtns().forEach(function (b) {
+        b.classList.toggle('playing', !!playing);
+        b.setAttribute('aria-label', playing ? '暂停' : '播放');
+        b.setAttribute('aria-pressed', playing ? 'true' : 'false');
+      });
 
       if (cur >= 0) {
         titleEl.textContent = TRACKS[cur].title;
@@ -359,7 +373,14 @@
       paint();
     }
 
-    btn.addEventListener('click', toggle);
+    /* 事件委托：起始页那颗是路由后才有的事件源，挂不到具体节点上。
+       而且 ui.js 只 boot 一次，这里挂 document 也只挂一次。 */
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest && e.target.closest('[data-np-toggle]');
+      if (!b) return;
+      e.preventDefault();
+      toggle();
+    });
 
     metaBtn.addEventListener('click', function (e) {
       e.stopPropagation();
@@ -557,6 +578,19 @@
     document.head.appendChild(sc);
   }
 
+  /* 可视化是 index.html 里的静态 <script>，只在首页有。
+     从子页面路由回起始页时它压根没加载过 —— 播放键点得到、歌也在放，
+     但画布永远不出现（实测就是这个坑）。所以进起始页时补一次。
+     viz.js 自己在 start() 里会重新取 [data-viz]，晚到也不怕。 */
+  function ensureViz() {
+    if (window.__dygViz || document.getElementById('dyg-viz-js')) return;
+    var v = assetVersion();
+    var sc = document.createElement('script');
+    sc.id = 'dyg-viz-js';
+    sc.src = 'assets/viz.js' + (v ? '?v=' + v : '');
+    document.head.appendChild(sc);
+  }
+
   /* ============================================================
      圆形揭示 —— 形态切换（起始页 ⇄ 博客）和站内换页共用同一套。
      圆心在被点的那个链接上，圆扩散到盖满整屏。
@@ -637,6 +671,7 @@
 
         /* 收尾：形态、地址栏、滚动、动画层、目录 */
         function settle() {
+          if (isIndex) ensureViz();
           if (isIndex && window.DYG_HOME) {
             window.DYG_HOME.setMode(mode, false);
             /* 换进来的 .start 是全新节点：必须重新 init，
