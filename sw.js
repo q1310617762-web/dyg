@@ -42,19 +42,25 @@
 
 const V = '20261024211014';
 const CODE = 'dyg-code-' + V;   /* HTML / CSS / JS：随代码版本走 */
-const ASSET = 'dyg-asset-v2';   /* 图片 / 字体 / 音频：不随代码版本走，
-                                   只有这些文件真的换内容了才手动把 v2 加一 */
+/* v2 → v3：图片重新压过一遍（见下方 WARM 注释里那条吞吐数据），
+   内容变了必须手动加一，否则老访客的 Cache Storage 里一直是旧图。 */
+const ASSET = 'dyg-asset-v3';   /* 图片 / 字体 / 音频：不随代码版本走，
+                                   只有这些文件真的换内容了才手动把 -vN 加一 */
 
 /* GitHub Pages 的 HTTP 缓存头改不了，固定 max-age=600。
    在这窗口里 SWR 没有意义：拉回来的一定是同一份字节。 */
 const FRESH_MS = 10 * 60 * 1000;
 
-/* 页面 idle 后慢慢补的资源。URL 写法和 HTML 里的相对路径一致；
-   带 ?v= 的必须写全，否则缓存里是老版本、页面却要新版本，会多一次网络往返。 */
+/* 页面 idle 后慢慢补的资源。
+ *
+ * 为什么这份名单故意很短：凡是在使用过程中会被请求的资源（别的页面、
+ * 别的皮肤的背景图、博客形态的大图），fetch 拦截器在它们第一次流经时
+ * 就已经写进缓存了 —— 根本不需要提前下载。
+ * 提前下载的代价是实打实的：这条线路上 GitHub Pages 的有效吞吐只有
+ * 几十 KB/s，一张 cover-anime（92K，只有 dark 皮肤用得到）就要传 3 秒，
+ * 白白占着别人的带宽。所以名单里只留「当前这一屏就要用的核心件」，
+ * 而且它们此刻大多还躺在浏览器的 HTTP 缓存里，补一下几乎是免费的。 */
 const WARM = [
-  './blog.html', './archive.html', './tags.html', './about.html',
-  './friends.html', './gallery.html', './post.html', './post-control.html',
-  './404.html',
   './theme.css?v=' + V,
   './ui.js?v=' + V,
   './home.js?v=' + V,
@@ -67,12 +73,6 @@ const WARM = [
   './assets/fonts/mast-cherry-bomb-one.woff2',
   './assets/favicon.svg',
   './assets/img/miko.webp',
-  './assets/img/wall-seaside.webp',
-  './assets/img/wall-seaside-blur.webp',
-  './assets/img/cover-control.webp',
-  './assets/img/cover-seitokai.webp',
-  './assets/img/cover-anime.webp',
-  './assets/img/avatar.webp',
 ];
 
 const OFFLINE = '<!doctype html><meta charset="utf-8">' +
