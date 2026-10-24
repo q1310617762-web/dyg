@@ -27,4 +27,14 @@ for (const f of fs.readdirSync('.').filter(x => x.endsWith('.html'))) {
   const out = s.replace(/(\?v=)[0-9a-z]+/g, `$1${stamp}`);
   if (out !== s) { fs.writeFileSync(f, out); n++; }
 }
-console.log('版本号 ->', stamp, '｜ 改了', n, '个 HTML');
+
+/* sw.js 里的 const V 必须和 HTML 的 ?v= 是同一个号：
+   号一变 → 缓存名变 → activate 把旧缓存整个删掉，这就是「更新自动覆盖缓存」。
+   sw.js 自己不进 SRC，否则每跑一次 bump 都会改自己，永远对不上。 */
+if (fs.existsSync('sw.js')) {
+  const s = fs.readFileSync('sw.js', 'utf8');
+  const out = s.replace(/(const V = ')[0-9a-z]+(')/, `$1${stamp}$2`);
+  if (out !== s) { fs.writeFileSync('sw.js', out); n++; }
+}
+
+console.log('版本号 ->', stamp, '｜ 改了', n, '个文件（HTML + sw.js）');

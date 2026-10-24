@@ -200,6 +200,21 @@
     }
   }
 
+  /* 博客形态里的大图（hero 横幅、文章封面、相册条）一开始只写了 data-src，
+     所以起始页冷启动不会去拉它们 —— 实测那 15 张图合计 1.8MB，
+     而起始页一张都不显示。切到博客形态时在这里补一次，只补一次。 */
+  var blogImagesLoaded = false;
+  function hydrateBlogImages() {
+    if (blogImagesLoaded) return;
+    blogImagesLoaded = true;
+    var n = document.querySelectorAll('.blog [data-src]');
+    for (var i = 0; i < n.length; i++) {
+      var d = n[i].getAttribute('data-src');
+      if (d) { n[i].setAttribute('src', d); n[i].removeAttribute('data-src'); }
+    }
+    if (window.__dygGallery) window.__dygGallery();
+  }
+
   function setMode(m, push) {
     if (m !== 'blog') m = 'start';
     var was = root.getAttribute('data-mode');
@@ -218,7 +233,10 @@
     clearTimeout(switchTimer);
     switchTimer = setTimeout(function () { root.removeAttribute('data-switching'); }, 1600);
 
-    if (m === 'blog' && was !== 'blog') window.scrollTo(0, 0);
+    if (m === 'blog') {
+      hydrateBlogImages();
+      if (was !== 'blog') window.scrollTo(0, 0);
+    }
 
     if (push) {
       try { history.pushState({ m: m }, '', urlFor(m)); } catch (e) {}

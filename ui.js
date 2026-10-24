@@ -834,3 +834,30 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
+
+/* ---- Service Worker：二次访问直接从硬盘读 ----
+   注册放在 ui.js 里，因为它每页都加载；file:// 和局域网 http 直接跳过。
+   sw.js 用 updateViaCache:'none' 注册，免得被 HTTP 缓存挡住拿不到新版本。 */
+(function () {
+  if (!('serviceWorker' in navigator)) return;
+  var h = location.hostname;
+  var ok = location.protocol === 'https:' ||
+           h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
+  if (!ok) return;
+
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
+      .then(function (reg) {
+        /* 页面闲下来再让 SW 去攒博客形态的图，别和首屏抢带宽 */
+        var warm = function () {
+          var sw = reg.installing || reg.waiting || reg.active ||
+                   navigator.serviceWorker.controller;
+          if (sw) sw.postMessage({ type: 'WARM' });
+        };
+        if (window.requestIdleCallback) window.requestIdleCallback(warm, { timeout: 9000 });
+        else setTimeout(warm, 4000);
+      })
+      .catch(function () {});
+  });
+})();
+/* ---- /Service Worker ---- */
