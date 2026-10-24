@@ -294,6 +294,22 @@
   var audio = null;
   var cur = -1;
 
+  /* 让 Service Worker 把当前这一首整首存进 Cache Storage。
+     放在这里由 playing 事件触发，是为了把「多下载一次」安排在用户已经开始听
+     之后 —— 那一刻带宽被占用是没感觉的，换来的是下一次听从硬盘读、
+     以及断网也能听下去。
+     没有 SW 接管（file://、还没注册好、HTTPS 之外的源）就直接返回，不影响任何东西。 */
+  function cacheCurrentTrack() {
+    if (cur < 0 || !TRACKS[cur]) return;
+    if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) return;
+    try {
+      navigator.serviceWorker.controller.postMessage({
+        type: 'CACHE_MEDIA',
+        url: new URL(TRACKS[cur].src, location.href).href
+      });
+    } catch (e) {}
+  }
+
   function initPlayer() {
     if (audio) return;                 /* boot 可能被调多次，<audio> 只能建一份 */
     var np = document.querySelector('[data-np]');
@@ -425,6 +441,15 @@
     audio.addEventListener('stalled', function () { setStall(true); });
     audio.addEventListener('playing', function () { setStall(false); });
     audio.addEventListener('canplay', function () { setStall(false); });
+
+    /* 已经在响了才去把它存进硬盘：这时候占的带宽用户感觉不到，
+       而下次听这一首就是从 Cache Storage 直接读，秒出、并且断网也能听。
+       为什么只在这里补、不在 SW 里替补：<audio> 发的是带 Range 的请求，
+       那份响应是残缺的（206），存进去也没用，得单独拉一次完整的。
+       sw.js 收到 CACHE_MEDIA 会自己判断有没有存过，重复发也不用操心。 */
+    audio.addEventListener('playing', function () {
+      cacheCurrentTrack();
+    });
     audio.addEventListener('ended', function () {
       if (cur >= 0 && cur < TRACKS.length - 1) playIndex(cur + 1);
       else { cur = -1; audio.removeAttribute('src'); paint(); setBar(); }
