@@ -106,6 +106,15 @@
     if (mt) mt.setAttribute('content', t.color);
     syncSky(id);
     syncPetals(id);
+    syncViz(id);
+  }
+
+  /* 音乐可视化只在「八重」下开，并且要正在播放才出现 ——
+     不是八重就立刻收起来，免得换皮肤后留一块空画布。 */
+  function syncViz(id) {
+    if (!window.__dygViz) return;
+    if (id !== 'miko') { window.__dygViz.stop(); return; }
+    window.__dygViz.syncTheme(id);
   }
 
   /* 星野只在「夜幕」下开。减弱动效时画一帧静态的——
@@ -811,6 +820,7 @@
     initTheme();
     syncSky(root.getAttribute('data-theme') || 'miko');
     syncPetals(root.getAttribute('data-theme') || 'miko');
+    syncViz(root.getAttribute('data-theme') || 'miko');
     fileModeTip();
     motionTip();
     initToc();

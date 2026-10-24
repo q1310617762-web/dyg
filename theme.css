@@ -538,6 +538,45 @@ html[data-switching] * { pointer-events: none !important; }
 }
 .hint-m { display: none; }
 
+/* ---------- 音乐可视化（八重皮肤专属，assets/viz.js 驱动）----------
+   高度 0 → clamp() 过渡，全程只有一次布局重排。
+   canvas 自身高度写死 140px，靠容器 overflow:hidden 裁切 ——
+   所以展开过程中画布不用跟着 resize，曲线不会一边长一边抖。 */
+.start-viz {
+  position: relative;
+  flex: 0 0 auto;
+  width: min(620px, 100%);
+  margin-inline: auto;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: height .45s var(--ease-out), opacity .28s linear;
+}
+.start-viz canvas {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+  width: 100%;
+  height: 140px;
+}
+/* 可视化展开后空间不够的话，让容器滚，不许把搜索框压扁 ——
+   实测 1366×768 下搜索框会被 flex 从 56px 压到 24px，很难看。 */
+.start-core > * { flex-shrink: 0; }
+/* 高度只给八重皮肤：别的皮肤就算 JS 加上 .on 也长不出来。
+   具体高度由 viz.js 实测后写进 --viz-h —— 用 clamp()/vh 猜不准：
+   1366×768 起始页只剩 30px 不到的富余，11vh 会给出 84px，直接把收藏挤出去。
+   JS 拿「容器可视高 − 其余内容高」算，不够就按比例缩，太窄就整个不出现。 */
+html[data-theme="miko"] .start-viz.on {
+  height: var(--viz-h, 0px);
+  opacity: 1;
+}
+/* 减弱动效：高度变化是布局位移，去掉；保留透明度 */
+@media (prefers-reduced-motion: reduce) {
+  .start-viz { transition: opacity .28s linear; }
+}
+
 /* ---------- 形态切换器：Material 分段按钮 ----------
    两个图标段 + 一个滑动的白色指示器。按下时指示器滑到另一段，
    同时由 JS 从按钮中心放一圈波纹覆盖全屏。 */
