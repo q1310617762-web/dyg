@@ -991,47 +991,39 @@ html[data-soft-switch]::view-transition-new(root) {
   flex: none;
 }
 
+/* 播放键只有一套规格：导航栏里那颗和搜索页（起始页）右上那颗必须长得一模一样。
+   两处共用 .np-btn，尺寸 / 圆角 / 底色 / 图标 / 播放态都在这条规则里定死，
+   不要再给 .start-right 单独开尺寸或配色 —— 一开就会「两边不一样」。 */
 .np-btn {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
+  flex: none;
   border-radius: 50%;
   color: var(--text);
   background: var(--layer-2);
-  transition: background .16s var(--ease), transform .12s var(--ease-out);
+  transition: background .16s var(--ease), color .16s var(--ease), transform .12s var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) {
   .np-btn:hover { background: var(--layer-3); }
 }
+.np-btn:active { background: var(--layer-3); transform: scale(.94); }
 .np-btn .np-i-pause { display: none; }
-/* 播放键有两处：导航栏里那颗挂在 .np 下，起始页那颗是独立的 <button>。
+/* 播放键有两处：导航栏里那颗挂在 .np 下，搜索页那颗是独立的 <button>。
    起始页形态下 .nav 是 visibility:hidden，只有后者点得到，
-   所以两套选择器都写 —— 少一套起始页那颗就永远停在 ▶ 不变 ⏸。 */
+   所以两套选择器都写 —— 少一套搜索页那颗就永远停在 ▶ 不变 ⏸。 */
 .np.playing .np-btn,
 .np-btn.playing { background: var(--accent); color: var(--on-accent); }
 .np.playing .np-i-play,
 .np-btn.playing .np-i-play { display: none; }
 .np.playing .np-i-pause,
 .np-btn.playing .np-i-pause { display: block; }
+.np.playing .np-btn:active,
+.np-btn.playing:active { background: var(--accent); }
 
-/* 起始页右上那颗：和皮肤键、形态切换同一排，尺寸与圆角对齐它们 */
-.start-right .np-btn {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--r-pill);
-  background: var(--layer-1);
-  color: var(--text-2);
-  transition: background .18s var(--ease), color .18s var(--ease), transform .12s var(--ease-out);
-}
-@media (hover: hover) and (pointer: fine) {
-  .start-right .np-btn:hover { background: var(--layer-3); color: var(--text); }
-}
-.start-right .np-btn:active { background: var(--layer-3); color: var(--text); }
-.start-right .np-btn.playing {
-  background: var(--accent);
-  color: var(--on-accent);
-}
+/* 搜索页右上那颗只留位置：和皮肤键、形态切换同一排，规格完全继承 .np-btn */
+.start-right .np-btn { margin-right: 2px; }
 
 .np-meta {
   display: flex;
@@ -1766,6 +1758,8 @@ html[data-theme="ly"] .modesw button[aria-current="page"] { color: var(--text); 
 html[data-theme="ly"] .th-btn:active,
 html[data-theme="ly"] .np-btn:active,
 html[data-theme="ly"] .burger:active { transform: translate(3px, 3px); box-shadow: none; }
+/* 触摸端没有 hover，:active 是唯一反馈，按下这块也得上黄绿 */
+html[data-theme="ly"] .np-btn:active { background: var(--acc-fill); }
 html[data-theme="ly"] .menu { background: #fff; border: 2.5px solid var(--ink); box-shadow: var(--hard); }
 html[data-theme="ly"] .menu-link { background: transparent; }
 @media (hover: hover) and (pointer: fine) {

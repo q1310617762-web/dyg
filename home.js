@@ -202,11 +202,13 @@
 
   /* 博客形态里的大图（hero 横幅、文章封面、相册条）一开始只写了 data-src，
      所以起始页冷启动不会去拉它们 —— 实测那 15 张图合计 1.8MB，
-     而起始页一张都不显示。切到博客形态时在这里补一次，只补一次。 */
-  var blogImagesLoaded = false;
+     而起始页一张都不显示。切到博客形态时在这里补一次。
+
+     这个函数可以重复调：data-src 用完就删，第二轮集合是空的；
+     __dygGallery 自己也挡了重复渲染（box.childElementCount）。
+     不能加「只补一次」的布尔锁 —— 相册脚本写在 home.js 之后，
+     首屏落地就是博客时第一遍 __dygGallery 还不存在，得等 DOMContentLoaded 再补一次。 */
   function hydrateBlogImages() {
-    if (blogImagesLoaded) return;
-    blogImagesLoaded = true;
     var n = document.querySelectorAll('.blog [data-src]');
     for (var i = 0; i < n.length; i++) {
       var d = n[i].getAttribute('data-src');
@@ -434,6 +436,21 @@
 
     // 带 ?m= 进来时，把当前形态写回会话，别让下次裸访问回到旧形态
     try { sessionStorage.setItem('dyg-mode', root.getAttribute('data-mode') || 'start'); } catch (e) {}
+
+    /* 直接以博客形态落地（?m=blog，或会话里存着 blog 后刷新）时，
+       data-mode 是首屏那段内联脚本写的，setMode 根本没跑过 ——
+       于是 hydrateBlogImages() 也永远不会跑，博客里所有只有 data-src 的图
+       （hero 横幅、文章封面、相册条）一张都不显示，表现就是「图片全没了」。
+       这里补一次：只补状态，不走 setMode（那会触发波纹和 1.6s 点击锁）。 */
+    if (root.getAttribute('data-mode') === 'blog') {
+      syncChrome('blog');
+      hydrateBlogImages();
+      /* 相册脚本排在 home.js 后面，此刻 __dygGallery 还没定义 ——
+         等解析完再补一次，否则相册条是空的。 */
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', hydrateBlogImages);
+      }
+    }
 
     window.addEventListener('popstate', function (e) {
       if (!root.hasAttribute('data-dual')) return;      // 子页面交给 ui.js 的路由

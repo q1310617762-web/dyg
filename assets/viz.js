@@ -148,26 +148,45 @@
     return h;
   }
 
-  /* ---------- 音频接入 ---------- */
+  /* ---------- 音频接入 ----------
+     顺序是硬要求：必须「AudioContext 真的 running 了」才去 createMediaElementSource。
+     这一步不可撤销 —— 接上之后这个 <audio> 的声音就永久改走音频图，
+     要是此刻 AudioContext 还是 suspended（这次 play 不是用户手势触发、
+     或者被浏览器策略挡了），页面上时间照走、进度条照动，但一点声音都没有。
+     所以先确认能出声再接管；接不上就让它继续走伪频谱，至少别把声音弄没。 */
+  var wireTries = 0;
   function wire() {
-    if (wired || !audio) return;
+    if (wired || !audio || wireTries > 4) return;
     var AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
+    wireTries++;
+
     try {
-      actx = new AC();
-      /* 只允许一次：重复调用会抛 InvalidStateError */
-      srcNode = actx.createMediaElementSource(audio);
-      anode = actx.createAnalyser();
-      anode.fftSize = 512;
-      anode.smoothingTimeConstant = 0.8;
-      abuf = new Uint8Array(anode.frequencyBinCount);
-      srcNode.connect(anode);
-      /* 必须接回 destination，不然除了可视化哪儿都没声 */
-      anode.connect(actx.destination);
-      wired = true;
-    } catch (e) {
-      wired = false; actx = null; anode = null; srcNode = null;
-    }
+      if (!actx) actx = new AC();
+    } catch (e) { actx = null; return; }
+
+    var go = function () {
+      if (wired || !audio || !actx) return;
+      /* 还是没跑起来就别接管，下次 play 再试 */
+      if (actx.state !== 'running') return;
+      try {
+        /* 只允许一次：重复调用会抛 InvalidStateError */
+        srcNode = actx.createMediaElementSource(audio);
+        anode = actx.createAnalyser();
+        anode.fftSize = 512;
+        anode.smoothingTimeConstant = 0.8;
+        abuf = new Uint8Array(anode.frequencyBinCount);
+        srcNode.connect(anode);
+        /* 必须接回 destination，不然除了可视化哪儿都没声 */
+        anode.connect(actx.destination);
+        wired = true;
+      } catch (e) {
+        wired = false; anode = null; srcNode = null;
+      }
+    };
+
+    if (actx.state === 'running') go();
+    else actx.resume().then(go, go);
   }
 
   /* ---------- 频谱 ----------
@@ -218,6 +237,9 @@
       return;
     }
     if (!wired || !anode) { pseudoBars(); return; }
+    /* 接管之后 AudioContext 被挂起（切后台、系统休眠）同样会静音，
+       这里顺手救一次，别让「播着播着没声了」变成要刷新才好的问题。 */
+    if (actx && actx.state === 'suspended') actx.resume().catch(function () {});
 
     /* dead 只代表「这一阵拿不到频谱」，不是永久判决。
        音乐本来就有静音前奏、间奏、淡出，连续 1.5 秒全零就判死的话，

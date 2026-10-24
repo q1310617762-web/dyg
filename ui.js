@@ -340,7 +340,10 @@
 
       if (cur >= 0) {
         titleEl.textContent = TRACKS[cur].title;
-        artistEl.textContent = TRACKS[cur].artist;
+        /* 音频是 preload:'none'，点下去才开始下载；1.2MB 的曲子在慢网要十几秒。
+           这中间什么都不显示的话，用户看到的就是「按了没反应」——
+           所以缓冲期间明说，别让人以为播放器坏了。 */
+        artistEl.textContent = stalling ? '缓冲中…' : TRACKS[cur].artist;
       } else {
         titleEl.textContent = '播放';
         artistEl.textContent = TRACKS.length + ' 首';
@@ -362,6 +365,7 @@
     function playIndex(i) {
       cur = i;
       audio.src = TRACKS[i].src;
+      stalling = true;              /* 从零开始下载，先按「缓冲中」画 */
       audio.play().catch(function () { /* 被拦就等用户再点 */ });
       paint();
     }
@@ -406,10 +410,21 @@
       metaBtn.setAttribute('aria-expanded', 'false');
     });
 
+    var stalling = false;
+    var setStall = function (v) {
+      if (stalling === v) return;
+      stalling = v;
+      paint();
+    };
+
     audio.addEventListener('play', paint);
     audio.addEventListener('pause', paint);
     audio.addEventListener('timeupdate', setBar);
     audio.addEventListener('loadedmetadata', setBar);
+    audio.addEventListener('waiting', function () { setStall(true); });
+    audio.addEventListener('stalled', function () { setStall(true); });
+    audio.addEventListener('playing', function () { setStall(false); });
+    audio.addEventListener('canplay', function () { setStall(false); });
     audio.addEventListener('ended', function () {
       if (cur >= 0 && cur < TRACKS.length - 1) playIndex(cur + 1);
       else { cur = -1; audio.removeAttribute('src'); paint(); setBar(); }
