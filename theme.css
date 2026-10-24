@@ -545,7 +545,10 @@ html[data-switching] * { pointer-events: none !important; }
 .start-viz {
   position: relative;
   flex: 0 0 auto;
-  width: min(620px, 100%);
+  /* 宽度跟收藏网格（miko 下 1040）对齐，不跟 620 的刊头栏。
+     620 的时候它是悬在版面正下方的一小块图，左右都留空，
+     看着像「没摆好的控件」；跟网格同宽之后才像压在页脚上的一条频谱带。 */
+  width: min(1040px, 100%);
   margin-inline: auto;
   height: 0;
   overflow: hidden;

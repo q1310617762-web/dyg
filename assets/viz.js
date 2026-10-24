@@ -17,20 +17,21 @@
       否则后台白烧电。
    ============================================================ */
 (function () {
-  var POINTS = 150;     /* 横向采样点数：60fps 下约 2.5 秒的窗口 */
-  var VBINS = 12;       /* 取前 12 个频点（约 0–1.1kHz）当低频能量 */
   var H = 140;          /* 画布设计高度上限，只做兜底；实际高度看 --viz-h */
+  /* 频谱柱覆盖的频段。analyser 是 fftSize=512 → 256 个 bin，
+     44.1kHz 下一个 bin ≈ 86Hz；取到 96（≈8kHz）为止，
+     再往右全是空的，画出来是一排贴地的死柱。 */
+  var SB_LO = 2, SB_HI = 96;
+  var VBINS = 12;       /* 低频能量（≈0–1.1kHz），只用来判「有没有声音」 */
 
   var box, cvs, g, W = 0, VH = H, dpr = 1;
-  var hist = [];
+  var BARS = 0, barRaw = [], barLv = [], barPk = [];
   var petals = [];
   var raf = 0, running = false, painted = false;
   var audio = null, actx = null, anode = null, abuf = null, srcNode = null;
   var wired = false, dead = false, zeroStreak = 0, probeGap = 0;
   var lastPeak = 0, tPrev = 0, scrollTimer = 0, smooth = 0;
   var colors = {};
-
-  for (var i = 0; i < POINTS; i++) hist.push(0);
 
   /* ---------- 颜色：从皮肤令牌读，换皮肤不用改代码 ---------- */
   function readColors() {
@@ -126,6 +127,9 @@
     var budget = Math.max(0, avail) + topGap;
     var h = Math.min(want, budget);
     if (h < 18) h = 0;   /* 连 18px 都挤不出来就别硬塞一条头发丝 */
+    /* 窄屏不出现：手机起始页本来就排到屏幕外（收藏和看板娘的气泡已经叠在一起），
+       再塞一条频谱只是把重叠弄得更难看。 */
+    if (window.innerWidth < 720) h = 0;
 
     /* 写高度时 measuring 还挂着 —— 当场生效、不起过渡。
        只有「首次展开」才回一次 0 再写 h，让 .on 加上那一刻有 0→h 的生长动画；
@@ -166,48 +170,106 @@
     }
   }
 
-  /* 拿不到频谱时的兜底：用播放进度算一条确定性曲线。
-     视觉上和真频谱同构，看不出是假的，但不会假装自己在反映音乐。 */
-  function pseudo() {
-    if (!audio) return 0.35;
-    var t = audio.currentTime || 0;
-    var v = Math.sin(t * 1.9) * 0.34 + Math.sin(t * 2.7 + 1.1) * 0.26 +
-            Math.sin(t * 0.8 + 2.4) * 0.22;
-    return Math.max(0, Math.min(1, 0.40 + v * 0.40));
+  /* ---------- 频谱 ----------
+     每根柱一段频段。柱宽按指数分配（`^1.9`）：低频信息密，
+     平均分的话鼓和贝斯全挤在最左边两三根里，右边一大排贴地的死柱。 */
+  function barN() {
+    return Math.max(18, Math.min(64, Math.floor(W / 14)));
   }
 
-  function level() {
-    /* 测试钩子：CI / 无音频设备的环境里，直接喂电平值验证绘制。
-       不设置就不生效，生产路径完全不受影响。 */
-    if (window.__dygVizFeed) return window.__dygVizFeed();
-    if (!wired || !anode) return pseudo();
+  function binEdge(j, n) {
+    var t = j / n;
+    return SB_LO + Math.round((SB_HI - SB_LO) * Math.pow(t, 1.9));
+  }
+
+  /* 拿不到频谱时的兜底：用播放进度算一列确定性数值。
+     视觉上和真频谱同构，但不会假装自己在反映音乐。 */
+  function pseudoBars() {
+    var t = audio ? (audio.currentTime || 0) : 0;
+    for (var i = 0; i < BARS; i++) {
+      var u = i / BARS;
+      var beat = 0.5 + 0.5 * Math.sin(t * 3.1);
+      var v = (0.10 + 0.62 * beat * Math.pow(1 - u, 1.25)) *
+              (0.62 + 0.38 * Math.sin(t * 2.3 + i * 0.55));
+      barRaw[i] = Math.max(0.03, Math.min(1, v));
+    }
+  }
+
+  /* 测试钩子返回标量时，展开成一列有起伏的柱子 ——
+     这样老的检查脚本（喂一个数）仍然能验「在动」。 */
+  function feedBars(lv) {
+    var t = (audio ? (audio.currentTime || 0) : 0) + performance.now() / 1000;
+    for (var i = 0; i < BARS; i++) {
+      var u = i / BARS;
+      var v = lv * (0.30 + 0.70 * (1 - u * 0.55)) *
+              (0.45 + 0.55 * Math.abs(Math.sin(t * 2.1 + i * 0.42)));
+      barRaw[i] = Math.max(0.02, Math.min(1, v));
+    }
+  }
+
+  /* 填 barRaw[i]。真频谱优先，拿不到就退到伪频谱。 */
+  function pull() {
+    if (BARS < 1) return;
+
+    if (window.__dygVizFeed) {
+      var f = window.__dygVizFeed();
+      if (typeof f === 'number') feedBars(f);
+      else if (f && f.length) for (var q = 0; q < BARS; q++) barRaw[q] = f[q % f.length];
+      return;
+    }
+    if (!wired || !anode) { pseudoBars(); return; }
 
     /* dead 只代表「这一阵拿不到频谱」，不是永久判决。
        音乐本来就有静音前奏、间奏、淡出，连续 1.5 秒全零就判死的话，
-       一首歌只要有一段安静，后面整首都变成假曲线了（而且换歌也不恢复）。
-       这里改成每隔 2 秒放一次探测，有声音就自己回来。 */
+       一首歌只要有一段安静，后面整首都变成假曲线了（换歌也不恢复）。
+       所以每隔 2 秒放一次探测，有声音就自己回来。 */
     if (dead) {
-      if (++probeGap < 120) return pseudo();
+      if (++probeGap < 120) { pseudoBars(); return; }
       probeGap = 0;
     }
 
     try {
       if (actx.state === 'suspended') actx.resume().catch(function () {});
       anode.getByteFrequencyData(abuf);
-      var s = 0, mx = 0;
-      for (var i = 0; i < VBINS; i++) { s += abuf[i]; if (abuf[i] > mx) mx = abuf[i]; }
+
+      var mx = 0;
+      for (var k = 0; k < VBINS; k++) if (abuf[k] > mx) mx = abuf[k];
       if (mx === 0) {
         if (++zeroStreak > 90) dead = true;
-        return pseudo();
+        pseudoBars();
+        return;
       }
       zeroStreak = 0;
       dead = false;
-      var v = s / (VBINS * 255);
-      return Math.pow(v, 0.72);   /* 提一点小音量时的可见度 */
+
+      for (var i = 0; i < BARS; i++) {
+        var a = binEdge(i, BARS), b = binEdge(i + 1, BARS);
+        if (b <= a) b = a + 1;
+        var s = 0, top = 0;
+        for (var j = a; j < b && j < abuf.length; j++) { s += abuf[j]; if (abuf[j] > top) top = abuf[j]; }
+        /* 取「均值 + 峰值」的折中：纯均值太温吞，纯峰值太跳 */
+        var v = (s / (b - a) * 0.45 + top * 0.55) / 255;
+        /* 高频天生低，不做倾斜右边会一直贴地 */
+        v *= 1 + 1.15 * (i / BARS);
+        barRaw[i] = Math.max(0, Math.min(1, Math.pow(v, 1.25)));
+      }
     } catch (e) {
       dead = true;
-      return pseudo();
+      pseudoBars();
     }
+  }
+
+  /* 圆角矩形：Chrome 有 roundRect，老浏览器退回手画 */
+  function rrect(x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h / 2));
+    g.beginPath();
+    if (g.roundRect) { g.roundRect(x, y, w, h, r); return; }
+    g.moveTo(x + r, y);
+    g.arcTo(x + w, y, x + w, y + h, r);
+    g.arcTo(x + w, y + h, x, y + h, r);
+    g.arcTo(x, y + h, x, y, r);
+    g.arcTo(x, y, x + w, y, r);
+    g.closePath();
   }
 
   /* ---------- 樱花 ---------- */
@@ -254,26 +316,43 @@
     var dt = tPrev ? Math.min(now - tPrev, 60) : 16;
     tPrev = now;
 
-    var v = level();
-    /* 一阶低通。频谱本身有 smoothingTimeConstant=.8，但 pow(0.72)
-       会把小波动一起放大，画出来像心电图；再过一道才像山。 */
-    smooth = smooth ? smooth * 0.55 + v * 0.45 : v;
-    var prev = hist[POINTS - 1];
-    hist.push(smooth);
-    hist.shift();
+    var n = barN();
+    if (n !== BARS) {                       /* 宽度变了就重建柱子 */
+      BARS = n;
+      barRaw = []; barLv = []; barPk = [];
+      for (var z = 0; z < BARS; z++) { barRaw.push(0); barLv.push(0); barPk.push(0); }
+    }
+
+    pull();
+
+    /* 一阶低通：analyser 自带 smoothing，但 pow() 会把小波动一起放大，
+       画出来像心电图；再过一道才像山。峰值帽只升不快降，留住「刚刚那一击」。 */
+    var sum = 0, tallest = 0, tallX = 0;
+    for (var i = 0; i < BARS; i++) {
+      var v = barRaw[i];
+      barLv[i] = barLv[i] ? barLv[i] * 0.55 + v * 0.45 : v;
+      if (barLv[i] > barPk[i]) barPk[i] = barLv[i];
+      else barPk[i] = Math.max(barLv[i], barPk[i] - dt * 0.00055);
+      sum += barLv[i];
+      if (barLv[i] > tallest) { tallest = barLv[i]; tallX = i; }
+    }
+    var avg = sum / BARS;
+    var prev = smooth;
+    smooth = smooth ? smooth * 0.45 + avg * 0.55 : avg;
 
     /* 电平 → 屏幕 y 的映射，全用容器真实高度算。
-       PAD_T / PAD_B 是上下留白：底部留 8px 让基线不贴着裁切边，
-       顶部留 10px 让满电平的峰尖不被切到。
-       但矮屏（1366×768 只剩 31px）上固定 18px 留白会把动态范围吃掉三分之二，
-       所以留白跟着高度缩，比例不变。 */
-    var PAD_T = Math.min(10, VH * 0.13), PAD_B = Math.min(8, VH * 0.10);
+       留白跟着高度缩：矮屏（1366×768 只剩 26px）上固定 18px 留白
+       会把动态范围吃掉三分之二。倒影要占一点底部，所以 PAD_B 给得比原来宽。 */
+    var PAD_T = Math.min(10, VH * 0.13), PAD_B = Math.min(16, Math.max(7, VH * 0.20));
     var range = Math.max(8, VH - PAD_T - PAD_B);
-    var yOf = function (lv) { return VH - PAD_B - lv * range; };
+    var base = VH - PAD_B;
+    var yOf = function (lv) { return base - lv * range; };
 
-    /* 峰顶飘樱花：正在上涨、且过了阈值、且跟上一朵拉开距离 */
-    if (smooth > 0.55 && smooth > prev && now - lastPeak > 260) {
-      spawnPetal(W - 4, yOf(smooth) - 6, smooth);
+    /* 峰顶飘樱花：正在上涨、过了阈值、且跟上一朵拉开距离
+       （从最高的那根柱顶冒出来，不是固定贴在最右边） */
+    if (smooth > 0.5 && smooth > prev && now - lastPeak > 260) {
+      spawnPetal(tallest > 0.05 ? (tallX + 0.5) * (W / BARS) : W - 4,
+                 yOf(tallest) - 6, tallest);
       lastPeak = now;
     }
 
@@ -288,43 +367,71 @@
 
     g.clearRect(0, 0, W, VH);
 
-    /* 曲线：二次贝塞尔中点法，比直线连起来柔和 */
-    var pts = [];
-    for (var j = 0; j < POINTS; j++) {
-      pts.push({ x: j / (POINTS - 1) * W, y: yOf(hist[j]) });
+    var gap = W > 460 ? 3 : 2;
+    var bw = Math.max(2, (W - gap * (BARS - 1)) / BARS);
+    var rad = Math.min(bw / 2, 3);
+
+    /* 柱子渐变：顶部亮粉、底部深梅，比单一色更有体积感 */
+    var grad = g.createLinearGradient(0, yOf(1), 0, base);
+    grad.addColorStop(0, colors.fillTop);
+    grad.addColorStop(1, colors.line);
+
+    /* 倒影：基线下面一段压扁的同色柱子，很淡。
+       这条线把整排柱子「钉」在地上，不然矮屏上看上去像飘着的一排色块。 */
+    g.save();
+    g.globalAlpha = 0.16;
+    g.fillStyle = colors.line;
+    for (var r = 0; r < BARS; r++) {
+      var rb = Math.max(1.5, barLv[r] * range * 0.55);
+      rrect(r * (bw + gap), base, bw, Math.min(PAD_B, rb), rad);
+      g.fill();
+    }
+    g.restore();
+
+    /* 基线：一条极淡的发丝线（不是结构线，只是让柱子有落脚点） */
+    g.globalAlpha = 0.22;
+    g.fillStyle = colors.line;
+    g.fillRect(0, base, W, 1);
+    g.globalAlpha = 1;
+
+    for (var q = 0; q < BARS; q++) {
+      var x = q * (bw + gap);
+      var bh = Math.max(1.5, barLv[q] * range);
+      rrect(x, base - bh, bw, bh, rad);
+      g.fillStyle = grad;
+      g.fill();
     }
 
-    g.beginPath();
-    g.moveTo(pts[0].x, VH);
-    g.lineTo(pts[0].x, pts[0].y);
-    for (var m = 1; m < POINTS; m++) {
-      var a = pts[m - 1], b = pts[m];
-      g.quadraticCurveTo(a.x, a.y, (a.x + b.x) / 2, (a.y + b.y) / 2);
+    /* 峰值帽：留住刚刚那一击，慢慢往下掉。
+       矮屏（1366×768 只有 26px，动态范围不到 20px）上帽子和柱顶挤在一起，
+       看起来像一排断掉的虚线，所以太矮就干脆不画。 */
+    if (range >= 22) {
+      g.fillStyle = colors.line;
+      g.globalAlpha = 0.75;
+      for (var c2 = 0; c2 < BARS; c2++) {
+        var pk = barPk[c2];
+        if (pk < 0.08) continue;
+        var cy = base - Math.max(1.5, pk * range) - 2.5;
+        if (cy < 0) continue;
+        rrect(c2 * (bw + gap), cy, bw, 2, Math.min(bw / 2, 1));
+        g.fill();
+      }
+      g.globalAlpha = 1;
     }
-    g.lineTo(pts[POINTS - 1].x, pts[POINTS - 1].y);
-    g.lineTo(W, VH);
-    g.closePath();
 
-    var grad = g.createLinearGradient(0, PAD_T, 0, yOf(0));
-    grad.addColorStop(0, hexA(colors.fillTop, 0.42));
-    grad.addColorStop(1, hexA(colors.fillTop, 0.02));
-    g.fillStyle = grad;
-    g.fill();
+    /* 左右两端淡出：不然整排柱子是被「切」在左右边上的，
+       看上去像一张条形图，而不是从页面里浮出来的一条频谱。 */
+    g.globalCompositeOperation = 'destination-out';
+    var fade = g.createLinearGradient(0, 0, W, 0);
+    fade.addColorStop(0, 'rgba(0,0,0,1)');
+    fade.addColorStop(0.07, 'rgba(0,0,0,0)');
+    fade.addColorStop(0.93, 'rgba(0,0,0,0)');
+    fade.addColorStop(1, 'rgba(0,0,0,1)');
+    g.fillStyle = fade;
+    g.fillRect(0, 0, W, VH);
+    g.globalCompositeOperation = 'source-over';
 
-    g.beginPath();
-    g.moveTo(pts[0].x, pts[0].y);
-    for (var n = 1; n < POINTS; n++) {
-      var c = pts[n - 1], d = pts[n];
-      g.quadraticCurveTo(c.x, c.y, (c.x + d.x) / 2, (c.y + d.y) / 2);
-    }
-    g.lineTo(pts[POINTS - 1].x, pts[POINTS - 1].y);
-    g.strokeStyle = colors.line;
-    /* 1.6 → 2：容器矮到 80px 时 1.6px 的线在 2 倍屏上几乎糊掉 */
-    g.lineWidth = 2;
-    g.lineJoin = 'round';
-    g.stroke();
-
-    for (var q = 0; q < petals.length; q++) drawPetal(petals[q]);
+    for (var e = 0; e < petals.length; e++) drawPetal(petals[e]);
   }
 
   /* #rrggbb -> rgba()，支持三位简写 */
@@ -356,8 +463,10 @@
     readColors();
     wire();
     /* 顺序不能反：fit() 先把真实高度写进 --viz-h，
-       resize() 才拿得到它去建画布和绘制坐标系。 */
-    fit();
+       resize() 才拿得到它去建画布和绘制坐标系。
+       fit() 给 0 就是「这块屏放不下」（窄屏 / 起始页一格不剩）：
+       干脆不开始，别挂个 0 高度的画布空转。 */
+    if (!fit()) return;
     resize();
     /* 重新开始就别带着上一次的降级状态 */
     dead = false; zeroStreak = 0; probeGap = 0;
@@ -405,7 +514,7 @@
     if (scrollTimer) { clearTimeout(scrollTimer); scrollTimer = 0; }
     if (box) box.classList.remove('on');
     petals.length = 0;
-    for (var i = 0; i < POINTS; i++) hist[i] = 0;
+    for (var i = 0; i < BARS; i++) { barLv[i] = 0; barPk[i] = 0; barRaw[i] = 0; }
     dead = false; zeroStreak = 0; probeGap = 0; smooth = 0;
   }
 
@@ -419,8 +528,9 @@
   function onResize() {
     if (window.innerWidth === lastW && window.innerHeight === lastH) return;
     lastW = window.innerWidth; lastH = window.innerHeight;
-    if (running) fit();
-    resize();
+    if (running) { fit(); resize(); return; }
+    /* 之前放不下（窄屏 / 起始页挤满）没开始，窗口拉大了要自己长出来 */
+    if (audio && !audio.paused) start();
   }
 
   /* 可取多次：路由从子页面回起始页时，.start 是 importNode 搬进来的全新节点，
