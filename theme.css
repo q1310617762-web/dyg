@@ -1677,6 +1677,16 @@ html[data-theme="ly"] .tag.on {
   box-shadow: none;
 }
 
+/* 文章行里的分类标签是裸 span（.row-tags span），不在上面的名单里。
+   基础样式只有一层淡底，白卡上几乎看不见，补成小描边块。 */
+html[data-theme="ly"] .row-tags span {
+  padding: 1px 7px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 7px;
+  color: var(--text-2);
+}
+
 /* ---------- 导航胶囊：玻璃 → 实心白块 ---------- */
 html[data-theme="ly"] .nav-inner {
   background: #fff;
