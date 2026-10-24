@@ -8,16 +8,21 @@
 <meta name="color-scheme" content="light" />
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
-<link rel="stylesheet" href="theme.css?v=20261024152142" />
+<link rel="stylesheet" href="theme.css?v=20261024160628" />
 <script>
 /* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
 (function () {
   try {
     /* 只认已知皮肤 */
-    var OK = { miko: 1, organic: 1, dark: 1, neu: 1 };
+    var OK = { miko: 1, organic: 1, dark: 1, ly: 1 };
 
     /* 本次会话手动选过，就听用户的 */
     var t = sessionStorage.getItem('dyg-theme');
+
+    /* 旧 id 迁移：neu（新拟物）已被「乐园」取代，soft 已被「八重」取代。
+       不映射的话，上一版选过第四套的人一跳页就被判成无效、退回时段默认。 */
+    var ALIAS = { neu: 'ly', soft: 'miko' };
+    if (ALIAS[t]) t = ALIAS[t];
 
     /* 否则按时段决定默认皮肤：
        06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
@@ -86,10 +91,10 @@
 <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261024152142"></script>
-<script src="assets/petals.js?v=20261024152142"></script>
-<script src="assets/starfield.js?v=20261024152142"></script>
-<script src="ui.js?v=20261024152142"></script>
+<script src="cursor.js?v=20261024160628"></script>
+<script src="assets/petals.js?v=20261024160628"></script>
+<script src="assets/starfield.js?v=20261024160628"></script>
+<script src="ui.js?v=20261024160628"></script>
 <script>
 (function () {
   var wall = document.querySelector('[data-wall]');
@@ -186,6 +191,6 @@ var ITEMS = [
   render();
 })();
 </script>
-<script src="fx.js?v=20261024152142"></script>
+<script src="fx.js?v=20261024160628"></script>
 </body>
 </html>

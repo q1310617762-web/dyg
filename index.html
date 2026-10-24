@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261024152142" />
+<link rel="stylesheet" href="theme.css?v=20261024160628" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -26,10 +26,18 @@
 (function () {
   try {
     /* 只认已知皮肤 */
-    var OK = { miko: 1, organic: 1, dark: 1, neu: 1 };
+    /* neu（新拟物）已经被「乐园」取代，soft 已经被「八重」取代。
+       旧会话里还存着这两个 id，认下来再换成新的，
+       否则下面 !OK[t] 会把它判成无效、退回时段默认。 */
+    var ALIAS = { neu: 'ly', soft: 'miko' };
+    var OK = { miko: 1, organic: 1, dark: 1, ly: 1 };
 
     /* 本次会话手动选过，就听用户的 */
     var t = sessionStorage.getItem('dyg-theme');
+
+    /* 映射必须在读出来之后 —— 写在前面的话 t 还没赋值（var 提升成
+       undefined），整个 ALIAS 等于没写，旧 id 会一路走到下面按无效处理 */
+    if (ALIAS[t]) t = ALIAS[t];
 
     /* 否则按时段决定默认皮肤：
        06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
@@ -76,7 +84,7 @@
         <span class="th-i th-organic"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.2 2.8c0 5.2-3.6 8.2-7.1 8.2-1.3 0-2.4-.4-3.2-1.2C2 6.6 5.2 2.8 13.2 2.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.6 13.4C5 9.8 7.9 7.2 11.4 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg></span>
         <span class="th-i th-miko"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><g fill="currentColor"><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(72 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(144 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(216 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(288 8 8)"/><circle cx="8" cy="8" r=".95" fill="none" stroke="currentColor" stroke-width="1.1"/></g></svg></span>
         <span class="th-i th-moon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.6 9.8A5.9 5.9 0 0 1 6.2 2.4a5.9 5.9 0 1 0 7.4 7.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg></span>
-        <span class="th-i th-sun"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.1" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.1v1.7M8 13.2v1.7M1.1 8h1.7M13.2 8h1.7M3.1 3.1l1.2 1.2M11.7 11.7l1.2 1.2M12.9 3.1l-1.2 1.2M4.3 11.7l-1.2 1.2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></span>
+        <span class="th-i th-ly"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.1l5.4 5.9L8 13.9 2.6 8z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 2.1v11.8M2.6 8h10.8" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/></svg></span>
       </button>
 
       <div class="modesw" data-at="start" role="group" aria-label="切换形态">
@@ -350,13 +358,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261024152142"></script>
-<script src="assets/petals.js?v=20261024152142"></script>
-<script src="assets/starfield.js?v=20261024152142"></script>
-<script src="ui.js?v=20261024152142"></script>
-<script src="home.js?v=20261024152142"></script>
-<script src="assets/miko-talk.js?v=20261024152142"></script>
-<script src="assets/viz.js?v=20261024152142"></script>
+<script src="cursor.js?v=20261024160628"></script>
+<script src="assets/petals.js?v=20261024160628"></script>
+<script src="assets/starfield.js?v=20261024160628"></script>
+<script src="ui.js?v=20261024160628"></script>
+<script src="home.js?v=20261024160628"></script>
+<script src="assets/miko-talk.js?v=20261024160628"></script>
+<script src="assets/viz.js?v=20261024160628"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -379,6 +387,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261024152142"></script>
+<script src="fx.js?v=20261024160628"></script>
 </body>
 </html>

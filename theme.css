@@ -1577,241 +1577,274 @@ html.reveal .rv.in { opacity: 1; transform: none; }
 .th-btn:active { background: var(--layer-3); color: var(--text); }
 
 /* ============================================================
-   16. 皮肤二：Neumorphism（新拟物 / Soft UI）
+   16. 皮肤二：乐园漫记（Arcade）
    ────────────────────────────────────────────────────────────
-   为什么是这一套：全站骨架没变，只把「表面」的物理规则换掉。
-   深色皮肤用「白上加白」的半透明叠层表示层次，
-   新拟物不用叠层，用「同一块材料的凸起与凹陷」——双重阴影。
+   风格取自《崩坏：星穹铁道》差分宇宙「乐园漫记」界面。
+   骨架沿用全站，只换表面规则。四条硬规则：
 
-   三条硬规则：
-   1. 光源锁死左上：亮阴影永远 -X/-Y，暗阴影永远 +X/+Y，任何组件都不许反过来。
-   2. 按钮不能浮起：:active 从外凸转为内凹（inset），禁止 translate/scale。
-   3. hover 阴影要「缩小」不是放大——手指靠近是遮光，不是打光。
+   1. 描边就是结构：一律 2.5–3px 纯黑。1px 发丝线在这套里等于没画。
+   2. 投影不带模糊：5px 5px 0。按下时 translate(3px,3px) 把投影吃掉，
+      不要用 inset —— 凹陷是拟物的语言，这套是硬边，位移才对。
+   3. 两个黄绿必须分开用（这是最容易翻车的地方）：
+        --accent    #4a7300 深黄绿，只做文字/链接：白底 5.61:1、黄绿底 4.80:1
+        --acc-fill  #cdf03c 荧光黄绿，只做填充：   压黑字 14.15:1
+     混用的话，荧光黄绿当文字在白底上只有 1.5:1，等于看不见。
+   4. 圆角收到 10–12px：999px 的胶囊跟硬边气质打架。
+
+   这套不接玻璃模糊（--surface-glass 全部给不透明色）。
    ============================================================ */
-html[data-theme="neu"] {
-  --bg:        #e0e5ec;
-  --bg-lift:   #e8edf3;
-  --card:      #e0e5ec;
-  --card-2:    #e6ebf1;
+html[data-theme="ly"] {
+  --bg:        #e9f2c4;
+  --bg-lift:   #f3f8dc;
+  --card:      #ffffff;
+  --card-2:    #fbfdea;
 
-  --text:      #2f3437;
-  --text-2:    #4e565f;
-  --text-3:    #6b7280;   /* 4.9:1 —— 浅底上仍过 AA */
+  --text:      #141414;
+  --text-2:    #3a3a34;
+  --text-3:    #5c5d50;   /* 白底 6.66:1，黄绿底 5.70:1 */
 
-  --accent:    #6d5dfc;
+  --accent:    #4a7300;
   --on-accent: #ffffff;
+  --acc-fill:  #cdf03c;   /* 只配 --text 用 */
 
-  --line:      rgba(163, 177, 198, .38);
-  --line-2:    rgba(163, 177, 198, .6);
+  --line:      rgba(20, 20, 20, .22);
+  --line-2:    rgba(20, 20, 20, .44);
 
-  /* 浅底上的叠层必须反过来：用冷灰蓝，不是白 */
-  --layer-1:   rgba(163, 177, 198, .18);
-  --layer-2:   rgba(163, 177, 198, .30);
-  --layer-3:   rgba(163, 177, 198, .42);
-  --hair:      rgba(255, 255, 255, .95);
-  --hair-2:    rgba(163, 177, 198, .55);
+  --layer-1:   rgba(20, 20, 20, .05);
+  --layer-2:   rgba(20, 20, 20, .09);
+  --layer-3:   rgba(20, 20, 20, .14);
 
-  --surface-glass:   #e0e5ec;
-  --surface-panel:   #e8edf3;
-  --surface-scrim:   rgba(224, 229, 236, .72);
-  --surface-overlay: rgba(228, 233, 239, .97);
+  --surface-glass:   #ffffff;
+  --surface-panel:   #ffffff;
+  --surface-scrim:   rgba(233, 242, 196, .82);
+  --surface-overlay: #ffffff;
   --surface-start:   transparent;
 
-  --shadow-color: #b8bcc2;
+  --ink:        #141414;
+  --hard:       5px 5px 0 var(--ink);
+  --hard-sm:    3px 3px 0 var(--ink);
 
-  /* 双光源三档：凸起 / 小凸起 / 内凹 */
-  --neu-up:    8px 8px 16px #b8bcc2, -8px -8px 16px #ffffff;
-  --neu-up-sm: 4px 4px 8px #b8bcc2, -4px -4px 8px #ffffff;
-  --neu-in:    inset 4px 4px 8px #b8bcc2, inset -4px -4px 8px #ffffff;
-  --neu-in-deep: inset 6px 6px 12px #b8bcc2, inset -6px -6px 12px #ffffff;
+  --shadow-color: #141414;
+  --shadow:      var(--hard);
+  --shadow-sm:   var(--hard-sm);
+  --shadow-soft: var(--hard);
 
-  --shadow:    var(--neu-up);
-  --shadow-sm: var(--neu-up-sm);
-
-  /* 胶囊一律收成 18px 软块：999px 的胶囊跟「同一种材料」的气质打架 */
-  --r-pill:    18px;
-  --r-card:    20px;
-  --r-tile:    16px;
+  --r-pill:    10px;
+  --r-card:    12px;
+  --r-tile:    10px;
 }
 
-/* ---------- 底色：撤掉环境光，只留一块干净表面 ---------- */
-html[data-theme="neu"] body::before,
-html[data-theme="neu"] body::after { display: none; }
-html[data-theme="neu"] body { background: #e0e5ec; }
-html[data-theme="neu"] .start { background: transparent; }
+/* ---------- 底色：黄绿渐变 + 紫点网纹 ----------
+   网纹和渐变一起挂在 html 上，body 保持透明，
+   否则 body 那层会把渐变盖掉。fixed 是为了滚动时背景不动。 */
+html[data-theme="ly"] {
+  background:
+    radial-gradient(rgba(139, 92, 246, .18) 1.15px, transparent 1.15px) 0 0 / 13px 13px,
+    radial-gradient(115% 85% at 78% 6%, rgba(205, 240, 60, .50), transparent 60%),
+    linear-gradient(168deg, #edf5c9, #d6e7a2);
+  background-attachment: fixed;
+}
+html[data-theme="ly"] body { background: transparent; }
+html[data-theme="ly"] body::before,
+html[data-theme="ly"] body::after { display: none; }
+html[data-theme="ly"] .start { background: transparent; }
 
-/* ---------- 导航胶囊：从玻璃改成一块实心凸起面板 ---------- */
-html[data-theme="neu"] .nav-inner {
-  background: #e0e5ec;
+/* ---------- 通用：卡片的黑边 + 硬投影 ---------- */
+html[data-theme="ly"] .g-item,
+html[data-theme="ly"] .row,
+html[data-theme="ly"] .tag,
+html[data-theme="ly"] .chip,
+html[data-theme="ly"] .tag-cloud a,
+html[data-theme="ly"] .three > *,
+html[data-theme="ly"] .toc,
+html[data-theme="ly"] .prose blockquote,
+html[data-theme="ly"] .lb-btn {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: var(--hard-sm);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .g-item:hover,
+  html[data-theme="ly"] .row:hover { box-shadow: var(--hard); transform: translate(-2px, -2px); }
+  html[data-theme="ly"] .tag:hover,
+  html[data-theme="ly"] .chip:hover,
+  html[data-theme="ly"] .tag-cloud a:hover { background: var(--acc-fill); }
+}
+html[data-theme="ly"] .chip.on,
+html[data-theme="ly"] .tag.on {
+  background: var(--ink);
+  color: var(--acc-fill);
+  box-shadow: none;
+}
+
+/* ---------- 导航胶囊：玻璃 → 实心白块 ---------- */
+html[data-theme="ly"] .nav-inner {
+  background: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: var(--hard-sm);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: var(--neu-up);
-}
-html[data-theme="neu"] .nav-links a {
-  background: transparent;
-  box-shadow: none;
-  transition: box-shadow .3s ease-in-out, color .3s ease-in-out;
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .nav-links a:hover {
-    background: transparent;
+  html[data-theme="ly"] .nav-links a:hover { background: var(--acc-fill); color: var(--text); }
+}
+html[data-theme="ly"] .nav-links a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--acc-fill);
+}
+html[data-theme="ly"] .nav-links a:active { transform: translate(2px, 2px); }
+html[data-theme="ly"] .nav-prog { background: rgba(20, 20, 20, .16); }
+html[data-theme="ly"] .nav-prog i { background: var(--acc-fill); }
+
+/* ---------- 形态切换 / 皮肤按钮 / 播放器 ---------- */
+html[data-theme="ly"] .modesw,
+html[data-theme="ly"] .th-btn,
+html[data-theme="ly"] .np-btn,
+html[data-theme="ly"] .np-meta,
+html[data-theme="ly"] .burger {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: var(--hard-sm);
+}
+html[data-theme="ly"] .modesw-thumb { background: var(--acc-fill); border: 2px solid var(--ink); }
+/* 滑块是荧光黄绿，选中的那个图标必须是黑字。
+   基础规则给的是 --on-accent（白），压在这块黄绿上只有 1.5:1，
+   而且起始页用的是 <button> 不是 <a>，所以两条都要写。 */
+html[data-theme="ly"] .modesw a.on,
+html[data-theme="ly"] .modesw button.on,
+html[data-theme="ly"] .modesw a[aria-current="page"],
+html[data-theme="ly"] .modesw button[aria-current="page"] { color: var(--text); }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .th-btn:hover,
+  html[data-theme="ly"] .np-btn:hover { background: var(--acc-fill); }
+}
+/* 按下 = 位移吃掉投影。这套不用 inset，凹陷是拟物的语言 */
+html[data-theme="ly"] .th-btn:active,
+html[data-theme="ly"] .np-btn:active,
+html[data-theme="ly"] .burger:active { transform: translate(3px, 3px); box-shadow: none; }
+html[data-theme="ly"] .menu { background: #fff; border: 2.5px solid var(--ink); box-shadow: var(--hard); }
+html[data-theme="ly"] .menu-link { background: transparent; }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .menu-link:hover { background: var(--acc-fill); }
+}
+html[data-theme="ly"] .menu-link[aria-current="page"] { background: var(--ink); color: var(--acc-fill); }
+html[data-theme="ly"] .np-trk.on { background: var(--acc-fill); color: var(--text); }
+/* 播放键基础样式写死了 50% 正圆，硬边这套要收成圆角方块 */
+html[data-theme="ly"] .np-btn { border-radius: var(--r-pill); }
+
+/* ---------- 搜索 ---------- */
+html[data-theme="ly"] .search {
+  background: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: var(--hard);
+}
+html[data-theme="ly"] .search:focus-within { box-shadow: var(--hard); }
+html[data-theme="ly"] .eng-menu { background: #fff; border: 2.5px solid var(--ink); box-shadow: var(--hard-sm); }
+html[data-theme="ly"] .eng-menu button.on,
+html[data-theme="ly"] .eng-menu button[aria-current="true"] { background: var(--acc-fill); color: var(--text); }
+html[data-theme="ly"] .search kbd { background: var(--acc-fill); border: 2px solid var(--ink); color: var(--text); }
+
+/* ---------- 起始页刊头：粗黑 + 黄绿硬投影 ---------- */
+html[data-theme="ly"] .st-mast { --mast-font: "Arial Black", "Segoe UI Black", Impact, Georgia, serif; }
+html[data-theme="ly"] .st-hello {
+  color: var(--ink);
+  text-shadow: 4px 4px 0 var(--acc-fill);
+}
+html[data-theme="ly"] .st-kicker { color: var(--text-3); }
+html[data-theme="ly"] .mast-petals { display: none; }
+
+/* ---------- 收藏四列 ---------- */
+html[data-theme="ly"] .bm-g {
+  background: rgba(255, 255, 255, .72);
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard-sm);
+  /* 基础样式里 .bm-g 无边框无内边距。加了 2.5px 边框之后，
+     最后一行正好贴着描边（量出来差 0.5px），看起来像被裁了一半，
+     所以补一圈内边距把它顶回来。上下合计只给 9px ——
+     1280×720 这种矮屏，收藏区每长 16px 就会压到页脚上去。 */
+  padding: 4px 9px 5px;
+}
+/* 让每张卡按自己的条目数收高，不要被 grid 拉成一样高 ——
+   拉齐之后条目少的栏底下会空出一大块（素材只有 4 条时要空 200px）。 */
+html[data-theme="ly"] .start-core .bm-groups { align-items: start; }
+html[data-theme="ly"] .bm-l { margin-left: 0; }
+html[data-theme="ly"] .bm-l {
+  color: var(--text-2);
+  /* 基础样式只过渡了 color/background，这里多了投影和位移，得一起写上，
+     否则 hover 是硬切的（第 5 条手感红线：具体属性，不用 all） */
+  transition: color .16s var(--ease), background .16s var(--ease),
+              box-shadow .16s var(--ease), transform .12s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .bm-l:hover {
+    background: var(--acc-fill);
     color: var(--text);
-    box-shadow: var(--neu-up-sm);       /* hover 阴影缩小 */
+    box-shadow: var(--hard-sm);
+    transform: translate(-1px, -1px);
   }
 }
-html[data-theme="neu"] .nav-links a[aria-current="page"] {
-  background: transparent;
-  color: var(--accent);
-  box-shadow: var(--neu-in);            /* 当前页 = 按下去的凹槽 */
+html[data-theme="ly"] .bm-l i {
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--text);
 }
-html[data-theme="neu"] .nav-links a:active { background: transparent; box-shadow: var(--neu-in); }
+html[data-theme="ly"] .bm-l:active { transform: translate(2px, 2px); box-shadow: none; }
+html[data-theme="ly"] .start-foot kbd { background: #fff; border: 2px solid var(--ink); color: var(--text); }
 
-/* ---------- 形态切换：本身就是一个凹槽 + 一颗凸起的滑块 ---------- */
-html[data-theme="neu"] .modesw {
-  background: #e0e5ec;
-  box-shadow: var(--neu-in);
+/* ---------- 时钟：三张卡，中间反色 ----------
+   基础样式给的是 22px 圆角，比导航（10）和卡片（12）都软一档；
+   硬边这套里圆角只有两档，所以收到 --r-card。 */
+html[data-theme="ly"] .tc,
+html[data-theme="ly"] .tc-h,
+html[data-theme="ly"] .tc-s {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard-sm);
 }
-html[data-theme="neu"] .modesw-thumb {
-  background: #e0e5ec;
-  box-shadow: 2px 2px 5px #b8bcc2, -2px -2px 5px #ffffff;
+html[data-theme="ly"] .tc-m {
+  background: var(--ink);
+  border-color: var(--ink);
+  border-radius: var(--r-card);
 }
-html[data-theme="neu"] .modesw a { color: var(--text-3); }
-html[data-theme="neu"] .modesw a.on,
-html[data-theme="neu"] .modesw a[aria-current="page"] { color: var(--accent); }
-
-/* ---------- 播放器 ---------- */
-html[data-theme="neu"] .np-btn {
-  background: #e0e5ec;
-  box-shadow: var(--neu-up-sm);
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .np-btn:hover {
-    background: #e0e5ec;
-    box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff;
-  }
-}
-html[data-theme="neu"] .np-btn:active { box-shadow: var(--neu-in); transform: none; }
-html[data-theme="neu"] .np-meta { background: transparent; box-shadow: none; }
-html[data-theme="neu"] .np-meta:hover { background: transparent; }
-html[data-theme="neu"] .np-menu {
-  background: #e8edf3;
-  box-shadow: var(--neu-up);
-}
-html[data-theme="neu"] .np-trk { background: transparent; }
-html[data-theme="neu"] .np-trk:hover { background: rgba(163, 177, 198, .18); }
-html[data-theme="neu"] .np-trk.on { background: rgba(109, 93, 252, .10); box-shadow: var(--neu-in); }
-html[data-theme="neu"] .nav-prog { background: rgba(163, 177, 198, .35); }
-html[data-theme="neu"] .nav-prog i { background: var(--accent); }
-
-/* ---------- 汉堡与抽屉 ---------- */
-html[data-theme="neu"] .burger { background: #e0e5ec; box-shadow: var(--neu-up-sm); }
-html[data-theme="neu"] .burger:active { box-shadow: var(--neu-in); }
-html[data-theme="neu"] .menu { background: #e8edf3; box-shadow: var(--neu-up); }
-html[data-theme="neu"] .menu-link { background: transparent; }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .menu-link:hover { background: transparent; box-shadow: var(--neu-up-sm); }
-}
-html[data-theme="neu"] .menu-link:active { background: transparent; box-shadow: var(--neu-in); }
-html[data-theme="neu"] .menu-link[aria-current="page"] { background: transparent; box-shadow: var(--neu-in); color: var(--accent); }
-
-/* ---------- 起始页：搜索框是一条凹槽 ---------- */
-html[data-theme="neu"] .search {
-  background: #e0e5ec;
-  box-shadow: var(--neu-in-deep);
-}
-/* focus 时内阴影「变浅」，暗示通道打开——不能加深 */
-html[data-theme="neu"] .search:focus-within {
-  box-shadow: inset 2px 2px 4px #b8bcc2, inset -2px -2px 4px #ffffff;
-}
-html[data-theme="neu"] .eng-menu { background: #e8edf3; box-shadow: var(--neu-up); }
-html[data-theme="neu"] .eng-menu button { background: transparent; }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .eng-menu button:hover { background: transparent; box-shadow: var(--neu-up-sm); }
-}
-html[data-theme="neu"] .eng-menu button:active { background: transparent; box-shadow: var(--neu-in); }
-html[data-theme="neu"] .search kbd { background: rgba(163, 177, 198, .25); }
-
-/* ---------- 起始页：收藏列表 ---------- */
-html[data-theme="neu"] .bm-l { background: transparent; }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .bm-l:hover { background: transparent; box-shadow: var(--neu-up-sm); }
-}
-html[data-theme="neu"] .bm-l:active { background: transparent; box-shadow: var(--neu-in); }
-html[data-theme="neu"] .bm-l i { background: #e0e5ec; box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff; }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .bm-l:hover i { background: var(--accent); color: var(--on-accent); box-shadow: none; }
-}
-html[data-theme="neu"] .start-foot kbd { background: rgba(163, 177, 198, .25); }
-
-/* ---------- 卡片：瓦片、文章行、标签 ---------- */
-html[data-theme="neu"] .g-item,
-html[data-theme="neu"] .row,
-html[data-theme="neu"] .tag,
-html[data-theme="neu"] .chip,
-html[data-theme="neu"] .tag-cloud a,
-html[data-theme="neu"] .three > * { background: #e0e5ec; box-shadow: var(--neu-up-sm); }
-
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .g-item:hover { box-shadow: var(--neu-up); }
-  html[data-theme="neu"] .tag:hover,
-  html[data-theme="neu"] .chip:hover,
-  html[data-theme="neu"] .tag-cloud a:hover { background: #e0e5ec; box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff; }
-  html[data-theme="neu"] .arow:hover { background: transparent; box-shadow: var(--neu-up-sm); }
-}
-html[data-theme="neu"] .chip.on,
-html[data-theme="neu"] .tag.on { background: #e0e5ec; color: var(--accent); box-shadow: var(--neu-in); }
-html[data-theme="neu"] .g-item img { border-radius: inherit; }
+/* 底部那行「HOURS / MINUTES」原本是 #9aa1ab，白底只有 2.6:1，
+   7.5px 的字这样等于看不见 */
+html[data-theme="ly"] .tc-f { color: var(--text-3); }
+html[data-theme="ly"] .tc-m .tc-n { color: var(--acc-fill); }
+html[data-theme="ly"] .tc-m .tc-k { color: rgba(255, 255, 255, .68); }
+html[data-theme="ly"] .tc-m .tc-f { color: rgba(255, 255, 255, .48); }
 
 /* ---------- 按钮 ---------- */
-html[data-theme="neu"] .btn { background: var(--accent); color: var(--on-accent); box-shadow: 6px 6px 12px #b8bcc2, -6px -6px 12px #ffffff; }
-html[data-theme="neu"] .btn:active { box-shadow: inset 3px 3px 7px rgba(0, 0, 0, .22), inset -3px -3px 7px rgba(255, 255, 255, .18); }
-html[data-theme="neu"] .btn-ghost { background: #e0e5ec; color: var(--text-2); box-shadow: var(--neu-up-sm); }
+html[data-theme="ly"] .btn {
+  background: var(--acc-fill);
+  color: var(--text);
+  border: 2.5px solid var(--ink);
+  box-shadow: var(--hard-sm);
+}
+html[data-theme="ly"] .btn:active { transform: translate(3px, 3px); box-shadow: none; }
+html[data-theme="ly"] .btn-ghost { background: #fff; color: var(--text-2); }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .btn-ghost:hover { background: #e0e5ec; color: var(--text); box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff; }
+  html[data-theme="ly"] .btn-ghost:hover { background: var(--acc-fill); color: var(--text); }
 }
-html[data-theme="neu"] .btn-ghost:active { box-shadow: var(--neu-in); }
 
-/* ---------- 正文与其他块 ---------- */
-html[data-theme="neu"] .prose blockquote { background: #e0e5ec; box-shadow: var(--neu-in); }
-html[data-theme="neu"] .prose a { color: var(--accent); border-bottom-color: rgba(109, 93, 252, .35); }
-html[data-theme="neu"] .prose code { background: rgba(163, 177, 198, .28); color: var(--text); }
-html[data-theme="neu"] .toc { background: #e0e5ec; box-shadow: var(--neu-up-sm); }
-html[data-theme="neu"] .toc a { background: transparent; }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .toc a:hover { background: transparent; box-shadow: var(--neu-up-sm); }
+/* ---------- 正文 ---------- */
+html[data-theme="ly"] .prose a { color: var(--accent); border-bottom-color: rgba(74, 115, 0, .35); }
+html[data-theme="ly"] .prose code { background: var(--acc-fill); color: var(--text); }
+html[data-theme="ly"] .prose blockquote { border-left: 5px solid var(--acc-fill); }
+html[data-theme="ly"] .toc a.on { background: var(--acc-fill); color: var(--text); }
+/* 目录条的链接带 -8px 左外边距（基础样式是整行通栏的设计），
+   套上描边卡之后这块会顶穿左边框，所以补内边距并归零外边距 */
+html[data-theme="ly"] .toc {
+  padding: 6px 8px 8px;
+  border-radius: var(--r-card);
 }
-html[data-theme="neu"] .toc a.on { background: transparent; box-shadow: var(--neu-in); color: var(--accent); }
-html[data-theme="neu"] .lb-btn { background: #e0e5ec; color: var(--text); box-shadow: var(--neu-up-sm); }
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .lb-btn:hover { background: #e0e5ec; box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff; }
-}
-html[data-theme="neu"] .foot { background: transparent; }
-html[data-theme="neu"] .foot-bar { border-top-color: rgba(163, 177, 198, .5); }
-
-/* 图片上的压暗字幕：深色皮肤是「白字 + 黑渐变」，
-   浅色皮肤反过来，白字在黑渐变上依然成立，所以只需保证对比度不被削 */
-html[data-theme="neu"] .g-cap { color: #fff; }
-
-/* 纯白/纯黑在浅色皮肤下要换成令牌里的强调色 */
-html[data-theme="neu"] ::selection { background: var(--accent); color: #fff; }
-
-html[data-theme="neu"] .th-btn {
-  background: #e0e5ec;
-  color: var(--text-2);
-  box-shadow: var(--neu-up-sm);
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .th-btn:hover {
-    background: #e0e5ec;
-    color: var(--accent);
-    box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff;
-  }
-}
-/* 按下 = 从凸起变凹陷，不用 translate */
-html[data-theme="neu"] .th-btn:active {
-  background: #e0e5ec;
-  box-shadow: var(--neu-in);
-}
+html[data-theme="ly"] .toc a { margin-left: 0; border-radius: 7px; }
+html[data-theme="ly"] .foot-bar { border-top-color: var(--line-2); }
+html[data-theme="ly"] ::selection { background: var(--acc-fill); color: var(--text); }
+html[data-theme="ly"] .g-cap { color: #fff; }
 
 /* ---------- 起始页右上一组：皮肤 + 形态切换 ---------- */
 .start-right {
@@ -1826,71 +1859,112 @@ html[data-theme="neu"] .th-btn:active {
 .th-btn .th-paper { display: grid; }
 html[data-theme="dark"] .th-btn .th-paper { display: none; }
 html[data-theme="dark"] .th-btn .th-moon { display: grid; }
-html[data-theme="neu"] .th-btn .th-paper { display: none; }
-html[data-theme="neu"] .th-btn .th-sun { display: grid; }
+html[data-theme="ly"] .th-btn .th-paper { display: none; }
+html[data-theme="ly"] .th-btn .th-ly { display: grid; }
 html[data-theme="organic"] .th-btn .th-paper { display: none; }
 html[data-theme="organic"] .th-btn .th-organic { display: grid; }
 html[data-theme="miko"] .th-btn .th-paper { display: none; }
 html[data-theme="miko"] .th-btn .th-miko { display: grid; }
 html[data-theme="dark"] .th-btn .th-organic,
 html[data-theme="dark"] .th-btn .th-miko { display: none; }
-html[data-theme="neu"] .th-btn .th-organic,
-html[data-theme="neu"] .th-btn .th-miko { display: none; }
+html[data-theme="ly"] .th-btn .th-organic,
+html[data-theme="ly"] .th-btn .th-miko { display: none; }
 
-/* ---------- 新拟物细化：把还平着的块做成同一种材料 ---------- */
+/* ---------- 乐园细化：把还平着的块统一成白底黑边 ---------- */
 
-/* hero 的元信息胶囊：浅底上 rgba 叠层几乎看不见，改成凸起小块 */
-html[data-theme="neu"] .hero-meta span {
-  background: #e0e5ec;
+/* hero 的元信息胶囊：浅底上 rgba 叠层几乎看不见，改成白底黑边小块 */
+html[data-theme="ly"] .hero-meta span {
+  background: #fff;
   color: var(--text-2);
-  box-shadow: 2px 2px 5px #b8bcc2, -2px -2px 5px #ffffff;
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
-/* 图片瓦片：从「图片铺满」改成「图片嵌在面板里」——
-   新拟物的层次靠材料厚度，图片直接铺满就没有那层厚度了 */
-html[data-theme="neu"] .g-item {
+/* 图片瓦片：白底黑边，图片压在边框里 */
+html[data-theme="ly"] .g-item {
   padding: 6px;
-  background: #e0e5ec;
-  box-shadow: 4px 4px 8px #b8bcc2, -4px -4px 8px #ffffff;
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: var(--hard-sm);
 }
-html[data-theme="neu"] .g-item img { border-radius: 11px; }
-html[data-theme="neu"] .g-cap {
+html[data-theme="ly"] .g-item img { border-radius: 7px; }
+html[data-theme="ly"] .g-cap {
   inset: auto 6px 6px 6px;
-  border-radius: 0 0 11px 11px;
+  border-radius: 0 0 7px 7px;
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="neu"] .g-item:hover {
-    box-shadow: 6px 6px 12px #b8bcc2, -6px -6px 12px #ffffff;
+  html[data-theme="ly"] .g-item:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: var(--hard);
   }
 }
 
 /* 表单控件跟随浅色 */
-html[data-theme="neu"] input,
-html[data-theme="neu"] textarea { color: var(--text); }
-html[data-theme="neu"] .search input::placeholder { color: var(--text-3); }
-html[data-theme="neu"] select { color: var(--text); background: #e0e5ec; }
+html[data-theme="ly"] input,
+html[data-theme="ly"] textarea { color: var(--text); }
+html[data-theme="ly"] .search input::placeholder { color: var(--text-3); }
+html[data-theme="ly"] select { color: var(--text); background: #fff; border: 2px solid var(--ink); }
 
 /* 页脚原本靠一层深色压暗，浅底上不要那层 */
-html[data-theme="neu"] .foot { background: transparent; }
+html[data-theme="ly"] .foot { background: transparent; }
 
 /* 灯箱：浅色遮罩下按钮仍是凸起的浅块 */
-html[data-theme="neu"] .lightbox { background: var(--surface-overlay); }
-html[data-theme="neu"] .lb-close { color: var(--text); }
+html[data-theme="ly"] .lightbox { background: var(--surface-overlay); }
+html[data-theme="ly"] .lb-close { color: var(--text); }
 
 /* hero 大图同样嵌进面板，和下面瓦片用同一种厚度 */
-html[data-theme="neu"] .hero-fig {
+html[data-theme="ly"] .hero-fig {
   padding: 8px;
-  background: #e0e5ec;
-  border-radius: 26px;
-  box-shadow: var(--neu-up);
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard);
 }
-html[data-theme="neu"] .hero-fig img { border-radius: 18px; box-shadow: none; }
-html[data-theme="neu"] .hero-fig figcaption { margin: 10px 6px 2px; }
+html[data-theme="ly"] .hero-fig img {
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: none;
+}
+html[data-theme="ly"] .hero-fig figcaption { margin: 10px 6px 2px; }
 
 /* 文章封面小图也收进圆角，别在浅底上露出直角 */
-html[data-theme="neu"] .row-cover { border-radius: 12px; }
-html[data-theme="neu"] .avatar,
-html[data-theme="neu"] .three img { border-radius: 14px; }
+html[data-theme="ly"] .row-cover { border-radius: 12px; }
+html[data-theme="ly"] .avatar,
+html[data-theme="ly"] .three img { border-radius: 14px; }
+
+/* ---------- 正文插图 / 提示块 / 友链卡 / 头像 ----------
+   这几处基础样式只给了圆角或一点点投影，边框全靠深色底才看得出来。
+   换到黄绿底上就只剩一块白，所以要统一补描边。 */
+html[data-theme="ly"] .note {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard-sm);
+}
+html[data-theme="ly"] .prose img {
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard-sm);
+}
+html[data-theme="ly"] .link-card {
+  background: #fff;
+  border: 2.5px solid var(--ink);
+  box-shadow: var(--hard-sm);
+  transition: background .18s var(--ease), box-shadow .18s var(--ease),
+              transform .14s var(--ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .link-card:hover {
+    background: var(--acc-fill);
+    transform: translate(-2px, -2px);
+    box-shadow: var(--hard);
+  }
+}
+html[data-theme="ly"] .portrait {
+  border: 2.5px solid var(--ink);
+  border-radius: var(--r-card);
+  box-shadow: var(--hard-sm);
+}
 
 /* ---------- 减弱动效下的换页 ----------
    系统开了「减少动画」时不做圆形扩散，但也不能硬切：
@@ -1949,11 +2023,12 @@ html[data-vt="soft"]::view-transition-new(root) {
 @media (hover: hover) and (pointer: fine) {
   .file-tip button:hover { background: var(--layer-2); color: var(--text); }
 }
-html[data-theme="neu"] .file-tip {
-  background: #e0e5ec;
+html[data-theme="ly"] .file-tip {
+  background: #fff;
+  border: 2.5px solid var(--ink);
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  box-shadow: var(--neu-up);
+  box-shadow: var(--hard);
 }
 
 .file-tip .act {
@@ -1970,10 +2045,11 @@ html[data-theme="neu"] .file-tip {
 @media (hover: hover) and (pointer: fine) {
   .file-tip .act:hover { background: var(--layer-3); }
 }
-html[data-theme="neu"] .file-tip .act {
-  color: var(--on-accent);
-  background: var(--accent);
-  box-shadow: 2px 2px 4px #b8bcc2, -2px -2px 4px #ffffff;
+html[data-theme="ly"] .file-tip .act {
+  color: var(--text);
+  background: var(--acc-fill);
+  border: 2px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
 }
 
 /* ============================================================
@@ -3026,13 +3102,8 @@ html[data-theme="dark"] .tc-h .tc-f,
 html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
 
 /* 新拟物：卡片跟着底色走，别用纯白 */
-html[data-theme="neu"] .tc-h,
-html[data-theme="neu"] .tc-s {
-  background: #e0e5ec;
-  box-shadow:
-    6px 6px 14px #b8bcc2,
-    -6px -6px 14px #ffffff;
-}
+/* 乐园的时钟卡片在第 16 节里统一写了（白底黑边硬投影、中间那张反色），
+   这里不要再补 —— 旧的新拟物双光源阴影放在文件更后面，会反过头盖掉它。 */
 
 @media (max-width: 560px) {
   .tc { height: 92px; border-radius: 18px; }

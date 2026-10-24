@@ -17,7 +17,7 @@
  *   - POST 等非 GET。
  */
 
-const V = '20261024152142';
+const V = '20261024160628';
 const CORE = 'dyg-core-' + V;      /* 预缓存：首屏就要用的 */
 const RUNTIME = 'dyg-rt-' + V;     /* 运行时：图片等按需攒下来的 */
 
@@ -136,12 +136,14 @@ self.addEventListener('fetch', e => {
     return;
   }
 
-  /* 带 ?v= 的 CSS/JS：缓存优先。版本号一变就是新 URL，
-     加上 activate 会清掉旧缓存，不会读到过期文件。 */
+  /* 带 ?v= 的 CSS/JS：缓存优先。
+     **不能 ignoreSearch** —— 忽略查询串的话，新版本的 theme.css?v=新号
+     会命中缓存里 ?v=旧号 的那条，表现就是「改了 CSS 但用户看到的还是旧的」，
+     要刷新两次才对。这里用精确匹配：版本号一变就 miss，走网络拿新的。 */
   if (/\.(css|js)$/i.test(p)) {
     e.respondWith((async () => {
       const c = await caches.open(CORE);
-      const hit = await c.match(req, { ignoreSearch: true });
+      const hit = await c.match(req);
       if (hit) { revalidate(c, req); return hit; }
       const net = await fetch(req);
       put(c, req, net.clone());
