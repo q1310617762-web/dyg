@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="start" data-theme="miko" data-fit="gap">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>起始页 × 看板娘 · 集成 demo</title>
+<link rel="stylesheet" href="theme.css?v=20261024130359">
+<style>
+/* ============================================================
+   集成 demo：把看板娘装进真实起始页
+   —— 用的是站内真实的 theme.css 和真实的起始页结构，
+      只额外加粉色搜索框、角色和两种让位方案。
+   目的就是暴露集成问题，所以下面每一行都标了它要解决什么。
+   ============================================================ */
+
+/* ---------- 粉色搜索框令牌 ----------
+   浅色三套共用一组，夜幕压暗一套。所有对比度都是算出来的，不是挑的。
+
+   站内真实皮肤只有 soft / organic / dark / neu 四套（ui.js 的 THEMES），
+   没有 paper。所以浅色令牌挂在 :not([data-theme="dark"]) 上，
+   夜幕单独覆写 —— 这样即使某个皮肤名没认出来，也不会掉回无令牌状态。 */
+html:not([data-theme="dark"]) {
+  /* 亮度这两档是踩出来的，别往回退：
+     · #fbeef3 / #f9e8ee（R−G 13~17）在真实起始页上根本读不出粉 —— 起始页底色是
+       暖米/冷白，几乎无彩度，一点点粉会被底色的暖调吃掉，看着就是块偏白的板子。
+     · #fadae7（R−G=32）才第一次看得出是粉的。这个值是在真页面上把 6 个候选并排
+       渲出来比的，不是算出来的。 */
+  --field:        #fadae7;
+  --field-2:      #f9d2e0;   /* 聚焦时再深一档 */
+  --field-ring:   #b85a69;   /* vs 框底 3.45:1、vs 聚焦底 3.26:1，都过 1.4.11 的 3:1 */
+  --field-line:   #c98aa0;   /* organic 那圈发丝线改玫红（原本 #e5dccd 是米灰，配粉很脏） */
+  --field-ink:    #3a2b31;   /* 10.35:1 / 聚焦底 9.76:1 */
+  --field-2nd:    #5d4a52;   /* 6.33:1 / 聚焦底 5.97:1 */
+  --field-ph:     #715765;   /* 4.99:1 / 聚焦底 4.71:1 —— 原来的 #7d616b 到这一档就掉到 4.1 了 */
+  --field-chip:   rgba(184, 63, 104, .10);
+  --field-accent: #9d3153;   /* 5.42:1；chip 实色 #f3cbda 上 4.79:1 */
+  --field-glow:   rgba(184, 63, 104, .30);
+  /* 拟物皮肤的阴影色：跟站内 #b8bcc2 同亮度(0.5005)换成玫红灰。
+     亮度必须对上 —— 对上了「凹陷有多深」才不变，只是颜色跟着粉走。 */
+  --field-shade:  #cab8b2;
+}
+html[data-theme="dark"] {
+  /* 深色下「粉」靠 R−G 差撑起来：#241a1f 只差 10，看着是块灰，
+     要到 #331f28（差 20）才读得出，亮度还压在 0.018 */
+  --field:        #331f28;
+  --field-2:      #3a2330;
+  --field-ring:   #a1667f;   /* 与框底 3.45:1 */
+  --field-ink:    #f6e9ee;   /* 13.02:1 */
+  --field-2nd:    #cbb3bd;   /* 7.84:1 */
+  --field-ph:     #a38d97;   /* 4.98:1 */
+  --field-chip:   rgba(240, 168, 196, .12);
+  --field-accent: #f0a8c4;
+  --field-glow:   rgba(0, 0, 0, .5);
+  --field-line:   #7a4a5c;
+}
+
+/* ---------- 搜索框 + 角色：装进一个定位容器 ----------
+   原来 .search 是 .start-core 的直接子元素，没法挂绝对定位的角色，
+   所以包一层 .st-field，宽度沿用原来的 620 窄栏。 */
+.st-field {
+  position: relative;
+  width: min(620px, 100%);
+  margin-inline: auto;
+  margin-top: 8px;
+}
+.st-field > .search {
+  width: 100%;
+  margin-top: 0;
+}
+/* 站内写的是 html[data-theme="miko"] .search，特异性 (0,3,1)；
+   光写 .st-field > .search 只有 (0,2,0)，会被压掉，粉色根本不出来。
+   所以下面一律加 html[data-theme] 前缀把特异性顶上去。 */
+/* 底色与文字先统一（各皮肤下面再补自己的形状/景深） */
+html[data-theme] .st-field > .search {
+  background: var(--field);
+  transition: background-color .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+html[data-theme] .st-field > .search:focus-within {
+  background: var(--field-2);
+  box-shadow: 0 14px 32px -20px var(--field-glow),
+              inset 0 0 0 1.5px var(--field-ring);
+}
+
+/* ---------- 各皮肤的景深：不能一刀切 ----------
+   只换 background 是不够的 —— 站内每套皮肤给 .search 定了自己的
+   圆角和景深语言，一刀切会把它们打平：
+     · soft    胶囊圆角 + 靛蓝柔投影
+     · organic 胶囊圆角 + 1px 米灰发丝线（不改就是「粉底配灰边」，很脏）
+     · neu     18px 圆角 + inset 内凹拟物（不改就整个失去景深，成一块贴纸）
+   所以形状一律跟随皮肤，只把颜色往玫红调。 */
+
+/* soft：沿用它的双层柔投影几何，颜色换玫红。
+   聚焦必须补一圈实色内描边 —— 站内 soft 的聚焦信号是「4px 外光环」，
+   但 rgba(184,63,104,.18) 压在浅底上合成出来的彩度极低（实测叠完约 1.25:1），
+   粉底上等于看不见。内描边用不透明的 --field-ring，3.45:1 才立得住。 */
+html[data-theme="miko"] .st-field > .search {
+  box-shadow: 0 10px 26px -14px rgba(184, 63, 104, .30);
+}
+html[data-theme="miko"] .st-field > .search:focus-within {
+  box-shadow: inset 0 0 0 1.5px var(--field-ring),
+              0 0 0 4px rgba(184, 63, 104, .18),
+              0 16px 34px -16px rgba(184, 63, 104, .34);
+}
+
+/* organic：保留它的 1px 描边和胶囊，只把米灰换成玫红 */
+html[data-theme="organic"] .st-field > .search {
+  border-color: var(--field-line);
+  box-shadow: var(--shadow-sm);
+}
+html[data-theme="organic"] .st-field > .search:focus-within {
+  border-color: var(--field-ring);
+  box-shadow: 0 0 0 3px rgba(194, 101, 124, .20);
+}
+
+/* neu：把内凹的几何原样搬回来，冷灰蓝换成同亮度的玫红灰。
+   聚焦时按站内规矩「反过来变浅」（2px 而不是 6px），再补一圈玫红描边
+   —— 光靠内阴影变化在粉底上不够看得见。 */
+html[data-theme="neu"] .st-field > .search {
+  box-shadow: inset 6px 6px 12px var(--field-shade),
+              inset -6px -6px 12px #ffffff;
+}
+html[data-theme="neu"] .st-field > .search:focus-within {
+  background: var(--field-2);
+  box-shadow: inset 2px 2px 4px var(--field-shade),
+              inset -2px -2px 4px #ffffff,
+              inset 0 0 0 1.5px var(--field-ring);
+}
+html[data-theme] .st-field .eng-btn { color: var(--field-2nd); }
+html[data-theme] .st-field .eng-btn[aria-expanded="true"] { color: var(--field-ink); }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme] .st-field .eng-btn:hover { color: var(--field-ink); }
+}
+html[data-theme] .st-field input { color: var(--field-ink); }
+html[data-theme] .st-field > .search input::placeholder { color: var(--field-ph); opacity: 1; }
+html[data-theme] .st-field > .search kbd { background: var(--field-chip); color: var(--field-2nd); }
+html[data-theme] .st-field .eng-menu button[aria-checked="true"] {
+  background: var(--field-chip);
+  color: var(--field-accent);
+}
+/* Chrome 自带的蓝色清除叉在粉底上非常刺眼 */
+html[data-theme] .st-field input::-webkit-search-cancel-button,
+html[data-theme] .st-field input::-webkit-search-decoration {
+  -webkit-appearance: none; appearance: none;
+}
+
+.clr {
+  flex: none;
+  display: grid; place-items: center;
+  width: 24px; height: 24px;
+  padding: 0; border: 0; border-radius: 999px;
+  background: var(--field-chip);
+  color: var(--field-2nd);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .16s ease, color .16s ease, transform .12s ease;
+}
+.clr[hidden] { display: none; }
+.clr:active { transform: scale(.9); }
+@media (hover: hover) and (pointer: fine) {
+  .clr:hover { background: var(--field-ring); color: var(--field-ink); }
+}
+/* 有内容时把 `/` 收起来，不然和清除按钮并排两个小圆块 */
+.st-field > .search:focus-within kbd,
+.st-field > .search:has(input:not(:placeholder-shown)) kbd { opacity: 0; }
+
+/* ---------- 角色 ----------
+   动图里角色本体只占画面宽 24.8%–81.6%，上下各有一段透明边
+   （左右是飞进飞出的小团子和花瓣，不能裁）。所以按比算偏移。 */
+.st-field {
+  --mw: 150px;
+  --m-l: .248;   /* 本体左边界 / 画面宽 */
+  --m-r: .816;   /* 本体右边界 */
+  --m-w: .568;   /* 本体宽 = m-r - m-l */
+  --m-cx: .532;  /* 本体水平中心 */
+}
+
+.mascot {
+  position: absolute;
+  margin: 0;
+  width: var(--mw);
+  z-index: 0;                       /* 在框下面，下半身被挡住 */
+  right: calc(var(--mw) * .06);
+  bottom: calc(var(--mw) * .126);   /* 脚伸进框里多少 = 被遮多少 */
+}
+.mascot img {
+  display: block; width: 100%; height: auto;
+  user-select: none; -webkit-user-drag: none;
+}
+
+/* 气泡贴头顶，右缘对齐角色中心往左长——
+   台词长短差很多，居中长会让气泡左右乱跳 */
+.bubble {
+  position: absolute;
+  right: calc(100% - var(--mw) * var(--m-cx));
+  bottom: calc(100% + 9px - var(--mw) * .134);
+  z-index: 3;
+  width: max-content;
+  max-width: 250px;
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 14px;
+  background: var(--surface-overlay);
+  color: var(--text);
+  font-size: 13.5px;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .38);
+}
+.bubble::after {
+  content: ""; position: absolute; top: 100%; right: 15px;
+  border: 7px solid transparent;
+  border-top-color: var(--surface-overlay);
+}
+.bubble.pop { animation: pop .24s ease-out; }
+@keyframes pop {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.bubble.muted { opacity: .6; transition: opacity .4s ease; }
+
+.mascot.hop { animation: hop .44s cubic-bezier(.34, 1.4, .64, 1); }
+@keyframes hop {
+  0%   { transform: translateY(0); }
+  38%  { transform: translateY(-13px) scale(1.03); }
+  100% { transform: translateY(0); }
+}
+
+/* ===== 让位方案 A：腾空 =====
+   刊头（Hello / World / 副标题）的墨迹把框上方 620px 全占满了，
+   底边离框顶只剩几 px。角色要从框后探出 96px + 气泡 42px，
+   不给这段留白就必然压在 World 上。代价是起始页更高（本来就要滚）。
+
+   2026-10-24：刊头字号 122 → 158、副标题上下留白各收 4px，
+   「墨迹底 → 气泡顶」的空隙从 9px 掉到 1px（实测 1440/1280/1024 全线擦边）。
+   腾空档整体上抬一档：120/14vh/150 → 150/17vh/180。 */
+html[data-fit="gap"] .st-field {
+  margin-top: clamp(150px, 17vh, 180px);
+}
+/* 侧站在 1320 以下没有侧边空白，回退成腾空 —— 这里必须把 side 也列上。
+   原来只写了 [data-fit="gap"]，side 在窄屏其实一条 margin 都没有：
+   它一直靠副标题下方那 9px 残料勉强过关（阈值只需要 ≥4px），
+   刊头一变大就露出来 —— 气泡顶 280、字形底 279，擦到 1px。 */
+html[data-fit="side"] .st-field {
+  margin-top: clamp(150px, 17vh, 180px);
+}
+
+/* ===== 让位方案 B：侧站 =====
+   角色站到框的左侧空白里，不占框上方，起始页不用加高度。
+   代价是没有「被框遮住下半身」那层关系。
+
+   为什么是左侧不是右侧 —— 量出来的，不是挑的：
+   气泡从角色中心往左长。放右侧的话，1440 下气泡右缘在 x≈1080，
+   往左长 230px 正好压在 World 的墨迹上（实测重叠 160×57px，三种宽度都撞）；
+   而框左侧 x<400 在刊头墨迹之外，是整页唯一能放气泡的空白。
+   放更右边也不行：1024 下角色右缘就到 949，气泡会顶出视口。 */
+/* 整段只在 >=1320px 生效。
+   写成「先给侧站一套规则、再用 max-width 媒体查询改回去」是错的 ——
+   回改永远漏一条（max-width 就漏了两次），窄屏反而被侧站规则污染。
+   窄屏干脆不写规则，只把 margin-top 换回腾空的档位。 */
+@media (min-width: 1320px) {
+  html[data-fit="side"] .st-field { margin-top: 8px; }
+  html[data-fit="side"] .mascot {
+    /* 整个身子挪到框左缘外面，只有透明边与框相碰。
+       往下压 0.2×mw 是给气泡让出台阶，见下面气泡那条注释。 */
+    left: calc(var(--mw) * -.85);
+    right: auto;
+    bottom: calc(var(--mw) * -.20);
+    z-index: 2;
+  }
+
+  /* 侧站时气泡不能还在头顶。
+     像素量出来的死结：刊头字形底在 y≈220，侧站时框顶在 y=229，
+     两者之间只有 9px，而气泡高 58px —— 头顶挂气泡必然压字（实测压 39px）。
+     框左侧 x<400 是整页唯一能放气泡的空白，所以气泡挂到角色左侧、腰的高度，
+     尾巴改成朝右。宽度收到 200px：1320 视口下角色左缘只剩约 215px。 */
+  html[data-fit="side"] .bubble {
+    right: calc(100% + 10px);
+    top: auto;
+    bottom: calc(var(--mw) * .16);
+    max-width: 200px;
+  }
+  html[data-fit="side"] .bubble::after {
+    top: 50%;
+    right: auto;
+    left: 100%;
+    margin-top: -7px;
+    border-top-color: transparent;
+    border-left-color: var(--surface-overlay);
+  }
+}
+
+/* 窄屏：侧站放不下（角色左缘只剩几十像素，气泡必溢出），退回腾空的排版。
+   ────────────────────────────────────────────────────────────
+   2026-10-24：原来这里还有一条 `max-width: 1319px` 的「回改」——
+   把 margin-top 又改回 120/14vh/150。问题是上面 220 行那条腾空规则
+   只写了 [data-fit="gap"]，side 在窄屏本来就一条 margin 都没有，
+   所谓「回改」其实是在替一个不存在的默认值收尾，两处还都是旧档位。
+   现在改成：side 的窄屏档位直接跟腾空共用同一条规则（见上），
+   这个媒体查询整个删掉 —— 「先写一套、再用 max-width 改回去」就是会漏。 */
+
+/* ---------- demo 工具条（不属于起始页） ---------- */
+.tools {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + 14px);
+  transform: translateX(-50%);
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: calc(100vw - 24px);
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 10px;
+  border-radius: 14px;
+  background: var(--surface-glass);
+  box-shadow: 0 10px 30px -14px rgba(0, 0, 0, .45);
+  font-size: 12.5px;
+}
+.tools .seg { display: flex; gap: 4px; align-items: center; }
+.tools .lb { color: var(--text-3); padding-right: 2px; }
+.tools button {
+  appearance: none; border: 0;
+  background: var(--layer-1);
+  color: var(--text-2);
+  font: inherit; font-size: 12.5px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .16s ease, color .16s ease;
+}
+.tools button.on { background: var(--accent); color: var(--on-accent); }
+@media (hover: hover) and (pointer: fine) {
+  .tools button:hover { background: var(--layer-2); color: var(--text); }
+  .tools button.on:hover { background: var(--accent); color: var(--on-accent); }
+}
+.readout {
+  width: 100%;
+  text-align: center;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+/* ---------- 诊断：把碰撞关系画出来 ---------- */
+html[data-diag="on"] .st-hello span { outline: 1px dashed #e0483f; outline-offset: 1px; }
+html[data-diag="on"] .st-kicker      { outline: 1px dashed #e0483f; outline-offset: 1px; }
+html[data-diag="on"] .mascot         { outline: 1px dashed #2f7fe0; outline-offset: 1px; }
+html[data-diag="on"] .st-field > .search { outline: 1px solid #2f7fe0; }
+html[data-diag="on"] .mascot.clash   { outline: 2px solid #e0483f; }
+html[data-diag="on"] .readout { display: block; }
+
+@media (max-width: 520px) {
+  .st-field { --mw: 118px; }
+  .bubble { max-width: 190px; font-size: 13px; }
+  /* 手机上副标题「A PERSONAL START PAGE」只有 y≈178–202，
+     而最长的台词在 190px 宽里要折 3 行、气泡高 75px，
+     按原来的 96px 腾空会压在副标题上（实测压 42px）。加到 150px 才够。
+     侧站在 1320 以下本来就会退回腾空，这里要跟腾空取同一档，
+     否则它会套用上面那份 120px，又变成 13px 擦边。 */
+  html[data-fit="gap"] .st-field,
+  html[data-fit="side"] .st-field { margin-top: clamp(150px, 20vh, 180px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot.hop { animation: none; }
+  .bubble.pop { animation: fade .2s linear; }
+  @keyframes fade { from { opacity: .35; } to { opacity: 1; } }
+}
+</style>
+</head>
+
+<body>
+
+<section class="start" data-start aria-label="起始页">
+
+  <header class="start-top">
+    <a class="mark" href="index.html?m=start">东芽果 <small>DYG</small></a>
+    <div class="start-right"></div>
+  </header>
+
+  <div class="start-core">
+
+    <div class="st-mast">
+      <h1 class="st-hello"><span>Hello</span><span>World</span></h1>
+      <p class="st-kicker">A PERSONAL START PAGE · DYG</p>
+    </div>
+
+    <div class="st-field">
+      <figure class="mascot">
+        <p class="bubble" data-bubble>今天想搜点什么？</p>
+        <img src="assets/img/miko.webp" alt="八重神子看板娘">
+      </figure>
+
+      <form class="search" data-search role="search">
+        <button type="button" class="eng-btn" data-eng-btn
+                aria-haspopup="true" aria-expanded="false" aria-label="切换搜索引擎">
+          <span data-eng-name>Bing</span>
+          <svg class="eng-car" width="9" height="6" viewBox="0 0 9 6" fill="none" aria-hidden="true">
+            <path d="M1 1.5L4.5 5L8 1.5" stroke="currentColor" stroke-width="1.2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <input type="search" data-q aria-label="搜索或输入网址"
+               placeholder="搜索，或输入网址" autocomplete="off" spellcheck="false" />
+
+        <button type="button" class="clr" data-clr aria-label="清空" hidden>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2.6 2.6L9.4 9.4M9.4 2.6L2.6 9.4" stroke="currentColor"
+                  stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <kbd>/</kbd>
+
+        <div class="eng-menu" data-eng-menu role="menu" hidden>
+          <button type="button" role="menuitemradio" aria-checked="true"  data-e="bing">Bing</button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-e="baidu">百度</button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-e="google">Google</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="st-clock" role="timer" aria-label="当前时间">
+      <div class="tc tc-h">
+        <span class="tc-k">HOUR</span>
+        <span class="tc-n" data-hour>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>HOURS</span>
+      </div>
+      <div class="tc tc-m">
+        <span class="tc-k">MINUTE</span>
+        <span class="tc-n" data-minute>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>MINUTES</span>
+      </div>
+      <div class="tc tc-s">
+        <span class="tc-k">SECOND</span>
+        <span class="tc-n" data-second>--</span>
+        <span class="tc-f"><i class="tc-dot"></i>SECONDS</span>
+      </div>
+    </div>
+
+    <p class="st-greet"><span data-date>—</span><span class="st-sep">·</span><span data-hello>你好</span></p>
+
+    <section class="bm" aria-label="收藏">
+      <div class="bm-head">
+        <span class="bm-title">收藏</span>
+        <span class="bm-note">21 个</span>
+      </div>
+
+      <div class="bm-groups">
+        <div class="bm-g">
+          <h3>游戏</h3>
+          <a class="bm-l" href="https://store.steampowered.com/"><i>S</i><span>Steam</span></a>
+          <a class="bm-l" href="https://www.miyoushe.com/"><i>米</i><span>米游社</span></a>
+          <a class="bm-l" href="https://keyushe.com/game.html"><i>科</i><span>科盒社</span></a>
+          <a class="bm-l" href="https://steamfu.com/"><i>S</i><span>SteamFu</span></a>
+          <a class="bm-l" href="https://www.lezhugame.com/"><i>乐</i><span>乐猪游戏</span></a>
+          <a class="bm-l" href="https://www.flysheep6.com/"><i>飞</i><span>飞羊</span></a>
+          <a class="bm-l" href="https://gamebanana.com/"><i>蕉</i><span>游戏香蕉</span></a>
+        </div>
+        <div class="bm-g">
+          <h3>壁纸</h3>
+          <a class="bm-l" href="https://haowallpaper.com/"><i>哲</i><span>哲风壁纸</span></a>
+          <a class="bm-l" href="https://wallhalla.com/"><i>W</i><span>Wallhalla</span></a>
+          <a class="bm-l" href="https://gallery.wallaura.cn/"><i>W</i><span>Wallaura</span></a>
+          <a class="bm-l" href="https://alphacoders.com/"><i>A</i><span>Abyss</span></a>
+          <a class="bm-l" href="https://wallpaperscraft.com/"><i>W</i><span>WallpapersCraft</span></a>
+        </div>
+        <div class="bm-g">
+          <h3>素材</h3>
+          <a class="bm-l" href="https://ibaotu.com/"><i>包</i><span>包图网</span></a>
+          <a class="bm-l" href="https://www.aigei.com/"><i>爱</i><span>爱给网</span></a>
+          <a class="bm-l" href="https://cn.eagle.cool/"><i>E</i><span>Eagle</span></a>
+          <a class="bm-l" href="https://huaban.com/"><i>花</i><span>花瓣</span></a>
+        </div>
+        <div class="bm-g">
+          <h3>看看</h3>
+          <a class="bm-l" href="https://peko.love/"><i>佩</i><span>佩可动漫</span></a>
+          <a class="bm-l" href="https://www.zhihu.com/"><i>知</i><span>知乎</span></a>
+          <a class="bm-l" href="https://www.douyin.com/"><i>抖</i><span>抖音</span></a>
+          <a class="bm-l" href="https://x.com/"><i>X</i><span>X</span></a>
+          <a class="bm-l" href="https://www.youtube.com/"><i>Y</i><span>YouTube</span></a>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="start-foot">
+    <span class="hint-d"><kbd>/</kbd> 搜索　<kbd>B</kbd> 切换博客</span>
+    <span class="hint-m">点右上角换成博客</span>
+    <span>东芽果 DYG</span>
+  </footer>
+</section>
+
+<div class="tools">
+  <span class="seg">
+    <span class="lb">皮肤</span>
+    <button type="button" class="on" data-theme="miko">八重</button>
+    <button type="button" data-theme="organic">有机</button>
+    <button type="button" data-theme="dark">夜幕</button>
+    <button type="button" data-theme="neu">新拟物</button>
+  </span>
+  <span class="seg">
+    <span class="lb">让位</span>
+    <button type="button" class="on" data-fit="gap">腾空</button>
+    <button type="button" data-fit="side">侧站</button>
+  </span>
+  <span class="seg">
+    <button type="button" data-diag>诊断</button>
+  </span>
+  <span class="readout" data-readout></span>
+</div>
+
+<script>
+/* ---------- 台词库（沿用上一版） ---------- */
+const LINES = {
+  idle: ['今天想搜点什么？','慢慢想，我不催你。','嗯……发什么呆呢。','难得的清闲，就这么站着？',
+         '要不要我替你找点乐子？','风不错，就这样待一会儿也好。','我的时间可不便宜，不过对你还算宽裕。'],
+  focus: ['说吧，我听着。','嗯？想找什么。','难得主动，说来听听。'],
+  short: ['「{v}」？就这点线索。','「{v}」……你还真是不客气。'],
+  mid: ['找「{v}」？交给我。','「{v}」啊，有点意思。','嗯，「{v}」，我看看。'],
+  long: ['「{v}……」这么长，你确定我记得住。','「{v}……」，你这是在写报告吗。'],
+  url: ['网址啊，你自己不就能去。','这串东西，一看就不是来问我的。'],
+  lore: ['又绕回提瓦特了。','在找我？直说就好。','神社的事，你得先预约。'],
+  question: ['问题？我最喜欢有人问我问题了。','问得不错，就是别指望我好好答。'],
+  engine: ['换个地方找，也不错。','行，就它了。','这个我可管不着，你定。'],
+  submit: ['出发！','走吧，别让我等。','找到了记得回来。'],
+  empty: ['什么都没写，让我猜吗。','空手而来，胆子不小。'],
+  bored: ['……睡着了？','喂，还醒着吗。','我就这么不值得你理？']
+};
+let lastLine = '';
+function pick(a) {
+  let s = a[Math.floor(Math.random() * a.length)];
+  if (a.length > 1 && s === lastLine) s = a[(a.indexOf(s) + 1) % a.length];
+  lastLine = s; return s;
+}
+const fill = (t, v) => t.replace('{v}', v);
+
+function typingLine(v) {
+  if (/^https?:\/\/|^www\.|\b\w+\.(com|cn|net|org|io|me)\b/i.test(v)) return pick(LINES.url);
+  if (/原神|提瓦特|神子|八重|稻妻/.test(v)) return pick(LINES.lore);
+  if (/[?？]|吗$|呢$|怎么样|为什么|是什么|多少|哪个|如何|能不能/.test(v)) return pick(LINES.question);
+  if (v.length > 12) return fill(pick(LINES.long), v.slice(0, 8));
+  if (v.length <= 3) return fill(pick(LINES.short), v);
+  return fill(pick(LINES.mid), v);
+}
+
+/* ---------- DOM ---------- */
+let bubble, mascot, form, input, clr;
+function grab() {
+  bubble = document.querySelector('[data-bubble]');
+  mascot = document.querySelector('.mascot');
+  form   = document.querySelector('[data-search]');
+  input  = document.querySelector('[data-q]');
+  clr    = document.querySelector('[data-clr]');
+}
+grab();
+
+let popTimer = 0;
+function say(text, muted) {
+  if (!bubble) grab();
+  bubble.textContent = text;
+  bubble.classList.toggle('muted', !!muted);
+  bubble.classList.remove('pop');
+  void bubble.offsetWidth;
+  bubble.classList.add('pop');
+  clearTimeout(popTimer);
+  popTimer = setTimeout(() => bubble.classList.remove('pop'), 280);
+}
+function hop() {
+  mascot.classList.remove('hop'); void mascot.offsetWidth;
+  mascot.classList.add('hop');
+  setTimeout(() => mascot.classList.remove('hop'), 460);
+}
+
+let idleTimer = 0, boredTimer = 0, boredStage = 0, typingTimer = 0;
+function scheduleIdle() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (document.activeElement !== input) { say(pick(LINES.idle)); scheduleIdle(); }
+  }, 8000 + Math.random() * 4000);
+}
+function scheduleBored() {
+  clearTimeout(boredTimer);
+  boredTimer = setTimeout(() => {
+    if (document.activeElement !== input) {
+      say(pick(LINES.bored), true);
+      if (++boredStage < 3) scheduleBored();
+    }
+  }, 55000);
+}
+function touched() { boredStage = 0; clearTimeout(boredTimer); scheduleBored(); scheduleIdle(); }
+
+function syncClr() { clr.hidden = input.value.length === 0; }
+
+/* 事件用委托：起始页这个块会被路由换掉，直接绑在节点上会丢 */
+document.addEventListener('focusin', e => {
+  if (e.target !== input) return;
+  clearTimeout(idleTimer);
+  say(pick(LINES.focus));
+});
+document.addEventListener('focusout', e => {
+  if (e.target !== input) return;
+  if (!input.value.trim()) say(pick(LINES.idle));
+  scheduleIdle();
+});
+document.addEventListener('input', e => {
+  if (e.target !== input) return;
+  touched(); syncClr();
+  const v = input.value.trim();
+  clearTimeout(typingTimer);
+  if (!v) { say(pick(LINES.focus)); return; }
+  typingTimer = setTimeout(() => say(typingLine(v)), 420);
+});
+document.addEventListener('submit', e => {
+  if (e.target !== form) return;
+  e.preventDefault();
+  clearTimeout(typingTimer);
+  const v = input.value.trim();
+  if (v) { say(pick(LINES.submit)); hop(); } else say(pick(LINES.empty));
+  touched();
+});
+document.addEventListener('mousedown', e => {
+  if (e.target.closest('[data-clr]')) e.preventDefault();
+});
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-clr]');
+  if (c) {
+    input.value = ''; syncClr(); input.focus();
+    clearTimeout(typingTimer);
+    say(pick(LINES.focus)); touched(); return;
+  }
+  const eng = e.target.closest('[data-e]');
+  if (eng) {
+    document.querySelectorAll('[data-e]').forEach(x =>
+      x.setAttribute('aria-checked', String(x === eng)));
+    document.querySelector('[data-eng-name]').textContent =
+      { bing: 'Bing', baidu: '百度', google: 'Google' }[eng.dataset.e];
+    document.querySelector('[data-eng-menu]').hidden = true;
+    document.querySelector('[data-eng-btn]').setAttribute('aria-expanded', 'false');
+    input.focus();                       // focus 会同步触发聚焦台词，必须先 focus 再 say
+    say(pick(LINES.engine)); touched(); return;
+  }
+  const btn = e.target.closest('[data-eng-btn]');
+  if (btn) {
+    const open = btn.getAttribute('aria-expanded') === 'true';
+    btn.setAttribute('aria-expanded', String(!open));
+    document.querySelector('[data-eng-menu]').hidden = open; return;
+  }
+  if (!e.target.closest('[data-search]')) {
+    document.querySelector('[data-eng-menu]').hidden = true;
+    document.querySelector('[data-eng-btn]').setAttribute('aria-expanded', 'false');
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== input &&
+      !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+    e.preventDefault(); input.focus();
+  }
+  if (e.key === 'Escape') {
+    document.querySelector('[data-eng-menu]').hidden = true;
+    document.querySelector('[data-eng-btn]').setAttribute('aria-expanded', 'false');
+  }
+});
+
+/* ---------- 时钟（起始页原有功能，这里补上以便看整体） ---------- */
+function tick() {
+  const d = new Date();
+  const p = n => String(n).padStart(2, '0');
+  const h = document.querySelector('[data-hour]'),
+        m = document.querySelector('[data-minute]'),
+        s = document.querySelector('[data-second]');
+  if (h) h.textContent = p(d.getHours());
+  if (m) m.textContent = p(d.getMinutes());
+  if (s) s.textContent = p(d.getSeconds());
+  setTimeout(tick, 1000 - d.getMilliseconds());
+}
+const HELLO = [[5,'凌晨好'],[8,'早上好'],[11,'上午好'],[13,'中午好'],[18,'下午好'],[23,'晚上好'],[24,'凌晨好']];
+function greet() {
+  const d = new Date();
+  const dEl = document.querySelector('[data-date]'), hEl = document.querySelector('[data-hello]');
+  if (dEl) dEl.textContent = `${d.getMonth()+1} 月 ${d.getDate()} 日`;
+  if (hEl) hEl.textContent = (HELLO.find(x => d.getHours() < x[0]) || HELLO.at(-1))[1];
+}
+tick(); greet();
+
+/* ---------- 工具条 ----------
+   注意：<html> 自己带着 data-theme（theme.css 需要），
+   所以 closest('[data-theme]') 一定会先撞到 html，工具条的分支就永远轮不到。
+   必须限定成 button[...] 再找。 */
+const root = document.documentElement;
+document.querySelector('.tools').addEventListener('click', e => {
+  const tb = e.target.closest('button[data-theme]');
+  if (tb) {
+    root.dataset.theme = tb.dataset.theme;
+    document.querySelectorAll('button[data-theme]').forEach(b => b.classList.toggle('on', b === tb));
+    return;
+  }
+  const fb = e.target.closest('button[data-fit]');
+  if (fb) {
+    root.dataset.fit = fb.dataset.fit;
+    document.querySelectorAll('button[data-fit]').forEach(b => b.classList.toggle('on', b === fb));
+    return;
+  }
+  const db = e.target.closest('button[data-diag]');
+  if (db) {
+    root.dataset.diag = root.dataset.diag === 'on' ? 'off' : 'on';
+    db.classList.toggle('on', root.dataset.diag === 'on');
+  }
+});
+
+/* ---------- 诊断读数 ----------
+   三个容易搞错的地方：
+   1. 只盯角色本体不够 —— 气泡从她中心往左长，长台词比本体更容易撞刊头。
+   2. Range.getBoundingClientRect() 给的不是字形墨迹。但也不是行盒 ——
+      对单行 span，它就是「字体框」（ascent + descent）。实测 World 的
+      rect 高 163px，正好等于 fontBoundingBoxAscent 132 + descent 31。
+      所以字形底 = rect.bottom − descent + 实际下伸，别去套半行距模型
+      （套了会差三十多像素，把有 11px 空隙判成压字）。
+   3. 净空必须按「横向是否相交」算：副标题的字形底比 World 低，但它在
+      气泡左侧，横向不相交，取全局最大就会算出假的负值。
+   真值可以和 check-start-mascot.mjs 里的像素扫描对账。 */
+function inkBottomOf(el) {
+  const cs = getComputedStyle(el);
+  const r = document.createRange(); r.selectNodeContents(el);
+  const t = r.getBoundingClientRect();
+  const cv = document.createElement('canvas').getContext('2d');
+  cv.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+  const met = cv.measureText((el.textContent || '').trim());
+  const fd = met.fontBoundingBoxDescent, ad = met.actualBoundingBoxDescent || 0;
+  if (!isFinite(fd)) return t.bottom;
+  return t.bottom - fd + ad;
+}
+
+function diag() {
+  const out = document.querySelector('[data-readout]');
+  if (!out) return;
+  if (root.dataset.diag !== 'on') { out.textContent = ''; return; }
+  const q = document.querySelector('.st-field > .search').getBoundingClientRect();
+  const m = document.querySelector('.mascot').getBoundingClientRect();
+  const b = document.querySelector('.bubble').getBoundingClientRect();
+  const kick = document.querySelector('.st-kicker').getBoundingClientRect();
+  const core = document.querySelector('.start-core');
+  const charTop = m.top + m.height * 0.151;
+  const charL = m.left + m.width * 0.248;
+  const charR = m.left + m.width * 0.816;
+  const lines = ['.st-hello span:nth-child(1)', '.st-hello span:nth-child(2)', '.st-kicker']
+    .map(s => document.querySelector(s)).filter(Boolean)
+    .map(el => {
+      const r = document.createRange(); r.selectNodeContents(el);
+      return { el, t: r.getBoundingClientRect(), ink: inkBottomOf(el) };
+    });
+  let worst = null;
+  for (const { el, t, ink } of lines) {
+    const ox = Math.min(t.right, charR) - Math.max(t.left, charL);
+    const oy = ink - Math.max(t.top, charTop);   /* 用字形底，不用行盒底 */
+    if (ox > 0 && oy > 0) {
+      const area = ox * oy;
+      if (!worst || area > worst.area) worst = { ox: Math.round(ox), oy: Math.round(oy), area };
+    }
+  }
+  mascot.classList.toggle('clash', !!worst);
+  /* 气泡的净空只能按「横向是否相交」算：
+     副标题的字形底比 World 更低，但它在 x 403–598，气泡在 693 以外，
+     两个横向不相交，取全局最大字形底就会算出一个假的负值。 */
+  let clear = null;
+  for (const { t, ink } of lines) {
+    const ox = Math.min(t.right, b.right) - Math.max(t.left, b.left);
+    if (ox <= 0) continue;
+    const c = b.top - ink;
+    if (clear === null || c < clear) clear = c;
+  }
+  const parts = [
+    worst ? `⚠ 角色压到刊头 ${worst.ox}×${worst.oy}px` : '✓ 角色与刊头不重叠',
+    clear === null ? '气泡左上方没有文字' : `气泡顶 − 正上方字形底 ${Math.round(clear)}px`,
+    `框顶 − 副标题底 ${Math.round(q.top - kick.bottom)}px`,
+    `起始页 ${core.scrollHeight}/${core.clientHeight}px`,
+  ];
+  if (root.dataset.fit === 'side' && innerWidth < 1320) parts.push('侧站 <1320px 已自动退回腾空');
+  out.textContent = parts.join('　·　');
+}
+setInterval(diag, 400);
+diag();
+scheduleIdle(); scheduleBored();
+</script>
+</body>
+</html>

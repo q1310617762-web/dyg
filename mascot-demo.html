@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="miko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>搜索框 × 看板娘</title>
+<style>
+/* ============================================================
+   起始页搜索框 × 看板娘（定稿形态：探身）
+   色值沿用站内 soft / dark 两套皮肤令牌，动图是去掉背景的
+   八重神子（8 位半透明 WebP，129 帧）。
+   这仍是 demo 页，还没有接进 index.html。
+   ============================================================ */
+
+:root {
+  --bg:        #0b0b0d;
+  --text:      #f3f3f4;
+  --text-2:    rgba(243, 243, 244, .72);
+  --text-3:    rgba(243, 243, 244, .54);
+  --accent:    #ffffff;
+  --on-accent: #0b0b0d;
+
+  --layer-1:   rgba(255, 255, 255, .07);
+  --layer-2:   rgba(255, 255, 255, .10);
+
+  --bubble-bg: #1b1b21;
+  --bubble-fg: #f3f3f4;
+  --panel:     #1b1b21;
+
+  /* 粉色搜索框（深色皮肤）：压得很暗，不然夜里刺眼；
+     但 R 要比 G 高出 20 左右，不然「粉」就没了，只是一块灰 */
+  --field:        #331f28;
+  --field-2:      #3a2330;
+  --field-ring:   #a1667f;   /* 与框底 3.23:1，聚焦环看得见 */
+  --field-ink:    #f6e9ee;   /* 13.0:1 */
+  --field-2nd:    #cbb3bd;   /* 8.0:1 */
+  --field-ph:     #a38d97;   /* 5.0:1 */
+  --field-chip:   rgba(240, 168, 196, .12);
+  --field-accent: #f0a8c4;
+  --field-glow:   rgba(0, 0, 0, .5);
+}
+html[data-theme="miko"] {
+  --bg:        #f8fafc;
+  --text:      #1f2937;
+  --text-2:    #475569;
+  --text-3:    #64748b;
+  --accent:    #4f46e5;
+  --on-accent: #ffffff;
+
+  --layer-1:   rgba(79, 70, 229, .06);
+  --layer-2:   rgba(79, 70, 229, .10);
+
+  --bubble-bg: #ffffff;
+  --bubble-fg: #1f2937;
+  --panel:     #ffffff;
+
+  /* 粉色搜索框（浅色皮肤）。占位色取 #7d616b：
+     在 #fbeef3 上 4.91:1、聚焦态 #fce7ef 上 4.70:1，都过线 */
+  --field:        #fbeef3;
+  --field-2:      #fce7ef;
+  --field-ring:   #cd7295;   /* 与框底 2.5:1，1.5px 描边足够看清 */
+  --field-ink:    #3a2b31;   /* 11.9:1 */
+  --field-2nd:    #5d4a52;   /* 7.3:1 */
+  --field-ph:     #7d616b;   /* 4.91:1 */
+  --field-chip:   rgba(184, 63, 104, .10);
+  --field-accent: #b83f68;
+  --field-glow:   rgba(184, 63, 104, .30);
+}
+
+* { box-sizing: border-box; }
+html { scrollbar-gutter: stable; }
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  padding:
+    calc(env(safe-area-inset-top) + 28px)
+    calc(env(safe-area-inset-right) + 20px)
+    calc(env(safe-area-inset-bottom) + 32px)
+    calc(env(safe-area-inset-left) + 20px);
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+               "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: contain;
+  transition: background-color .24s ease, color .24s ease;
+}
+
+.wrap { max-width: 820px; margin: 0 auto; }
+
+/* ---------- 头部 ---------- */
+
+.hd {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -.01em;
+}
+.hd-r { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+
+.btn {
+  appearance: none;
+  border: 0;
+  background: var(--layer-1);
+  color: var(--text-2);
+  font: inherit;
+  font-size: 13px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .18s ease, color .18s ease, transform .12s ease;
+}
+.btn:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover { background: var(--layer-2); color: var(--text); }
+}
+
+/* ---------- 舞台 ---------- */
+
+.stage {
+  min-height: 330px;
+  display: grid;
+  place-items: center;
+  padding-top: 112px;   /* 给气泡留位置，不然会顶到标题 */
+}
+
+.unit {
+  position: relative;
+  width: min(720px, 100%);
+
+  /* 动图里角色本体只占画面宽度的 24.8%–81.6%，上下也各留了一截透明边
+     （左右那些是飞进飞出的小团子和花瓣，不能裁，裁了这段戏就没了）。
+     所以下面全部按比例算偏移，不能拿容器宽度直接当角色宽度用。 */
+  --mw: 190px;            /* 动图显示宽度，只想改大小就改这一个 */
+  --m-l: .248;            /* 角色本体左边界 / 画面宽 */
+  --m-r: .816;            /* 角色本体右边界 / 画面宽 */
+  --m-w: .568;            /* 角色本体宽 = m-r - m-l */
+  --m-pad: .184;          /* 画面右侧透明边 = 1 - m-r */
+  --m-cx: .532;           /* 角色本体水平中心 */
+}
+
+/* ---------- 角色：探身（站在框后面，只露上半身） ---------- */
+
+.mascot {
+  position: absolute;
+  right: calc(var(--mw) * -1 * var(--m-pad));
+  bottom: 24px;
+  width: var(--mw);
+  margin: 0;
+  z-index: 0;           /* 压在搜索框下面，下半身被挡住 */
+}
+.mascot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* 气泡贴在头顶。右缘对齐角色中心、向左生长：
+   台词长短差很多，居中生长会让气泡左右乱跳，这样只有左边缘在动。
+   竖向不能直接 bottom:100%——画面顶部约 15% 是透明留白，照 100% 摆会空出 20 多像素。 */
+.bubble {
+  position: absolute;
+  right: calc(100% - var(--mw) * var(--m-cx));
+  bottom: calc(100% + 9px - var(--mw) * .134);
+  z-index: 3;
+  width: max-content;
+  max-width: 264px;
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 14px;
+  background: var(--bubble-bg);
+  color: var(--bubble-fg);
+  font-size: 14px;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .38);
+}
+.bubble::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  right: 15px;
+  border: 7px solid transparent;
+  border-top-color: var(--bubble-bg);
+}
+.bubble.pop { animation: pop .24s ease-out; }
+@keyframes pop {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+/* 长时间发呆时气泡淡一点，不抢视线 */
+.bubble.muted { opacity: .62; transition: opacity .4s ease; }
+
+/* 角色雀跃 */
+.mascot.hop { animation: hop .44s cubic-bezier(.34, 1.4, .64, 1); }
+@keyframes hop {
+  0%   { transform: translateY(0); }
+  38%  { transform: translateY(-13px) scale(1.03); }
+  100% { transform: translateY(0); }
+}
+
+/* ---------- 粉色搜索框 ---------- */
+
+.search {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 56px;
+  padding: 0 12px 0 14px;
+  background: var(--field);
+  border-radius: 18px;
+  box-shadow: 0 12px 28px -20px var(--field-glow);
+  transition: background-color .2s ease, box-shadow .2s ease;
+}
+.search:focus-within {
+  background: var(--field-2);
+  box-shadow: 0 14px 32px -20px var(--field-glow),
+              inset 0 0 0 1.5px var(--field-ring);
+}
+
+.eng-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 100%;
+  padding: 0 11px 0 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--field-2nd);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: color .18s ease;
+}
+.eng-btn[aria-expanded="true"] { color: var(--field-ink); }
+@media (hover: hover) and (pointer: fine) {
+  .eng-btn:hover { color: var(--field-ink); }
+}
+.eng-car { opacity: .75; transition: transform .22s ease; }
+.eng-btn[aria-expanded="true"] .eng-car { transform: rotate(180deg); }
+
+.eng-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 12px;
+  z-index: 30;
+  min-width: 148px;
+  padding: 6px;
+  background: var(--panel);
+  border-radius: 14px;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, .5);
+}
+.eng-menu[hidden] { display: none; }
+.eng-menu button {
+  display: block;
+  width: 100%;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  background: none;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text-2);
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .16s ease, color .16s ease;
+}
+.eng-menu button[aria-checked="true"] {
+  background: var(--field-chip);
+  color: var(--field-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .eng-menu button:hover { background: var(--layer-1); color: var(--text); }
+}
+
+.search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 16px;          /* 低于 16px，iOS 会放大整页且还原不回来 */
+  color: var(--field-ink);
+  outline: none;
+}
+.search input::placeholder { color: var(--field-ph); opacity: 1; }
+
+/* 干掉 Chrome 自带的蓝色清除叉：它在粉底上非常跳，换成下面自己的 */
+.search input::-webkit-search-cancel-button,
+.search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.clr {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--field-chip);
+  color: var(--field-2nd);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .16s ease, color .16s ease, transform .12s ease;
+}
+.clr[hidden] { display: none; }
+.clr:active { transform: scale(.9); }
+@media (hover: hover) and (pointer: fine) {
+  .clr:hover { background: var(--field-ring); color: var(--field-ink); }
+}
+
+.search kbd {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 7px;
+  background: var(--field-chip);
+  color: var(--field-2nd);
+  font: inherit;
+  font-size: 12px;
+  transition: opacity .18s ease;
+}
+.search:focus-within kbd { opacity: 0; }
+/* 已经有内容时 `/` 也该让位，否则会和清除按钮并排放两个小圆块 */
+.search:has(input:not(:placeholder-shown)) kbd { opacity: 0; }
+
+/* ---------- 说明 ---------- */
+
+.note {
+  margin: 36px auto 0;
+  max-width: 640px;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--text-3);
+  text-align: center;
+}
+.note b { color: var(--text-2); font-weight: 600; }
+
+@media (max-width: 560px) {
+  .hd { display: grid; grid-template-columns: 1fr auto; align-items: center; }
+  .hd > h1    { grid-column: 1; grid-row: 1; }
+  .hd > .hd-r { grid-column: 2; grid-row: 1; margin-left: 0; justify-self: end; }
+}
+
+@media (max-width: 520px) {
+  .unit { --mw: 150px; }
+  .mascot { right: 0; bottom: 34px; }
+  .bubble { max-width: 220px; font-size: 13.5px; }
+}
+
+/* 减弱动效：只去掉位移与缩放，颜色和透明度照常过渡。
+   注意不能给所有东西压成 .01ms——那等于硬切，比动画本身还难受。 */
+@media (prefers-reduced-motion: reduce) {
+  .mascot.hop { animation: none; }
+  .bubble.pop { animation: fade .2s linear; }
+  @keyframes fade { from { opacity: .35; } to { opacity: 1; } }
+  .btn { transition: background-color .18s ease, color .18s ease; }
+  .btn:active { transform: none; }
+  .eng-car { transition: none; }
+}
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+  <header class="hd">
+    <h1>搜索框 × 看板娘</h1>
+    <div class="hd-r">
+      <button type="button" class="btn" data-skin>深色</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <div class="unit">
+
+      <figure class="mascot">
+        <p class="bubble" data-bubble>今天想搜点什么？</p>
+        <img src="assets/img/miko.webp" alt="八重神子看板娘">
+      </figure>
+
+      <form class="search" data-search role="search">
+        <button type="button" class="eng-btn" data-eng-btn
+                aria-haspopup="true" aria-expanded="false" aria-label="切换搜索引擎">
+          <span data-eng-name>Bing</span>
+          <svg class="eng-car" width="9" height="6" viewBox="0 0 9 6" fill="none" aria-hidden="true">
+            <path d="M1 1.5L4.5 5L8 1.5" stroke="currentColor" stroke-width="1.2"
+                  stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </button>
+
+        <input type="search" data-q aria-label="搜索或输入网址"
+               placeholder="搜索，或输入网址" autocomplete="off" spellcheck="false" />
+
+        <button type="button" class="clr" data-clr aria-label="清空" hidden>
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+            <path d="M2.6 2.6L9.4 9.4M9.4 2.6L2.6 9.4" stroke="currentColor"
+                  stroke-width="1.5" stroke-linecap="round" />
+          </svg>
+        </button>
+
+        <kbd>/</kbd>
+
+        <div class="eng-menu" data-eng-menu role="menu" hidden>
+          <button type="button" role="menuitemradio" aria-checked="true"  data-e="bing">Bing</button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-e="baidu">百度</button>
+          <button type="button" role="menuitemradio" aria-checked="false" data-e="google">Google</button>
+        </div>
+      </form>
+
+    </div>
+  </main>
+
+  <p class="note">
+    点输入框她会接话，打字时跟着你念，回车送客。<b>/</b> 键可以直接聚焦。<br>
+    放着不动她会自己找话说，很久不理她会开始嘟囔。<br>
+    这是个 demo 页，还没接进起始页。
+  </p>
+
+</div>
+
+<script>
+const bubble = document.querySelector('[data-bubble]');
+const mascot = document.querySelector('.mascot');
+const form   = document.querySelector('[data-search]');
+const input  = document.querySelector('[data-q]');
+const clr    = document.querySelector('[data-clr]');
+
+/* ---------- 台词库 ----------
+   八重神子的说话方式：温和、带点刺、爱看人笑话，不催不赶。 */
+
+const LINES = {
+  idle: [
+    '今天想搜点什么？',
+    '慢慢想，我不催你。',
+    '嗯……发什么呆呢。',
+    '难得的清闲，就这么站着？',
+    '要不要我替你找点乐子？',
+    '风不错，就这样待一会儿也好。',
+    '我的时间可不便宜，不过对你还算宽裕。',
+    '一本正经地空着，也挺好看。'
+  ],
+  focus: [
+    '说吧，我听着。',
+    '嗯？想找什么。',
+    '难得主动，说来听听。',
+    '手放上来就别停了。'
+  ],
+  short: [
+    '「{v}」？就这点线索。',
+    '「{v}」……你还真是不客气。',
+    '「{v}」，行吧，我记下了。'
+  ],
+  mid: [
+    '找「{v}」？交给我。',
+    '「{v}」啊，有点意思。',
+    '嗯，「{v}」，我看看。'
+  ],
+  long: [
+    '「{v}……」这么长，你确定我记得住。',
+    '「{v}……」，你这是在写报告吗。'
+  ],
+  url: [
+    '网址啊，你自己不就能去。',
+    '这串东西，一看就不是来问我的。'
+  ],
+  lore: [
+    '又绕回提瓦特了。',
+    '在找我？直说就好。',
+    '神社的事，你得先预约。'
+  ],
+  question: [
+    '问题？我最喜欢有人问我问题了。',
+    '问得不错，就是别指望我好好答。'
+  ],
+  engine: [
+    '换个地方找，也不错。',
+    '行，就它了。',
+    '这个我可管不着，你定。',
+    '换吧，反正结果都差不多。'
+  ],
+  submit: [
+    '出发！',
+    '走吧，别让我等。',
+    '找到了记得回来。'
+  ],
+  empty: [
+    '什么都没写，让我猜吗。',
+    '空手而来，胆子不小。',
+    '你确定要搜空气？'
+  ],
+  bored: [
+    '……睡着了？',
+    '喂，还醒着吗。',
+    '我就这么不值得你理？',
+    '再不理我，我可要走了。'
+  ]
+};
+
+/* 不连着说同一句 */
+let lastLine = '';
+function pick(arr) {
+  let s = arr[Math.floor(Math.random() * arr.length)];
+  if (arr.length > 1 && s === lastLine) s = arr[(arr.indexOf(s) + 1) % arr.length];
+  lastLine = s;
+  return s;
+}
+
+function fill(tpl, v) { return tpl.replace('{v}', v); }
+
+let popTimer = 0;
+function say(text, muted) {
+  bubble.textContent = text;
+  bubble.classList.toggle('muted', !!muted);
+  bubble.classList.remove('pop');
+  void bubble.offsetWidth;            // 重启动画，不然连着说就只动一次
+  bubble.classList.add('pop');
+  clearTimeout(popTimer);
+  popTimer = setTimeout(() => bubble.classList.remove('pop'), 280);
+}
+
+function hop() {
+  mascot.classList.remove('hop');
+  void mascot.offsetWidth;
+  mascot.classList.add('hop');
+  setTimeout(() => mascot.classList.remove('hop'), 460);
+}
+
+/* ---------- 空闲台词轮播 ---------- */
+
+const BORED_AFTER = 55000;    // 这么久没动静就开始嘟囔
+let idleTimer = 0, boredTimer = 0, boredStage = 0;
+
+function scheduleIdle() {
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (document.activeElement !== input) {
+      say(pick(LINES.idle));
+      scheduleIdle();
+    }
+  }, 8000 + Math.random() * 4000);
+}
+
+function scheduleBored() {
+  clearTimeout(boredTimer);
+  boredTimer = setTimeout(() => {
+    if (document.activeElement !== input) {
+      say(pick(LINES.bored), true);
+      boredStage++;
+      if (boredStage < 3) scheduleBored();
+    }
+  }, BORED_AFTER);
+}
+
+function userDidSomething() {
+  boredStage = 0;
+  clearTimeout(boredTimer);
+  scheduleBored();
+  scheduleIdle();
+}
+
+/* ---------- 输入内容分流 ---------- */
+
+function typingLine(v) {
+  if (/^https?:\/\/|^www\.|\b\w+\.(com|cn|net|org|io|me)\b/i.test(v)) return pick(LINES.url);
+  if (/原神|提瓦特|神子|八重|稻妻/.test(v)) return pick(LINES.lore);
+  /* 别只看问号——中文里「今天天气怎么样」这种是问句但没问号 */
+  if (/[?？]|吗$|呢$|怎么样|为什么|是什么|是多少|多少|哪个|如何|能不能/.test(v))
+    return pick(LINES.question);
+  if (v.length > 12) return fill(pick(LINES.long), v.slice(0, 8));
+  if (v.length <= 3) return fill(pick(LINES.short), v);
+  return fill(pick(LINES.mid), v);
+}
+
+/* ---------- 事件 ---------- */
+
+input.addEventListener('focus', () => {
+  clearTimeout(idleTimer);
+  say(pick(LINES.focus));
+});
+
+input.addEventListener('blur', () => {
+  if (!input.value.trim()) { say(pick(LINES.idle)); scheduleIdle(); }
+  else scheduleIdle();
+});
+
+let typingTimer = 0;
+input.addEventListener('input', () => {
+  userDidSomething();
+  syncClr();
+  const v = input.value.trim();
+  clearTimeout(typingTimer);
+  if (!v) { say(pick(LINES.focus)); return; }
+  /* 打字过程中别每敲一下就换句，停手 420ms 再回应 */
+  typingTimer = setTimeout(() => say(typingLine(v)), 420);
+});
+
+/* 清除按钮：有内容才出现 */
+function syncClr() { clr.hidden = input.value.length === 0; }
+
+/* 用 mousedown 拦一下，点清除时输入框不会先失焦（否则会闪一句闲置台词） */
+clr.addEventListener('mousedown', e => e.preventDefault());
+clr.addEventListener('click', () => {
+  input.value = '';
+  syncClr();
+  input.focus();
+  /* 必须取消还在排队的那次「打字回应」，否则半秒后它会把这句话顶掉 */
+  clearTimeout(typingTimer);
+  say(pick(LINES.focus));
+  userDidSomething();
+});
+
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  clearTimeout(typingTimer);          // 同上：别让排队的打字回应盖住「出发」
+  const v = input.value.trim();
+  if (v) { say(pick(LINES.submit)); hop(); }
+  else   { say(pick(LINES.empty)); }
+  userDidSomething();
+});
+
+/* ---------- 深浅切换 ---------- */
+
+const skinBtn = document.querySelector('[data-skin]');
+skinBtn.addEventListener('click', () => {
+  const dark = document.documentElement.dataset.theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'miko' : 'dark';
+  skinBtn.textContent = dark ? '深色' : '浅色';
+});
+
+/* ---------- 搜索引擎下拉 ---------- */
+
+const engBtn  = document.querySelector('[data-eng-btn]');
+const engMenu = document.querySelector('[data-eng-menu]');
+const engName = document.querySelector('[data-eng-name]');
+const LABEL = { bing: 'Bing', baidu: '百度', google: 'Google' };
+
+engBtn.addEventListener('click', () => {
+  const open = engBtn.getAttribute('aria-expanded') === 'true';
+  engBtn.setAttribute('aria-expanded', String(!open));
+  engMenu.hidden = open;
+});
+engMenu.addEventListener('click', e => {
+  const b = e.target.closest('[data-e]');
+  if (!b) return;
+  engMenu.querySelectorAll('[data-e]').forEach(x =>
+    x.setAttribute('aria-checked', String(x === b)));
+  engName.textContent = LABEL[b.dataset.e];
+  engMenu.hidden = true;
+  engBtn.setAttribute('aria-expanded', 'false');
+  /* 先 focus 再说：focus 会同步触发聚焦台词，反过来的话刚说的话立刻被顶掉 */
+  input.focus();
+  say(pick(LINES.engine));
+  userDidSomething();
+});
+document.addEventListener('click', e => {
+  if (!e.target.closest('[data-search]')) {
+    engMenu.hidden = true;
+    engBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+/* ---------- / 键聚焦，跟站内一致 ---------- */
+
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && document.activeElement !== input &&
+      !/^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) {
+    e.preventDefault();
+    input.focus();
+  }
+  if (e.key === 'Escape') {
+    engMenu.hidden = true;
+    engBtn.setAttribute('aria-expanded', 'false');
+  }
+});
+
+scheduleIdle();
+scheduleBored();
+</script>
+</body>
+</html>

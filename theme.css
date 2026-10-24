@@ -11,6 +11,15 @@
   font-style: normal;
   font-display: swap;
 }
+/* 八重皮肤的刊头字。latin 子集 22KB，自托管（Google CDN 国内直连不通）。
+   只在这里声明一次：其他皮肤不引用就不会下载。 */
+@font-face {
+  font-family: "Cherry Bomb One";
+  src: url("assets/fonts/mast-cherry-bomb-one.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ============================================================
    东芽果 DYG · v7
@@ -35,6 +44,14 @@
   --bg-lift:   #101013;
   --card:      #15151a;
   --card-2:    #1b1b21;
+
+  /* 刊头：字号倍率 + 看板娘位置系数。
+     刊头是大写，Playfair 的 WORLD 有 3.76em（小写 world 只有 2.51em），
+     620 的栏里还要留出角色本体（0.857em）和间隙，所以字号倍率压到 .75，
+     角色位置按 wordEm-0.265 推得 3.50。八重皮肤换装饰体后字更窄，
+     在 21 节里按各自的 wordEm 重新标定。 */
+  --mast-scale: .75;
+  --miko-k: 3.50;
 
   --line:      rgba(255, 255, 255, .09);
   --line-2:    rgba(255, 255, 255, .16);
@@ -1771,12 +1788,12 @@ html[data-theme="neu"] .th-btn .th-paper { display: none; }
 html[data-theme="neu"] .th-btn .th-sun { display: grid; }
 html[data-theme="organic"] .th-btn .th-paper { display: none; }
 html[data-theme="organic"] .th-btn .th-organic { display: grid; }
-html[data-theme="soft"] .th-btn .th-paper { display: none; }
-html[data-theme="soft"] .th-btn .th-soft { display: grid; }
+html[data-theme="miko"] .th-btn .th-paper { display: none; }
+html[data-theme="miko"] .th-btn .th-miko { display: grid; }
 html[data-theme="dark"] .th-btn .th-organic,
-html[data-theme="dark"] .th-btn .th-soft { display: none; }
+html[data-theme="dark"] .th-btn .th-miko { display: none; }
 html[data-theme="neu"] .th-btn .th-organic,
-html[data-theme="neu"] .th-btn .th-soft { display: none; }
+html[data-theme="neu"] .th-btn .th-miko { display: none; }
 
 /* ---------- 新拟物细化：把还平着的块做成同一种材料 ---------- */
 
@@ -1947,28 +1964,168 @@ html[data-theme="neu"] .file-tip .act {
   margin-inline: auto;
 }
 
-.st-mast { padding-top: clamp(4px, 1.4vh, 16px); }
+.st-mast { padding-top: clamp(2px, 1vh, 10px); }
 
-/* 刊头：两行，第二行右移，像报纸的错落标题 */
+/* 刊头：小写、两行、第二行更大，看板娘站在 world 右端
+   ────────────────────────────────────────────────────────────
+   2026-10-24 第二版（按用户给的版式参考）：hello 小一号、缩进一截；
+   world 大一号、从栏左缘起排；看板娘紧接在 world 右端，下半身被搜索框挡住。
+   只借版式，字体仍是 Playfair、颜色仍走皮肤令牌。
+
+   比例是从参考图量出来的（参考图 712×480，框宽 622）：
+     hello 字高 86 / world 108        → world 是 hello 的 1.25 倍
+     hello 左缘比 world 右移 88px      → 占栏宽 14%
+     world 墨迹 380 + 角色本体 143 + 右留白 66 ≈ 622
+   换算到 620 的栏：world 字号 164、hello 131（.8em）、角色本体宽 143。
+
+   看板娘元素本身有透明边（本体只占画面宽 24.5%–82%、高 18.1%–96.2%），
+   所以定位要按比例反推，不能直接贴 right。 */
+.st-mast {
+  /* 字号只跟视口高走，不跟宽走。
+     栏宽是死的 620，字号要是跟 vw，1024 下字缩到 117 而栏还是 620，
+     看板娘又贴着 right，word 和角色之间就会裂开一百多像素 —— 跟上一版
+     「World 被甩到右边」是同一个病。所以：高度定字号，角色跟 word 走。 */
+  --mast-f: clamp(60px, 17.5vh, 164px);
+  position: relative;
+  /* z-index:0 建一个层叠上下文：里面的花瓣/刊头/看板娘自己排序，
+     不会跑到同级的搜索框（z-index:1）上面 —— 否则看板娘的脚会盖住框。 */
+  z-index: 0;
+}
+
 .st-hello {
   margin: 0;
-  font-family: "Playfair Display", Georgia, "Songti SC", serif;
+  /* 字体和字号倍率都做成皮肤变量：八重皮肤换 Cherry Bomb One（WORLD 宽 3.35em），
+     其余皮肤仍是 Playfair（2.67em）—— 字宽差 25%，所以倍率必须跟着走 */
+  font-family: var(--mast-font, "Playfair Display", Georgia, "Songti SC", serif);
   font-weight: 900;
-  font-size: clamp(54px, 9.6vw, 122px);
-  line-height: .78;
+  font-size: calc(var(--mast-f) * var(--mast-scale, 1));
+  line-height: .74;
   letter-spacing: -.045em;
   color: var(--text);
+  text-transform: uppercase;
+  /* 花瓣层在 .st-mast 里是 z-index:1，字必须压在它上面 */
+  position: relative;
+  z-index: 2;
 }
 .st-hello span { display: block; }
-.st-hello span:last-child { text-align: right; margin-right: 2%; }
+/* hello：小一号，右移 14% 栏宽 */
+.st-hello span:first-child { font-size: .8em; margin-left: 14%; }
+/* world：占满栏左缘，不再缩进 */
+.st-hello span:last-child { text-align: left; margin-right: 0; margin-left: 0; }
 
-/* 刊头和搜索栏之间不画线，靠留白分档 */
+/* 看板娘：只在「八重」皮肤下出现。
+   八重以外的三套（有机 / 夜幕 / 新拟物）不挂这个角色 —— 它不是通用装饰，
+   是这一套皮肤的角色。默认 display:none，下面按属性放开。
+   本体只占画面宽 24.5%–82%、高 18.1%–96.2%（左右是飘动的小团子和花瓣）。 */
+.mast-miko-wrap {
+  display: none;
+  --mw: calc(var(--mast-f) * var(--mast-scale, 1) * 1.49);
+  position: absolute;
+  left: calc(var(--mast-f) * var(--mast-scale, 1) * var(--miko-k, 2.4));
+  bottom: -30px;
+  width: var(--mw);
+  height: calc(var(--mw) * 0.8856);      /* 717 × 635 */
+  z-index: 3;              /* 花瓣 1 / 字 2 / 角色 3 —— 角色压在花瓣上 */
+  pointer-events: none;
+}
+html[data-theme="miko"] .mast-miko-wrap { display: block; }
+
+.mast-miko {
+  display: block;
+  width: 100%;
+  /* 外层 pointer-events:none，这里单独放开，角色才能被点。
+     下半身被搜索框盖住，实际可点的只有头肩那一片。 */
+  pointer-events: auto;
+}
+.mast-miko img {
+  display: block;
+  width: 100%;
+  height: auto;
+  -webkit-user-drag: none;
+}
+/* 跳一下：提交搜索、被戳的时候。减弱动效下不跳（位移属于要去掉的部分） */
+.mast-miko.hop { animation: miko-hop .46s cubic-bezier(.34, 1.4, .64, 1); }
+@keyframes miko-hop {
+  0%   { transform: translateY(0); }
+  36%  { transform: translateY(-10px) scale(1.035); }
+  100% { transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mast-miko.hop { animation: none; }
+}
+
+/* 台词气泡：从头中心往右长，尾巴朝下点在头上。
+   长台词会折行，宽度锁在 190px，别让它顶到页面边缘。 */
+.mast-bubble {
+  position: absolute;
+  left: 53.2%;                 /* 本体水平中心 */
+  bottom: 79%;                 /* 头顶再往上一点 */
+  width: max-content;
+  max-width: 190px;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 13px;
+  background: var(--surface-overlay, #fff);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: left;
+  box-shadow: 0 10px 26px -14px rgba(59, 42, 52, .45);
+  opacity: 0;
+  transform: translateY(5px) scale(.96);
+  transition: opacity .2s ease, transform .2s ease;
+  pointer-events: none;
+}
+.mast-bubble.on { opacity: 1; transform: none; }
+.mast-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 2px;          /* 尾巴尖落在头的中心（气泡左缘就在 53.2%） */
+  border: 7px solid transparent;
+  border-top-color: var(--surface-overlay, #fff);
+}
+/* 手机上没有横向空间给它，收起（角色本身还在） */
+@media (max-width: 760px) {
+  .mast-bubble { display: none; }
+}
+
+/* 樱花层：默认不显示，只有八重皮肤打开（见 21 节）。
+   坐标用 px 不用百分比 —— 栏宽 620 是固定的，px 才贴得住字；
+   换皮肤时字号会变，但字的左缘始终在栏左。容器左右各外扩 10px。 */
+.mast-petals { display: none; }
+.mast-petals .sk {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  color: var(--sakura-petal, #f4a0bf);
+  opacity: var(--o, .6);
+  transform: rotate(var(--r, 0deg));
+}
+.mast-petals .sk.pe { color: var(--sakura-2, #c0396a); }
+/* 搜索框盖住角色的下半身 */
+.start-core > .search { position: relative; z-index: 1; }
+
+/* 刊头和搜索栏之间不画线，靠留白分档。
+   字号涨了 29%，这里回收 8px，一屏放得下。 */
 .st-kicker {
-  margin: 10px 0 0;
-  padding-bottom: 6px;
+  margin: 6px 0 0;
+  padding-bottom: 2px;
   font-size: 11px;
   letter-spacing: .13em;
   color: var(--text-3);
+}
+
+/* 窄屏收掉副标题。
+   这条 11px 的小字在 11px + .13em 下宽 192px，而看板娘是跟着 world
+   右端走的 —— 360px 的屏上 world 只到 188，角色本体从 196 起，
+   两条正好撞在一起（实测 360 下压住 12px，390 下只剩 3px 空隙，也算撞）。
+   它只是装饰，品牌名导航左上角本来就有；而且收掉正好给已经很紧的
+   手机竖屏腾出 27px。 */
+@media (max-width: 480px) {
+  .st-kicker { display: none; }
 }
 /* 问候跟着时钟走，别再挡在刊头线和搜索框之间 */
 .st-greet { margin: 8px 0 0; font-size: 13.5px; color: var(--text-2); text-align: center; }
@@ -2020,25 +2177,37 @@ html[data-theme="neu"] .file-tip .act {
 .start-core > .search { margin-top: 8px; }
 
 /* 收藏：四组并排成一横排，21 条一屏看完，不用滚。
-   报纸本来就是宽窄混排——刊头和时钟是窄栏，目录可以放开到更宽。 */
+   报纸本来就是宽窄混排——刊头和时钟是窄栏，目录可以放开到更宽。
+
+   纵向压紧（2026-10-24）：收藏区原来 262px，最高一组 7 条撑到 224px，
+   单条 28px 里真正决定高度的是那个 22px 的图标块 —— 所以压图标才是有效的，
+   只调 padding 没用（内容高被图标顶着）。
+   压完：单条 22px、收藏区约 205px，省出 57px 给搜索栏和看板娘。 */
 .start-core > .bm {
   width: min(1040px, 100%);
-  margin-top: clamp(12px, 1.8vh, 18px);
+  margin-top: clamp(8px, 1.4vh, 14px);
 }
 .start-core .bm-groups {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0 28px;
+  gap: 0 24px;
   columns: auto;
-  padding-top: 10px;
+  padding-top: 6px;
 }
 .start-core .bm-g { break-inside: auto; margin-bottom: 0; }
+.start-core .bm-g h3 { font-size: 12px; margin-bottom: 4px; }
 .start-core .bm-l {
   font-size: 13px;
-  padding: 3px 8px 3px 6px;
-  gap: 8px;
+  padding: 1.5px 8px 1.5px 6px;
+  gap: 7px;
 }
-.start-core .bm-l span { line-height: 1.4; }
+.start-core .bm-l i {
+  width: 18px;
+  height: 18px;
+  font-size: 10px;
+  border-radius: 6px;
+}
+.start-core .bm-l span { line-height: 1.35; padding-block: 1px; }
 
 @media (max-width: 760px) {
   .start-core > .bm { width: 100%; }
@@ -2046,10 +2215,16 @@ html[data-theme="neu"] .file-tip .act {
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 0 16px;
   }
-  .st-hello { font-size: clamp(54px, 17vw, 88px); }
+  /* 字号只能改 --mast-f：直接写 .st-hello{font-size} 会让看板娘的
+     width: calc(var(--mast-f) * 1.366) 跟文字脱钩 */
+  .st-mast { --mast-f: clamp(54px, 19vw, 96px); }
 }
+/* 触摸端别跟着一起压：手指需要更大的点击目标，
+   图标留 20px、padding 留 2px，单条 24px。 */
 @media (max-width: 520px) {
   .start-core .bm-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .start-core .bm-l { padding: 2px 8px 2px 6px; }
+  .start-core .bm-l i { width: 20px; height: 20px; }
 }
 
 /* 报纸皮肤下，起始页的刊头线更实一点 */
@@ -2260,45 +2435,51 @@ html[data-theme="organic"] .nav-links a {
 }
 
 /* ============================================================
-   21. 皮肤六：柔和界面（Soft UI）
+   21. 皮肤：八重（Yae Miko）
    ────────────────────────────────────────────────────────────
-   低饱和 indigo + 浅灰蓝底 + 大圆角 + 带颜色的柔阴影。
-   三个硬约束：不用纯黑（用 gray-800）、不用硬边框（靠阴影分层）、
-   hover 上浮而不是变色——触感像按在柔软的东西上。
+   2026-10-24：这套接手「柔和」的位置（顺序第一、默认皮肤）。
+   原来那套低饱和 indigo + 冷灰底整个换掉 —— 现在整页是樱粉的：
+   樱白底、白卡、樱红强调、深梅墨的字，配樱桃炸弹体的刊头和飘落的花瓣。
+
+   骨架没动：还是大圆角 + 带色柔阴影 + hover 上浮（这套是好的，换的只是颜色），
+   所以下面那一大段规则原样保留，只把写死的 indigo / slate 换成玫红 / 梅墨。
+
+   三个硬约束照旧：不用纯黑、不用硬边框、hover 上浮而不是变色。
+   对比度都算过：正文 12.59:1、次要 8.01:1、三级 4.59:1、强调 4.98:1（樱白底）。
    ============================================================ */
-html[data-theme="soft"] {
-  --bg:        #f8fafc;   /* slate-50 */
-  --bg-lift:   #f1f5f9;
+html[data-theme="miko"] {
+  --bg:        #fdf6f9;   /* 樱白：只带一点粉，不能做成粉纸 */
+  --bg-lift:   #fbeff4;
   --card:      #ffffff;
-  --card-2:    #ffffff;
+  --card-2:    #fffafc;
 
-  --text:      #1f2937;   /* gray-800，不是纯黑 */
-  --text-2:    #475569;
-  --text-3:    #64748b;   /* 4.8:1 */
+  --text:      #3b2a34;   /* 深梅墨，不是纯黑 */
+  --text-2:    #5f4553;
+  --text-3:    #836a78;   /* 4.59:1 */
 
-  --accent:    #4f46e5;   /* indigo-600，白底上 5.9:1 */
+  --accent:    #c0356b;   /* 樱红：白底 5.30、樱白底 4.98 */
   --on-accent: #ffffff;
 
-  --line:      #e2e8f0;
-  --line-2:    #cbd5e1;
+  --line:      #f2dbe6;
+  --line-2:    #e6c6d6;
 
-  --layer-1:   rgba(79, 70, 229, .06);
-  --layer-2:   rgba(79, 70, 229, .10);
-  --layer-3:   rgba(79, 70, 229, .16);
-  --hair:      #cbd5e1;
-  --hair-2:    #e2e8f0;
+  --layer-1:   rgba(192, 53, 107, .06);
+  --layer-2:   rgba(192, 53, 107, .10);
+  --layer-3:   rgba(192, 53, 107, .16);
+  --hair:      #e6c6d6;
+  --hair-2:    #f2dbe6;
 
   --surface-glass:   rgba(255, 255, 255, .92);
   --surface-panel:   #ffffff;
-  --surface-scrim:   rgba(30, 41, 59, .45);
+  --surface-scrim:   rgba(59, 42, 52, .45);
   --surface-overlay: #ffffff;
   --surface-start:   transparent;
 
-  /* 阴影一律带色：灰蓝或 indigo，绝不出现纯黑硬影 */
-  --shadow-color: rgba(79, 70, 229, .18);
-  --shadow:    0 24px 48px -24px rgba(51, 65, 85, .28);
-  --shadow-sm: 0 12px 28px -14px rgba(51, 65, 85, .22);
-  --shadow-soft: 0 20px 44px -18px rgba(79, 70, 229, .28);
+  /* 阴影一律带色：玫红或梅墨，绝不出现纯黑硬影 */
+  --shadow-color: rgba(160, 61, 106, .18);
+  --shadow:      0 24px 48px -24px rgba(90, 52, 71, .28);
+  --shadow-sm:   0 12px 28px -14px rgba(90, 52, 71, .22);
+  --shadow-soft: 0 20px 44px -18px rgba(192, 53, 107, .26);
 
   --r-card: 24px;
   --r-tile: 20px;
@@ -2306,46 +2487,56 @@ html[data-theme="soft"] {
 
   --soft-dur: 300ms;
   --soft-ease: cubic-bezier(.4, 0, .2, 1);
+
+  /* --- 刊头 ---
+     装饰体的字宽和 Playfair 差很多（WORLD：3.35em vs 2.55em），
+     所以看板娘的位置系数 --miko-k 必须跟着换，否则角色会站进字里。 */
+  --mast-font: "Cherry Bomb One", "Playfair Display", Georgia, serif;
+  --mast-scale: .81;
+  --miko-k: 3.14;
+  --sakura-1: #e35c8a;
+  --sakura-2: #c0396a;
+  --sakura-petal: #f4a0bf;
 }
 
-html[data-theme="soft"] body::before,
-html[data-theme="soft"] body::after { display: none; }
-html[data-theme="soft"] body {
-  background: #f8fafc;
+html[data-theme="miko"] body::before,
+html[data-theme="miko"] body::after { display: none; }
+html[data-theme="miko"] body {
+  background: #fdf6f9;
   background-image:
-    radial-gradient(60% 46% at 18% 0%, rgba(99, 102, 241, .10), transparent 70%),
-    radial-gradient(52% 40% at 86% 12%, rgba(236, 72, 153, .07), transparent 72%);
+    radial-gradient(60% 46% at 18% 0%, rgba(226, 116, 158, .12), transparent 70%),
+    radial-gradient(52% 40% at 86% 12%, rgba(150, 92, 154, .085), transparent 72%);
   background-repeat: no-repeat;
 }
 
 /* 导航：浮起来的白胶囊，阴影带 indigo 味道 */
-html[data-theme="soft"] .nav-inner {
+html[data-theme="miko"] .nav-inner {
   background: rgba(255, 255, 255, .96);
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 0;
-  box-shadow: 0 18px 40px -18px rgba(51, 65, 85, .25),
-              0 2px 8px -2px rgba(79, 70, 229, .10);
+  box-shadow: 0 18px 40px -18px rgba(90, 52, 71, .25),
+              0 2px 8px -2px rgba(192, 53, 107, .10);
 }
-html[data-theme="soft"] .nav-links a {
+html[data-theme="miko"] .nav-links a {
   border-radius: 999px;
   transition: background var(--soft-dur) var(--soft-ease),
               color var(--soft-dur) var(--soft-ease);
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .nav-links a:hover { background: var(--layer-2); color: var(--accent); }
+  html[data-theme="miko"] .nav-links a:hover { background: var(--layer-2); color: var(--accent); }
 }
-html[data-theme="soft"] .nav-links a[aria-current="page"] {
+html[data-theme="miko"] .nav-links a[aria-current="page"] {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 8px 18px -8px rgba(79, 70, 229, .6);
+  box-shadow: 0 8px 18px -8px rgba(192, 53, 107, .6);
 }
 
 /* 卡片 / 瓦片：大圆角 + 上浮 */
-html[data-theme="soft"] .g-item,
-html[data-theme="soft"] .row,
-html[data-theme="soft"] .tag,
-html[data-theme="soft"] .chip {
+html[data-theme="miko"] .g-item,
+html[data-theme="miko"] .row,
+html[data-theme="miko"] .tag,
+html[data-theme="miko"] .chip {
   border: 0;
   border-radius: var(--r-card);
   background: #fff;
@@ -2354,34 +2545,34 @@ html[data-theme="soft"] .chip {
               box-shadow var(--soft-dur) var(--soft-ease);
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .g-item:hover,
-  html[data-theme="soft"] .row:hover {
+  html[data-theme="miko"] .g-item:hover,
+  html[data-theme="miko"] .row:hover {
   transform: translateY(-3px);
   /* 白卡叠在白底上，只靠阴影几乎看不出变化：
      底色压成极淡的薰衣草，再加一圈 indigo 描边。 */
-  background: #f7f7ff;
-  box-shadow: 0 0 0 1px rgba(79, 70, 229, .22), var(--shadow-soft);
+  background: #fdf1f6;
+  box-shadow: 0 0 0 1px rgba(192, 53, 107, .22), var(--shadow-soft);
 }
-  html[data-theme="soft"] .tag:hover,
-  html[data-theme="soft"] .chip:hover {
+  html[data-theme="miko"] .tag:hover,
+  html[data-theme="miko"] .chip:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-sm);
     color: var(--accent);
   }
 }
-html[data-theme="soft"] .g-item img { border-radius: var(--r-card); }
-html[data-theme="soft"] .chip.on,
-html[data-theme="soft"] .tag.on {
+html[data-theme="miko"] .g-item img { border-radius: var(--r-card); }
+html[data-theme="miko"] .chip.on,
+html[data-theme="miko"] .tag.on {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 10px 22px -10px rgba(79, 70, 229, .65);
+  box-shadow: 0 10px 22px -10px rgba(192, 53, 107, .65);
 }
 
 /* 按钮：圆形底、悬浮 */
-html[data-theme="soft"] .np-btn,
-html[data-theme="soft"] .th-btn,
-html[data-theme="soft"] .burger,
-html[data-theme="soft"] .lb-btn {
+html[data-theme="miko"] .np-btn,
+html[data-theme="miko"] .th-btn,
+html[data-theme="miko"] .burger,
+html[data-theme="miko"] .lb-btn {
   border: 0;
   border-radius: 999px;
   background: #fff;
@@ -2391,146 +2582,182 @@ html[data-theme="soft"] .lb-btn {
               color 200ms var(--soft-ease);
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .np-btn:hover,
-  html[data-theme="soft"] .th-btn:hover,
-  html[data-theme="soft"] .burger:hover,
-  html[data-theme="soft"] .lb-btn:hover {
+  html[data-theme="miko"] .np-btn:hover,
+  html[data-theme="miko"] .th-btn:hover,
+  html[data-theme="miko"] .burger:hover,
+  html[data-theme="miko"] .lb-btn:hover {
     transform: translateY(-2px);
     color: var(--accent);
     box-shadow: var(--shadow-soft);
   }
 }
-html[data-theme="soft"] .np-btn:active,
-html[data-theme="soft"] .th-btn:active,
-html[data-theme="soft"] .burger:active { transform: scale(.95); }
+html[data-theme="miko"] .np-btn:active,
+html[data-theme="miko"] .th-btn:active,
+html[data-theme="miko"] .burger:active { transform: scale(.95); }
 
-html[data-theme="soft"] .modesw {
+html[data-theme="miko"] .modesw {
   background: rgba(241, 245, 249, .9);
   border: 0;
-  box-shadow: inset 0 1px 3px rgba(51, 65, 85, .10);
+  box-shadow: inset 0 1px 3px rgba(90, 52, 71, .10);
 }
-html[data-theme="soft"] .modesw-thumb {
+html[data-theme="miko"] .modesw-thumb {
   background: #fff;
-  box-shadow: 0 6px 14px -6px rgba(51, 65, 85, .35);
+  box-shadow: 0 6px 14px -6px rgba(90, 52, 71, .35);
 }
-html[data-theme="soft"] .modesw a.on,
-html[data-theme="soft"] .modesw button.on,
-html[data-theme="soft"] .modesw a[aria-current="page"] { color: var(--accent); }
+html[data-theme="miko"] .modesw a.on,
+html[data-theme="miko"] .modesw button.on,
+html[data-theme="miko"] .modesw a[aria-current="page"] { color: var(--accent); }
 
 /* 搜索框：浅灰底 + focus 柔光环，不用边框 */
-html[data-theme="soft"] .search {
+html[data-theme="miko"] .search {
   background: #fff;
   border: 0;
   border-radius: var(--r-pill);
-  box-shadow: 0 10px 26px -14px rgba(51, 65, 85, .28);
+  box-shadow: 0 10px 26px -14px rgba(90, 52, 71, .28);
   transition: box-shadow var(--soft-dur) var(--soft-ease);
 }
-html[data-theme="soft"] .search:focus-within {
-  box-shadow: 0 0 0 4px rgba(79, 70, 229, .18),
-              0 16px 34px -16px rgba(79, 70, 229, .35);
+html[data-theme="miko"] .search:focus-within {
+  /* 原来只有一圈 4px / 18% 的外光环 —— 合成到樱白底上不足 1.3:1，
+     等于没有聚焦信号。补一圈实色内描边，外光环留作氛围。 */
+  box-shadow: inset 0 0 0 1.5px var(--accent),
+              0 0 0 4px rgba(192, 53, 107, .22),
+              0 16px 34px -16px rgba(192, 53, 107, .35);
 }
-html[data-theme="soft"] .search kbd {
+html[data-theme="miko"] .search kbd {
   background: var(--layer-2);
   color: var(--accent);
   border-radius: 999px;
 }
-html[data-theme="soft"] .eng-menu {
+html[data-theme="miko"] .eng-menu {
   border: 0;
   border-radius: var(--r-card);
   box-shadow: var(--shadow);
 }
-html[data-theme="soft"] .eng-menu button { border-radius: 999px; }
+html[data-theme="miko"] .eng-menu button { border-radius: 999px; }
 
 /* 收藏条目：整行圆角 + 悬停浅 indigo */
-html[data-theme="soft"] .bm-l {
+html[data-theme="miko"] .bm-l {
   border-radius: 14px;
   transition: background var(--soft-dur) var(--soft-ease),
               color var(--soft-dur) var(--soft-ease);
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .bm-l:hover { background: var(--layer-1); color: var(--accent); }
+  html[data-theme="miko"] .bm-l:hover { background: var(--layer-1); color: var(--accent); }
 }
-html[data-theme="soft"] .bm-l:active { background: var(--layer-2); }
-html[data-theme="soft"] .bm-l i {
+html[data-theme="miko"] .bm-l:active { background: var(--layer-2); }
+html[data-theme="miko"] .bm-l i {
   background: var(--layer-2);
   color: var(--accent);
   border-radius: 999px;
   font-weight: 600;
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .bm-l:hover i {
+  html[data-theme="miko"] .bm-l:hover i {
     background: var(--accent);
     color: #fff;
-    box-shadow: 0 6px 14px -6px rgba(79, 70, 229, .6);
+    box-shadow: 0 6px 14px -6px rgba(192, 53, 107, .6);
   }
 }
 
 /* 刊头与时钟 */
-html[data-theme="soft"] .st-hello { color: var(--text); letter-spacing: -.035em; }
-html[data-theme="soft"] .st-kicker { color: var(--text-3); letter-spacing: .14em; }
-html[data-theme="soft"] .clock-ring .cr-track { stroke: #e2e8f0; stroke-width: 6; }
-html[data-theme="soft"] .clock-ring .cr-fill {
+/* 刊头：樱粉渐变字。大字号按 WCAG 只要 3:1，
+   渐变两端 #e35c8a(3.26) / #c0396a(4.86) 在樱白底上都过。
+   不支持 background-clip:text 时退回纯色 var(--sakura-2)（4.86:1）。 */
+html[data-theme="miko"] .st-hello {
+  color: var(--sakura-2);
+  letter-spacing: -.02em;
+  /* Cherry Bomb One 的字体框有 1.45em（Playfair 只有 1.26em），
+     在 line-height .74 下最后一行会伸出元素盒底 0.078em（实测 10px）。
+     而 background-clip:text 只在元素盒范围内上色 —— 超出的部分直接透明，
+     看起来就是 WORLD 的底被一刀切平。补 .1em 内边距把盒子撑够；
+     顺带把副标题推开 10px，不然字母底会压到那行小字上。 */
+  padding-bottom: .1em;
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  html[data-theme="miko"] .st-hello {
+    background: linear-gradient(168deg, var(--sakura-1) 8%, var(--sakura-2) 78%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+html[data-theme="miko"] .st-kicker { color: var(--accent); letter-spacing: .14em; opacity: .9; }
+
+/* 樱花层：两朵整花 + 三片飘落单瓣。
+   试过「一大片极淡底纹」，460px 铺下来就是一团粉云，既不像纹理也不像装饰。
+   樱花感来自散落的单瓣，不是堆整花。 */
+html[data-theme="miko"] .mast-petals {
+  display: block;
+  position: absolute;
+  inset: -14px -10px auto -10px;
+  height: 260px;
+  z-index: 1;
+  pointer-events: none;
+}
+html[data-theme="miko"] .mast-petals .pe { color: var(--sakura-1); }
+html[data-theme="miko"] .clock-ring .cr-track { stroke: #f2dbe6; stroke-width: 6; }
+html[data-theme="miko"] .clock-ring .cr-fill {
   stroke: var(--accent);
   stroke-width: 6;
-  filter: drop-shadow(0 0 6px rgba(79, 70, 229, .45));
+  filter: drop-shadow(0 0 6px rgba(192, 53, 107, .45));
   transition: stroke-dashoffset 800ms var(--soft-ease);
 }
-html[data-theme="soft"] .clock-time { color: var(--text); font-weight: 600; }
-html[data-theme="soft"] .clock-date { color: var(--text-3); }
-html[data-theme="soft"] .st-greet { color: var(--text-2); }
+html[data-theme="miko"] .clock-time { color: var(--text); font-weight: 600; }
+html[data-theme="miko"] .clock-date { color: var(--text-3); }
+html[data-theme="miko"] .st-greet { color: var(--text-2); }
 
 /* 页脚与链接 */
-html[data-theme="soft"] .start-foot { color: var(--text-3); }
-html[data-theme="soft"] .start-foot kbd { background: var(--layer-2); color: var(--accent); border-radius: 999px; }
-html[data-theme="soft"] .prose a { color: var(--accent); border-bottom-color: rgba(79, 70, 229, .3); }
-html[data-theme="soft"] .nav-prog i { background: var(--accent); }
-html[data-theme="soft"] ::selection { background: var(--accent); color: #fff; }
+html[data-theme="miko"] .start-foot { color: var(--text-3); }
+html[data-theme="miko"] .start-foot kbd { background: var(--layer-2); color: var(--accent); border-radius: 999px; }
+html[data-theme="miko"] .prose a { color: var(--accent); border-bottom-color: rgba(192, 53, 107, .3); }
+html[data-theme="miko"] .nav-prog i { background: var(--accent); }
+html[data-theme="miko"] ::selection { background: var(--accent); color: #fff; }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-theme="soft"] .g-item:hover,
-  html[data-theme="soft"] .row:hover,
-  html[data-theme="soft"] .tag:hover,
-  html[data-theme="soft"] .chip:hover,
-  html[data-theme="soft"] .np-btn:hover,
-  html[data-theme="soft"] .th-btn:hover { transform: none; }
+  html[data-theme="miko"] .g-item:hover,
+  html[data-theme="miko"] .row:hover,
+  html[data-theme="miko"] .tag:hover,
+  html[data-theme="miko"] .chip:hover,
+  html[data-theme="miko"] .np-btn:hover,
+  html[data-theme="miko"] .th-btn:hover { transform: none; }
 }
 
 /* ---------- 柔和皮肤：给收藏分组上色 ----------
    Soft UI 规范允许 indigo / pink / emerald 作为强调色。
    四个分组各配一色，标题和图标跟着走，页面就不再是单一紫灰。
    颜色都取深一档，保证在浅底上过 4.5:1。 */
-html[data-theme="soft"] .bm-g:nth-child(1) { --g: #4f46e5; }   /* indigo-600 */
-html[data-theme="soft"] .bm-g:nth-child(2) { --g: #db2777; }   /* pink-600 */
-html[data-theme="soft"] .bm-g:nth-child(3) { --g: #047857; }   /* emerald-700 */
-html[data-theme="soft"] .bm-g:nth-child(4) { --g: #0e7490; }   /* cyan-700 */
+html[data-theme="miko"] .bm-g:nth-child(1) { --g: #c0356b; }   /* indigo-600 */
+html[data-theme="miko"] .bm-g:nth-child(2) { --g: #8a4f9e; }   /* pink-600 */
+html[data-theme="miko"] .bm-g:nth-child(3) { --g: #9c6a12; }   /* emerald-700 */
+html[data-theme="miko"] .bm-g:nth-child(4) { --g: #2c7266; }   /* cyan-700 */
 
-html[data-theme="soft"] .bm-g h3 {
+html[data-theme="miko"] .bm-g h3 {
   color: var(--g, var(--text-2));
   font-weight: 700;
   letter-spacing: .02em;
 }
 
-html[data-theme="soft"] .bm-g .bm-l i {
-  background: color-mix(in srgb, var(--g, #4f46e5) 12%, #fff);
-  color: var(--g, #4f46e5);
+html[data-theme="miko"] .bm-g .bm-l i {
+  background: color-mix(in srgb, var(--g, #c0356b) 12%, #fff);
+  color: var(--g, #c0356b);
 }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="soft"] .bm-g .bm-l:hover {
-    background: color-mix(in srgb, var(--g, #4f46e5) 7%, #fff);
-    color: var(--g, #4f46e5);
+  html[data-theme="miko"] .bm-g .bm-l:hover {
+    background: color-mix(in srgb, var(--g, #c0356b) 7%, #fff);
+    color: var(--g, #c0356b);
   }
-  html[data-theme="soft"] .bm-g .bm-l:hover i {
-    background: var(--g, #4f46e5);
+  html[data-theme="miko"] .bm-g .bm-l:hover i {
+    background: var(--g, #c0356b);
     color: #fff;
-    box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--g, #4f46e5) 65%, transparent);
+    box-shadow: 0 6px 14px -6px color-mix(in srgb, var(--g, #c0356b) 65%, transparent);
   }
 }
-html[data-theme="soft"] .bm-g .bm-l:active {
-  background: color-mix(in srgb, var(--g, #4f46e5) 14%, #fff);
+html[data-theme="miko"] .bm-g .bm-l:active {
+  background: color-mix(in srgb, var(--g, #c0356b) 14%, #fff);
 }
 
 /* 分组标题前的一小段色条，代替分割线 */
-html[data-theme="soft"] .bm-g h3::before {
+html[data-theme="miko"] .bm-g h3::before {
   content: '';
   display: inline-block;
   width: 14px;
@@ -2544,8 +2771,8 @@ html[data-theme="soft"] .bm-g h3::before {
 /* 时钟：环底留白、时间数字用强调色。
    这里本来想给数字做渐变，但规范明令禁止渐变文字（background-clip: text），
    所以改成纯 indigo——有颜色，但不违规。 */
-html[data-theme="soft"] .clock-ring .cr-track { stroke: #e2e8f0; }
-html[data-theme="soft"] .clock-time { color: var(--accent); }
+html[data-theme="miko"] .clock-ring .cr-track { stroke: #f2dbe6; }
+html[data-theme="miko"] .clock-time { color: var(--accent); }
 
 
 /* ---------- 星野背景（夜色皮肤专属）----------
@@ -2560,6 +2787,17 @@ html[data-theme="soft"] .clock-time { color: var(--accent); }
   display: none;
 }
 #dyg-sky.on { display: block; }
+
+/* 樱花飘落（八重皮肤专属）。和星野同一层：body 背景之上、内容之下，
+   所以花瓣是从字和卡片后面落下来的，不挡字、不吃点击。 */
+#dyg-petals {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  display: none;
+}
+#dyg-petals.on { display: block; }
 
 /* 夜色皮肤把这一层让出来，星野才有地方画 */
 html[data-theme="dark"] body { background: #0b0b0d; }
@@ -2662,6 +2900,42 @@ html[data-theme="dark"] body { background: #0b0b0d; }
 .tc-m .tc-n { color: #3dd6c4; }
 .tc-m .tc-f { color: #868c96; }
 .tc-m .tc-dot { background: #3dd6c4; }
+
+/* 八重皮肤下的时钟：原来那套橙 / 薄荷 / 深蓝是独立于皮肤的固定配色，
+   放在樱粉底上非常冲。这里不动结构，只换色 ——
+   三张卡的「左右白卡 + 中间深卡」关系保留，深卡从墨蓝换成梅墨。 */
+html[data-theme="miko"] .tc-h {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .9),
+    0 0 0 3px rgba(192, 53, 107, .22),
+    0 16px 34px -18px rgba(192, 53, 107, .55);
+}
+html[data-theme="miko"] .tc-h .tc-dot { background: #c0356b; }
+
+html[data-theme="miko"] .tc-s {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .9),
+    0 0 0 3px rgba(138, 79, 158, .22),
+    0 16px 34px -18px rgba(138, 79, 158, .50);
+}
+html[data-theme="miko"] .tc-s .tc-dot { background: #8a4f9e; }
+
+html[data-theme="miko"] .tc-m {
+  background: linear-gradient(160deg, #4a2f3e, #33202c);
+  color: #f7e7ee;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    0 0 0 3px rgba(192, 53, 107, .30),
+    0 22px 44px -20px rgba(160, 40, 85, .62);
+}
+html[data-theme="miko"] .tc-m .tc-k { color: #f7e7ee; }
+html[data-theme="miko"] .tc-m .tc-n { color: #f7a8c4; }   /* 樱粉数字，深梅墨底上 8:1 */
+html[data-theme="miko"] .tc-m .tc-f { color: #b79aa8; }
+html[data-theme="miko"] .tc-m .tc-dot { background: #f7a8c4; }
+
+/* 中间那张卡的说明行原本用 #868c96，在梅墨底上偏灰；换成带粉的灰 */
+html[data-theme="miko"] .tc-h .tc-f,
+html[data-theme="miko"] .tc-s .tc-f { color: var(--text-3); }
 
 /* 日期 + 问候合成一行 */
 .st-greet {

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="start" data-theme="miko" data-font="cherry" data-petal="on">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>刊头 · 樱花粉大写 · 字体 demo</title>
+<link rel="stylesheet" href="theme.css?v=20261024130359">
+<style>
+/* ============================================================
+   刊头字体 demo：只换 HELLO / WORLD 的字体和颜色 + 樱花装饰
+   ────────────────────────────────────────────────────────────
+   版式、看板娘、搜索框全部沿用真实站点的规则（theme.css），
+   这里只覆写三样东西：
+     1. text-transform: lowercase → uppercase（用户要大写）
+     2. font-family / color → 四款候选字体 + 樱花粉
+     3. 花瓣层（SVG）与右上角切换条
+
+   字体都是 latin 子集 woff2，自托管在 assets/fonts/mast-*.woff2，
+   不连 Google CDN（国内直连不通）。
+   ============================================================ */
+
+@font-face {
+  font-family: "Cherry Bomb One";
+  src: url("assets/fonts/mast-cherry-bomb-one.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "Mochiy Pop One";
+  src: url("assets/fonts/mast-mochiy-pop-one.woff2") format("woff2");
+  font-weight: 400; font-display: swap;
+}
+@font-face {
+  font-family: "Zen Maru Gothic";
+  src: url("assets/fonts/mast-zen-maru-700.woff2") format("woff2");
+  font-weight: 700; font-display: swap;
+}
+@font-face {
+  font-family: "Kaisei Decol";
+  src: url("assets/fonts/mast-kaisei-decol-700.woff2") format("woff2");
+  font-weight: 700; font-display: swap;
+}
+
+/* ---------- 樱花粉令牌 ----------
+   全部是算过对比度的。浅色三套底子不一样（软 #f8fafc / 有机 #faf6f1 /
+   拟物 #e0e5ec），同一个粉在拟物上会掉 0.7 个点，所以拟物单独压深一档。
+   大字号按 WCAG 只要 3:1，这里最低一档留到 3.17。 */
+html:not([data-theme="dark"]) {
+  --sakura-1: #e35c8a;   /* 渐变上端：软 3.26 / 有机 3.17 */
+  --sakura-2: #c0396a;   /* 渐变下端：软 4.86 / 有机 4.73，比 #b92d60 轻一点更像樱 */
+  --sakura-petal: #f4a0bf;
+  --sakura-vein:  #d9729a;
+  --sakura-core:  #fde3ec;
+  --sakura-glow:  rgba(233, 120, 160, .16);
+}
+html[data-theme="neu"] {
+  --sakura-1: #d94a7d;   /* 拟物底 #e0e5ec 更暗，得压深：3.17 */
+  --sakura-2: #a82857;
+}
+html[data-theme="dark"] {
+  --sakura-1: #f7a8c4;
+  --sakura-2: #e06a97;
+  --sakura-petal: #e8a2bd;
+  --sakura-vein:  #c9739a;
+  --sakura-core:  #3a2330;
+  --sakura-glow:  rgba(240, 150, 185, .18);
+}
+
+/* ---------- 刊头：大写 + 粉色 ----------
+   选择器必须挂 html[data-theme]，否则被 theme.css 里
+   `html[data-theme="miko"] .st-hello { color: var(--text) }`（0,2,1）压掉，
+   字就还是墨蓝的 —— 这个坑踩过一次了。 */
+html[data-theme] .st-mast .st-hello {
+  text-transform: uppercase;
+  /* 渐变字：先给 color 兜底，支持 background-clip:text 才用渐变 */
+  color: var(--sakura-2);
+  letter-spacing: -.02em;      /* 装饰字体本身字宽就大，负字距要收着来 */
+  position: relative;
+  z-index: 2;
+}
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  html[data-theme] .st-mast .st-hello {
+    background: linear-gradient(168deg, var(--sakura-1) 8%, var(--sakura-2) 78%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}
+/* 第二行更重一点，和参考图的「下大上小」呼应 */
+html[data-theme] .st-mast .st-hello span:last-child { letter-spacing: -.03em; }
+
+/* 副标题也跟着走一点粉，否则整块只有主标题有颜色，会像贴上去的 */
+html[data-theme] .st-mast .st-kicker { color: var(--sakura-1); opacity: .9; }
+
+/* ---------- 樱花层 ----------
+   绝对定位铺满 .st-mast，不吃事件。大的一朵垫在 WORLD 后面做底纹，
+   其余散在字的四角。坐标用 px 而不是百分比：栏宽 620 是固定的，
+   用 px 才能贴着字摆；换字体会改字号，但字的左缘始终在栏左。
+   容器左右各外扩 10px，所以横向坐标都比栏内坐标 +10。 */
+.petals {
+  position: absolute;
+  inset: -14px -10px auto -10px;
+  height: 260px;
+  z-index: 1;
+  pointer-events: none;
+}
+.sk {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--s);
+  height: var(--s);
+  color: var(--sakura-petal);
+  opacity: var(--o, .6);
+  transform: rotate(var(--r, 0deg));
+}
+html[data-petal="off"] .petals { display: none; }
+
+/* 单瓣用一点点更深的粉，否则和小朵整花挤在一起分不开 */
+.pe { color: var(--sakura-1); }
+
+/* 看板娘压在花瓣之上 */
+.mast-miko { z-index: 3; }
+
+/* demo 只有刊头 + 搜索框，整块竖着居中，别贴在顶上 */
+.start-core { display: flex; flex-direction: column; justify-content: center; }
+
+/* ---------- 看板娘跟着「这一款字的 WORLD 有多宽」走 ----------
+   站里原本是 left: calc(var(--mast-f) * 2.29)，2.29 是按 Playfair 小写
+   world 的 2.55em 推的。换成装饰字体后 WORLD 宽到 3.3–4.2em，
+   角色就会站到字里面去。这里把系数做成变量，一款字一个值。
+
+   关键在于只写「倍数」不写「基数」：--mast-f 本身由 theme.css 给
+   （桌面 clamp(60px,17.5vh,164px)、≤760px 换成 clamp(54px,19vw,96px)）。
+   第一版用 JS 直接把 --mast-f 整体内联覆盖，结果手机档的 clamp 被顶掉，
+   390px 下字号还是 147px，WORLD 直接顶出屏幕。 */
+html[data-theme] .st-mast .st-hello {
+  font-size: calc(var(--mast-f) * var(--fscale, 1));
+}
+html[data-theme] .st-mast .mast-miko {
+  left: calc(var(--mast-f) * var(--fscale, 1) * var(--miko-k, 2.29));
+  width: calc(var(--mast-f) * var(--fscale, 1) * 1.49);
+}
+
+/* ---------- demo 工具条（不属于起始页） ---------- */
+.bar {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  z-index: 9999;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: calc(100vw - 24px);
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .82);
+  backdrop-filter: blur(14px) saturate(1.4);
+  box-shadow: 0 14px 34px -14px rgba(20, 28, 48, .34), 0 0 0 1px rgba(20, 28, 48, .06);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.bar::-webkit-scrollbar { display: none; }
+.bar b {
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 12px;
+  letter-spacing: .02em;
+}
+.bar .sep { width: 1px; height: 18px; background: rgba(20, 28, 48, .12); flex: none; }
+.bar button {
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font: inherit;
+  color: #374151;
+  background: rgba(20, 28, 48, .06);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background .18s ease, color .18s ease, transform .12s ease;
+}
+.bar button.on { background: #111827; color: #fff; }
+.bar button:active { transform: scale(.96); }
+@media (hover: hover) and (pointer: fine) {
+  .bar button:hover { background: rgba(20, 28, 48, .12); }
+  .bar button.on:hover { background: #111827; }
+}
+
+/* 手机：工具条不做换行（一换行就成了挡住内容的方块），
+   保持单行横向滚动，缩小一点即可 */
+@media (max-width: 640px) {
+  .bar { gap: 6px; padding: 6px 8px; font-size: 12.5px; }
+  .bar button { padding: 6px 11px; }
+  .petals { height: 220px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 樱花图形定义一次，下面 <use> 复用。
+     fill 必须写在 defs 里的 <g> 上：<use> 克隆出来的是 shadow tree，
+     文档里的 `.sk path { fill: ... }` 匹配不到克隆体（只有可继承属性会下去），
+     所以一开始四朵花全是黑的。 -->
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <g id="sakura" fill="currentColor">
+      <path d="M50 52C40 50 32 40 34 28C35 20 42 14 47 18L50 24L53 18C58 14 65 20 66 28C68 40 60 50 50 52Z"/>
+      <path d="M50 52C40 50 32 40 34 28C35 20 42 14 47 18L50 24L53 18C58 14 65 20 66 28C68 40 60 50 50 52Z" transform="rotate(72 50 50)"/>
+      <path d="M50 52C40 50 32 40 34 28C35 20 42 14 47 18L50 24L53 18C58 14 65 20 66 28C68 40 60 50 50 52Z" transform="rotate(144 50 50)"/>
+      <path d="M50 52C40 50 32 40 34 28C35 20 42 14 47 18L50 24L53 18C58 14 65 20 66 28C68 40 60 50 50 52Z" transform="rotate(216 50 50)"/>
+      <path d="M50 52C40 50 32 40 34 28C35 20 42 14 47 18L50 24L53 18C58 14 65 20 66 28C68 40 60 50 50 52Z" transform="rotate(288 50 50)"/>
+      <circle cx="50" cy="50" r="4.5" fill="#ffffff" opacity=".72"/>
+      <circle cx="50" cy="50" r="2" fill="#c2537c" opacity=".55"/>
+    </g>
+    <!-- 单瓣：宽的一头带缺口、窄的一头收成把儿 -->
+    <g id="petal" fill="currentColor">
+      <path d="M50 96C34 88 26 66 30 44C33 26 44 10 47 4L50 11L53 4C56 10 67 26 70 44C74 66 66 88 50 96Z"/>
+    </g>
+  </defs>
+</svg>
+
+<div class="start">
+  <div class="start-core">
+
+    <div class="st-mast">
+
+      <div class="petals" aria-hidden="true">
+        <!-- 两朵整花 + 几片飘落的单瓣。
+             试过「一大片极淡底纹」，460px 铺下来就是一团粉云，既不像纹理
+             也不像装饰，删掉了。樱花感其实来自散落的单瓣，不是堆整花。 -->
+        <svg class="sk" style="--x:26px;--y:-24px;--s:64px;--r:-16deg;--o:.8" viewBox="0 0 100 100"><use href="#sakura"/></svg>
+        <svg class="sk" style="--x:528px;--y:24px;--s:40px;--r:38deg;--o:.45" viewBox="0 0 100 100"><use href="#sakura"/></svg>
+
+        <svg class="sk pe" style="--x:388px;--y:8px;--s:30px;--r:24deg;--o:.55" viewBox="0 0 100 100"><use href="#petal"/></svg>
+        <svg class="sk pe" style="--x:-16px;--y:100px;--s:34px;--r:-40deg;--o:.5" viewBox="0 0 100 100"><use href="#petal"/></svg>
+        <svg class="sk pe" style="--x:246px;--y:-14px;--s:22px;--r:100deg;--o:.45" viewBox="0 0 100 100"><use href="#petal"/></svg>
+      </div>
+
+      <picture class="mast-miko">
+        <source media="(prefers-reduced-motion: reduce)" srcset="assets/img/miko-still.webp">
+        <img src="assets/img/miko.webp" alt="" aria-hidden="true"
+             width="717" height="635" decoding="async">
+      </picture>
+
+      <h1 class="st-hello"><span>Hello</span><span>World</span></h1>
+      <p class="st-kicker">A PERSONAL START PAGE · DYG</p>
+    </div>
+
+    <form class="search" data-search role="search">
+      <button type="button" class="eng-btn" data-eng-btn
+              aria-haspopup="true" aria-expanded="false" aria-label="切换搜索引擎">
+        <span data-eng-name>Bing</span>
+        <svg class="eng-car" width="9" height="6" viewBox="0 0 9 6" fill="none" aria-hidden="true">
+          <path d="M1 1.5L4.5 5L8 1.5" stroke="currentColor" stroke-width="1.2"
+                stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+      <input type="search" data-q aria-label="搜索或输入网址"
+             placeholder="搜索，或输入网址" autocomplete="off" spellcheck="false" />
+      <kbd>/</kbd>
+    </form>
+
+  </div>
+</div>
+
+<div class="bar" role="toolbar" aria-label="demo 控制">
+  <b>字体</b>
+  <button type="button" data-font="cherry" class="on">Cherry Bomb</button>
+  <button type="button" data-font="mochiy">Mochiy Pop</button>
+  <button type="button" data-font="zenmaru">Zen Maru</button>
+  <button type="button" data-font="kaisei">Kaisei Decol</button>
+  <span class="sep"></span>
+  <button type="button" data-petal="on" class="on">花瓣 开</button>
+  <button type="button" data-petal="off">花瓣 关</button>
+</div>
+
+<script>
+/* 每个装饰字体在同样字号下宽度差很多，直接用同一个 --mast-f
+   会让 WORLD 一会儿顶到看板娘、一会儿缩在左边。
+   系数是量出来的：先按 1.0 渲一遍，记下 WORLD 的推进宽度比 wordEm，
+   再让「WORLD + 间隙 + 角色本体」的右端落在 960（和 Playfair 那一版齐）。
+     scale = (960 - 403) / (wordEm + 0.857 + 0.1) / 157.5
+     k     = wordEm - 0.265      ← 角色 body 左边界反推到画面左边界
+   字号和看板娘共用同一条变量，所以改这里角色会一起动。 */
+const FONTS = {
+  cherry:  { family: '"Cherry Bomb One"', scale: .82, weight: 400, k: 3.09 },   // WORLD 3.35em
+  mochiy:  { family: '"Mochiy Pop One"',  scale: .68, weight: 400, k: 3.98 },   // 4.24em，最宽
+  zenmaru: { family: '"Zen Maru Gothic"', scale: .83, weight: 700, k: 3.03 },   // 3.30em，最窄
+  kaisei:  { family: '"Kaisei Decol"',    scale: .73, weight: 700, k: 3.60 },   // 3.87em
+};
+
+const root = document.documentElement;
+const hello = document.querySelector('.st-hello');
+const mast = document.querySelector('.st-mast');
+
+function applyFont(name) {
+  const f = FONTS[name];
+  root.dataset.font = name;
+  if (!f) return;
+  hello.style.fontFamily = f.family + ', "Playfair Display", Georgia, serif';
+  hello.style.fontWeight = f.weight;
+  // 只给「倍数」，--mast-f 的基数留给 theme.css（手机档的 clamp 在里面）
+  mast.style.setProperty('--fscale', f.scale);
+  mast.style.setProperty('--miko-k', f.k);
+}
+
+document.querySelector('.bar').addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  if (b.dataset.font) {
+    document.querySelectorAll('button[data-font]').forEach(n => n.classList.toggle('on', n === b));
+    applyFont(b.dataset.font);
+  }
+  if (b.dataset.petal) {
+    document.querySelectorAll('button[data-petal]').forEach(n => n.classList.toggle('on', n === b));
+    root.dataset.petal = b.dataset.petal;
+  }
+});
+
+applyFont('cherry');
+</script>
+</body>
+</html>

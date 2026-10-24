@@ -7,7 +7,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const SRC = ['theme.css', 'ui.js', 'home.js', 'fx.js', 'cursor.js'];
+const SRC = ['theme.css', 'ui.js', 'home.js', 'fx.js', 'cursor.js',
+             'assets/petals.js', 'assets/starfield.js',
+             'assets/miko-talk.js'];
 
 let newest = 0;
 for (const f of SRC) {
