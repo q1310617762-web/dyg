@@ -1148,7 +1148,9 @@ html[data-soft-switch]::view-transition-new(root) {
      四套统一 6px，图片大小才不会换肤时变。 */
   padding: 6px;
   border-radius: var(--r-tile);
-  background: var(--card);
+  /* --ph 是这张图的主色（由 __dygGallery 写在 style 上）。图和缩略图都还没到
+     的时候先铺主色，比一片纯白像样；没有 --ph 的页面退回卡片底色。 */
+  background: var(--ph, var(--card));
   box-shadow: var(--shadow-sm);
   cursor: pointer;
   transform-style: preserve-3d;
@@ -1165,6 +1167,14 @@ html[data-soft-switch]::view-transition-new(root) {
 }
 /* 淡入只在 JS 就绪时启用：脚本挂了也不会留下一片空图 */
 html.imgfade .g-item img:not(.loaded) { opacity: 0; }
+/* 但上面这条依赖 fx.js 给每张图补 .loaded —— 而 fx.js 只在初始化时抓一次，
+   首页相册那 12 张是 __dygGallery() 后来动态生成的，抓不到就永远不会加上，
+   图片下载完了也还是 opacity:0（表现就是一片白卡片）。
+   所以 4 秒后无条件显示：宁可丢掉淡入，也不能让图消失。 */
+html.imgfade .g-item img:not(.loaded) {
+  animation: dyg-img-failsafe .01s linear 4s forwards;
+}
+@keyframes dyg-img-failsafe { to { opacity: 1; } }
 
 .tilting { transition: box-shadow .25s var(--ease); }
 .tilting > * { pointer-events: none; }
@@ -1945,7 +1955,8 @@ html[data-theme="ly"] .hero-meta span {
 
 /* 图片瓦片：白底黑边。内衬沿用基础的 6px，这里只换底色和描边 */
 html[data-theme="ly"] .g-item {
-  background: #fff;
+  /* 写死 #fff 会把基础规则里的 --ph 主色盖掉，图没到时就是一片白 */
+  background: var(--ph, #fff);
   outline: 2.5px solid var(--ink);
   outline-offset: 0;
   box-shadow: var(--hard-sm);
@@ -2768,7 +2779,8 @@ html[data-theme="miko"] .tag,
 html[data-theme="miko"] .chip {
   border: 0;
   border-radius: var(--r-card);
-  background: #fff;
+  /* --ph 是图片主色，图没到的时候先铺它，别一片白 */
+  background: var(--ph, #fff);
   box-shadow: var(--shadow-sm);
   transition: transform var(--soft-dur) var(--soft-ease),
               box-shadow var(--soft-dur) var(--soft-ease);

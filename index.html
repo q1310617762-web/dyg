@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261025151056" />
+<link rel="stylesheet" href="theme.css?v=20261025153741" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -490,35 +490,43 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261025151056"></script>
-<script src="assets/petals.js?v=20261025151056"></script>
-<script src="assets/starfield.js?v=20261025151056"></script>
-<script src="ui.js?v=20261025151056"></script>
-<script src="home.js?v=20261025151056"></script>
-<script src="assets/miko-talk.js?v=20261025151056"></script>
-<script src="assets/viz.js?v=20261025151056"></script>
+<script src="cursor.js?v=20261025153741"></script>
+<script src="assets/petals.js?v=20261025153741"></script>
+<script src="assets/starfield.js?v=20261025153741"></script>
+<script src="ui.js?v=20261025153741"></script>
+<script src="home.js?v=20261025153741"></script>
+<script src="assets/miko-talk.js?v=20261025153741"></script>
+<script src="assets/viz.js?v=20261025153741"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
    提前塞进 DOM 等于每次冷启动白拉 1.5MB。切到博客形态时由 home.js 调一次。 */
 window.__dygGallery = function () {
+  /* 第三列是这张图的主色，卡片先铺这个颜色当占位。
+     这站到 Pages 只有 8.6 KB/s，12 张原图 1.2MB 要两分多钟 —— 那段时间
+     卡片是纯白的（.g-cap 默认 opacity:0，没有文字），看着像坏了。
+     所以首页相册改用 assets/photos/t/ 下的缩略图：按卡片实际的 1.336 比例
+     预先裁好、360 宽、q72，12 张合计 197KB（省 84%）。
+     图集页仍然用原图，那边要大图看。 */
   var PICK = [
-    ['0aa9365f23a1', '金发角色'], ['119fdd8ad6ae', '星见雅'],
-    ['16e17750ef1a', '绯色立绘'], ['1e1e6e33aa62', '海色立绘'],
-    ['490b2380b210', '妮可立绘'], ['64a916330c0f', '碧色立绘'],
-    ['9bae97d1c2dc', '偶像合影'], ['df17a986c77a', '娜维娅海报'],
-    ['e09681216e8d', '巷口的光'], ['fe40761251ce', '紫发特写'],
-    ['0621547bba79', '晨曦平原'], ['0e2d4eb9f711', '雪村广场']
+    ['0aa9365f23a1', '金发角色', '#b1917a'], ['119fdd8ad6ae', '星见雅', '#3f7fa1'],
+    ['16e17750ef1a', '绯色立绘', '#886a79'], ['1e1e6e33aa62', '海色立绘', '#b8adbe'],
+    ['490b2380b210', '妮可立绘', '#674642'], ['64a916330c0f', '碧色立绘', '#b59bc4'],
+    ['9bae97d1c2dc', '偶像合影', '#b29979'], ['df17a986c77a', '娜维娅海报', '#b48645'],
+    ['e09681216e8d', '巷口的光', '#c3b9c6'], ['fe40761251ce', '紫发特写', '#c28bbd'],
+    ['0621547bba79', '晨曦平原', '#479db8'], ['0e2d4eb9f711', '雪村广场', '#8e8a87']
   ];
   var box = document.getElementById('homeGallery');
   if (!box || box.childElementCount) return;
   box.innerHTML = PICK.map(function (r) {
-    return '<a class="g-item" href="gallery.html">' +
-      '<img src="assets/photos/' + r[0] + '.webp" alt="' + r[1] + '" loading="lazy" />' +
+    /* 宽度/高度照缩略图的真实尺寸写上，浏览器能先留好位置，图到了不会跳 */
+    return '<a class="g-item" href="gallery.html" style="--ph:' + r[2] + '">' +
+      '<img src="assets/photos/t/' + r[0] + '.webp" alt="' + r[1] + '" loading="lazy"' +
+      ' width="360" height="269" />' +
       '<span class="g-cap">' + r[1] + '</span></a>';
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261025151056"></script>
+<script src="fx.js?v=20261025153741"></script>
 </body>
 </html>
