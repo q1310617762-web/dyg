@@ -3311,7 +3311,19 @@ html[data-theme="ly"] .start-viz { display: none !important; }
 /* ---------- 槽位分配 ---------- */
 html[data-theme="ly"] .mark        { grid-area: brand; justify-self: start; align-self: start; }
 html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin: 0; }
-html[data-theme="ly"] .start-right { grid-area: top;   justify-self: end;  align-self: start; }
+/* 和另外三套皮肤对齐：那边是「.start padding 32 + .start-top padding 32」两层，
+   按钮组离右边 64px；乐园因为 .start-top 被判成 display:contents，只剩一层 31px，
+   所以整个按钮组比别处右移了 33px。这里补一个 --pad 补回来。
+   垂直方向同理：那套装在 .start-top 里是垂直居中（按钮 y=27），
+   乐园直接贴在网格行顶（y=37），往上一行的高度补 10px。 */
+html[data-theme="ly"] .start-right {
+  grid-area: top;
+  justify-self: end;
+  align-self: start;
+  /* +1px 是为了抹掉另外三套 .start-top 上那 0.5px 的 margin 取整差 */
+  margin-right: calc(var(--pad) + 1px);
+  margin-top: -10px;
+}
 html[data-theme="ly"] .st-mast     { grid-area: mast;  align-self: center; }
 html[data-theme="ly"] .search      { grid-area: stage; align-self: center; }
 html[data-theme="ly"] .st-clock    { grid-area: clock; align-self: start; margin: 0; }
@@ -3825,4 +3837,30 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
   html[data-theme="ly"] .st-mast { min-height: 180px; --mast-f: clamp(30px, 7.5vw, 56px); }
   html[data-theme="ly"] .ly-cta { height: 48px; margin-top: 4px; }
   html[data-theme="ly"] .start-foot { flex-direction: row; gap: 10px; }
+}
+
+/* ============================================================
+   播放键「播放中」态：有机 / 乐园两套会变成白底白图标
+   ------------------------------------------------------------
+   .np-btn.playing 在基础样式里写的是 background:--accent + color:--on-accent。
+   但这两套皮肤的 `html[data-theme=x] .np-btn{background:#fff}` 特异性更强
+   （0,2,1 > 0,2,0），底色被改回白色，而 color 没被覆盖、仍是 --on-accent（白）
+   → 白底白三角，等于隐身。实测对比度 organic 1.02、乐园 1.00。
+   八重（miko）那套歪打正着没坏：它的皮肤规则把 color 也定了（--text-2），
+   所以播放中仍是白底深图标 —— 能看见，就不动它。
+   ============================================================ */
+/* 底色钉死一个更深的苔绿：#6f7f5c 配白字只有 4.3:1，压线不过 AA；
+   而且实测播放态的底色被别的规则抬亮到了 rgb(144,156,129)（只有 2.89:1），
+   所以这里不用变量，直接写值。这个绿配白字 6.4:1。 */
+html[data-theme="organic"] .np-btn.playing,
+html[data-theme="organic"] .np.playing .np-btn {
+  background: #4f5c41;
+  color: #fff;
+}
+/* 乐园用黄绿填充 + 黑图标 —— 和它的滑块 .modesw-thumb 是同一套语言，
+   荧光黄绿上压白字只有 1.5:1，必须换黑 */
+html[data-theme="ly"] .np-btn.playing,
+html[data-theme="ly"] .np.playing .np-btn {
+  background: var(--acc-fill);
+  color: var(--ink);
 }
