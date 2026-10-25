@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261025130526" />
+<link rel="stylesheet" href="theme.css?v=20261025133832" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -120,6 +120,32 @@
       </div>
     </div>
   </header>
+
+  <!-- 乐园皮肤的左侧竖排菜单：只在 ly 皮肤下显示，其余皮肤 display:none
+       （不占位、不影响任何别的布局）。对应原图左边那五颗深色药丸。
+       图标用实心色块，不做描边方框 —— 那是这套设计语言里明令不要的。 -->
+  <nav class="ly-menu" aria-label="站点导航">
+    <a class="ly-mi" href="index.html?m=start">
+      <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 2.6l5.4 4.4v6.4H9.9V9.6H6.1v3.8H2.6V7z"/></svg></span>
+      <span>起始页</span>
+    </a>
+    <a class="ly-mi" href="index.html?m=blog">
+      <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.4" y="3" width="11.2" height="2.6" rx="1.3"/><rect x="2.4" y="7" width="11.2" height="2.6" rx="1.3"/><rect x="2.4" y="11" width="6.8" height="2.6" rx="1.3"/></svg></span>
+      <span>博客</span>
+    </a>
+    <a class="ly-mi" href="archive.html">
+      <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 2.6h10v3.2H3z"/><rect x="4" y="7.2" width="8" height="6.2" rx="1.2"/></svg></span>
+      <span>归档</span>
+    </a>
+    <a class="ly-mi" href="gallery.html">
+      <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.4" y="2.8" width="4.6" height="4.6" rx="1.1"/><rect x="9" y="2.8" width="4.6" height="4.6" rx="1.1"/><rect x="2.4" y="8.6" width="4.6" height="4.6" rx="1.1"/><rect x="9" y="8.6" width="4.6" height="4.6" rx="1.1"/></svg></span>
+      <span>图集</span>
+    </a>
+    <a class="ly-mi" href="friends.html">
+      <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5.8" cy="6" r="2.5"/><circle cx="10.6" cy="6.6" r="2"/><path d="M1.6 13c0-2.4 1.9-3.9 4.2-3.9s4.2 1.5 4.2 3.9z"/><path d="M9.6 13c.2-1.9 1.4-3 3-3 1.5 0 2.6 1.1 2.8 3z"/></svg></span>
+      <span>友链</span>
+    </a>
+  </nav>
 
   <div class="start-core">
 
@@ -284,6 +310,16 @@
 
   </div>
 
+  <!-- 乐园皮肤右下角那颗大按钮（原图「开始游戏」的位置）。
+      别的皮肤 display:none。走路由，不整页重载。 -->
+  <a class="ly-cta" href="index.html?m=blog">
+    <span>进入博客</span>
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
+      <path d="M3.4 9h11M9.8 4.2L14.6 9l-4.8 4.8" stroke="currentColor" stroke-width="2.2"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </a>
+
   <footer class="start-foot">
     <span class="hint-d"><kbd>/</kbd> 搜索　<kbd>B</kbd> 切换博客</span>
     <span class="hint-m">点右上角换成博客</span>
@@ -397,13 +433,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261025130526"></script>
-<script src="assets/petals.js?v=20261025130526"></script>
-<script src="assets/starfield.js?v=20261025130526"></script>
-<script src="ui.js?v=20261025130526"></script>
-<script src="home.js?v=20261025130526"></script>
-<script src="assets/miko-talk.js?v=20261025130526"></script>
-<script src="assets/viz.js?v=20261025130526"></script>
+<script src="cursor.js?v=20261025133832"></script>
+<script src="assets/petals.js?v=20261025133832"></script>
+<script src="assets/starfield.js?v=20261025133832"></script>
+<script src="ui.js?v=20261025133832"></script>
+<script src="home.js?v=20261025133832"></script>
+<script src="assets/miko-talk.js?v=20261025133832"></script>
+<script src="assets/viz.js?v=20261025133832"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -426,6 +462,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261025130526"></script>
+<script src="fx.js?v=20261025133832"></script>
 </body>
 </html>

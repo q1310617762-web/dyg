@@ -3232,3 +3232,269 @@ html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
   .tc-k { font-size: 8px; }
   .tc-f { font-size: 7px; }
 }
+
+/* ============================================================
+   乐园 · 起始页按原图重排布局（2026-10-25）
+   ------------------------------------------------------------
+   原图 1905x1192 上用行列投影量出来的骨架：
+     左栏   x   36 ~  289（13.3%）  五个黑药丸，每个高 48、间距 70
+     中区   x  380 ~ 1270          整幅插画
+     右栏   x 1378 ~ 1875（26.1%） 三张白卡，高 133 / 132 / 84
+     右上   1641, 58  157x101→34   白胶囊
+     右下   1290,1022 585x101      黄绿大按钮
+     左下    0,1030 / 1072         时间行 + 进度条
+     卡片左缘还有一条 4px 的红标签（实测 249,79,87）
+
+   实现方式：.start 在乐园下变成 grid，.start-top / .start-core 用
+   display:contents 把子节点提升上来直接参与排版 —— 这样 HTML 结构
+   不用改，另外三套皮肤一行都不受影响（它们的 .start 还是 flex 竖排）。
+
+   零位移那条规则在这里不适用：用户明确要求这套皮肤有自己的布局，
+   所以它退出「四套 rect 必须一致」的比较，见 check-align.mjs。
+   ============================================================ */
+
+/* 这两个节点只在乐园下存在，别的皮肤不占位 */
+.ly-menu,
+.ly-cta { display: none; }
+
+html[data-theme="ly"] .start {
+  display: grid;
+  grid-template-columns: 13.4% minmax(0, 1fr) 26.1%;
+  grid-template-rows: auto auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  /* 刊头占中上部（原图那一整幅插画的位置），搜索压在它下面近处，
+     两者之间不能空一大片 —— 所以 mast 跨到第 4 行，stage 只占 5~6 行。 */
+  grid-template-areas:
+    "brand mast  top"
+    "greet mast  ."
+    "menu  mast  clock"
+    "menu  mast  bm"
+    "menu  stage bm"
+    "foot  stage cta";
+  column-gap: 3.2%;
+  row-gap: 10px;
+  /* 原图上内容整体偏下：右上胶囊在 4.9%、品牌块在 6%，
+     所以顶边不能只留 16px */
+  padding:
+    calc(34px + env(safe-area-inset-top, 0px)) 2.2%
+    calc(44px + env(safe-area-inset-bottom, 0px)) 2.2%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 把两层容器拆掉，让叶子节点直接进 grid */
+html[data-theme="ly"] .start-top,
+html[data-theme="ly"] .start-core { display: contents; }
+
+/* 频谱那层在乐园下本来就不显示（只有八重皮肤有），
+   但作为 grid 子元素哪怕是 0 高度也会占掉一格 → 必须整格清掉 */
+html[data-theme="ly"] .start-viz { display: none !important; }
+
+/* ---------- 槽位分配 ---------- */
+html[data-theme="ly"] .mark        { grid-area: brand; justify-self: start; align-self: start; }
+html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin: 0; }
+html[data-theme="ly"] .start-right { grid-area: top;   justify-self: end;  align-self: start; }
+html[data-theme="ly"] .st-mast     { grid-area: mast;  align-self: center; }
+html[data-theme="ly"] .search      { grid-area: stage; align-self: center; }
+html[data-theme="ly"] .st-clock    { grid-area: clock; align-self: start; margin: 0; }
+html[data-theme="ly"] .bm          { grid-area: bm;    align-self: stretch; margin: 0; min-height: 0; }
+/* 菜单贴着自己那几行的顶对齐 —— 若居中，右栏那张很高的收藏卡
+   会把这几行拉长，菜单就跟着沉到半屏以下（原图它从 24.5% 就开始了） */
+html[data-theme="ly"] .ly-menu     { grid-area: menu;  align-self: start; }
+html[data-theme="ly"] .ly-cta      { grid-area: cta;   align-self: end; justify-self: stretch; }
+html[data-theme="ly"] .start-foot  { grid-area: foot;  align-self: end; margin: 0; }
+
+/* ---------- 左上：品牌做成便签（原图那块白底黑框、略歪的标题牌） ----------
+   原图这块是 254x170（占宽 13.3%、高 14.3%）：上面一行小字「差分宇宙」，
+   下面一行大字「乐园漫记」压在白底黑框里。这里照同样的大小和结构做，
+   small（DYG）转上去当小字，主文字当大字 —— 所以用 column-reverse。 */
+html[data-theme="ly"] .mark {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 2px;
+  min-width: 168px;
+  background: #fff;
+  outline: 3px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard);
+  border-radius: var(--r-card);
+  padding: 12px 18px 14px;
+  transform: rotate(-1.4deg);
+  transform-origin: left top;
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: .02em;
+}
+html[data-theme="ly"] .mark small {
+  display: block;
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .22em;
+  opacity: .62;
+}
+
+/* 原图左上那行「下次扩充时间 ⏱…」，站里对应日期 + 问候 */
+html[data-theme="ly"] .st-greet {
+  margin-top: 14px;
+  font-size: 12.5px;
+  color: var(--text-3);
+  max-width: 15ch;
+  line-height: 1.5;
+}
+
+/* ---------- 左侧：五颗黑色药丸（原图 menus） ---------- */
+html[data-theme="ly"] .ly-menu {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 9px;
+  min-width: 0;
+}
+html[data-theme="ly"] .ly-mi {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 15px;
+  border-radius: var(--r-pill);
+  background: #141414;
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: .02em;
+  text-decoration: none;
+  box-shadow: var(--hard-sm);
+  transition: background-color .16s, color .16s, box-shadow .16s;
+}
+html[data-theme="ly"] .ly-mi-i { display: grid; flex: none; width: 16px; height: 16px; }
+html[data-theme="ly"] .ly-mi-i svg { width: 16px; height: 16px; fill: currentColor; }
+
+/* ---------- 中区：刊头 + 搜索 ---------- */
+html[data-theme="ly"] .st-mast {
+  /* 中栏比原来的整幅窄一些，字号跟着收；这里没有看板娘，
+     所以不必再守「只跟 vh 不跟 vw」那条（那条是为了角色和 word 不裂开）。
+     宽度取 fit-content 再居中：写 100% 的话文字只占左边一半，
+     右边留 400 多像素空白 —— 一块里半边空是明确不要的。 */
+  --mast-f: clamp(50px, 15.5vh, 146px);
+  width: fit-content;
+  max-width: 100%;
+  text-align: left;
+  justify-self: center;
+  align-self: center;
+}
+/* 原图中部是一整幅插画，没有 eyebrow 那种小标签 */
+html[data-theme="ly"] .st-mast .st-kicker { display: none; }
+
+html[data-theme="ly"] .search {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  border-radius: var(--r-pill);
+}
+
+/* ---------- 右栏：白卡 + 左侧红标签条 ---------- */
+html[data-theme="ly"] .st-clock,
+html[data-theme="ly"] .bm {
+  background: #fff;
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: inset 6px 0 0 #f94f57, var(--hard-sm);
+  border-radius: var(--r-card);
+  padding: 13px 15px 13px 20px;
+}
+/* 原图右栏的第一张卡从 30% 高度才开始（上面那一大片是空的，
+   只有右上角一个小胶囊）。行 1~2 只装品牌和日期，够不到 30%，
+   所以这里补一段上边距把它压到位。 */
+html[data-theme="ly"] .st-clock {
+  width: auto;
+  gap: 14px;
+  justify-content: space-between;
+  margin-top: clamp(8px, 6.5vh, 74px);
+}
+html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
+
+html[data-theme="ly"] .bm { overflow-y: auto; overscroll-behavior: contain; }
+html[data-theme="ly"] .bm-head { margin-bottom: 8px; }
+html[data-theme="ly"] .bm-groups { gap: 10px 14px; }
+html[data-theme="ly"] .bm-l { font-size: 12.5px; }
+
+/* ---------- 右下：大黄绿按钮（原图「开始游戏」） ---------- */
+html[data-theme="ly"] .ly-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 56px;
+  border-radius: var(--r-card);
+  background: var(--acc-fill);
+  color: var(--ink);
+  outline: 3px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-decoration: none;
+  transition: transform .12s var(--ease-out), box-shadow .12s var(--ease-out);
+}
+html[data-theme="ly"] .ly-cta:active {
+  transform: translate(3px, 3px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+/* ---------- 左下：快捷键提示（原图「本期剩余时间」那一行） ---------- */
+html[data-theme="ly"] .start-foot {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-3);
+  text-align: left;
+}
+html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
+
+/* ---------- 悬停（只在真鼠标上） ---------- */
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .ly-mi:hover {
+    background: var(--acc-fill);
+    color: var(--ink);
+  }
+  html[data-theme="ly"] .ly-cta:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+}
+
+/* ---------- 窄屏：退回竖排流，别硬套三栏 ---------- */
+@media (max-width: 960px) {
+  html[data-theme="ly"] .start {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+  }
+  html[data-theme="ly"] .start-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  html[data-theme="ly"] .start-core {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    overflow: visible;
+  }
+  html[data-theme="ly"] .start-viz { display: block !important; }
+  html[data-theme="ly"] .mark { transform: none; align-self: flex-start; }
+  html[data-theme="ly"] .st-greet { max-width: none; margin-top: 0; }
+  html[data-theme="ly"] .st-mast { --mast-f: clamp(40px, 11vw, 76px); }
+  html[data-theme="ly"] .ly-menu {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 7px;
+  }
+  html[data-theme="ly"] .ly-mi { height: 34px; padding: 0 12px; font-size: 13px; }
+  html[data-theme="ly"] .bm { max-height: 46vh; }
+  html[data-theme="ly"] .ly-cta { height: 48px; margin-top: 4px; }
+  html[data-theme="ly"] .start-foot { flex-direction: row; gap: 10px; }
+}
