@@ -3024,6 +3024,8 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
    尺寸只跟 vw 走：它是背景装饰，不参与任何布局，改这个宽度不会推动
    页面上的任何东西（也就不违反「换肤零位移」那条）。
 
+   用 visibility 而不是 display:none —— display:none 会让 offsetWidth/Height 量到 0，
+   而边界判断全靠这两个数，量到 0 就等于没有边界，角色会一路飘出视口。
    投影是压暗不发光：夜色底上角色偏亮，靠下方一层暗投影把它从星野里托出来，
    不要用荧光描边那种做法。 */
 #dyg-drift {
@@ -3032,13 +3034,13 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
   top: 0;
   z-index: 2;
   pointer-events: none;
-  display: none;
+  visibility: hidden;
   width: clamp(94px, 13vw, 170px);
-  opacity: .92;
+  opacity: 0;
   will-change: transform;
   filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .55));
 }
-#dyg-drift.on { display: block; }
+#dyg-drift.on { visibility: visible; opacity: .92; }
 #dyg-drift img {
   display: block;
   width: 100%;

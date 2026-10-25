@@ -34,7 +34,14 @@
   function measure() {
     W = window.innerWidth;
     H = window.innerHeight;
-    if (box) { w = box.offsetWidth; h = box.offsetHeight; }
+    if (!box) return;
+    w = box.offsetWidth;
+    h = box.offsetHeight;
+    /* 兜底：图片还没解码时 offsetHeight 是 0，w/h 拿到 0 就等于没有边界，
+       角色会一路飘出视口（这个 bug 真的发生过）。宽度按 theme.css 里同一个
+       clamp 推算，高度按图片固有比例 400:391。两处要一起改。 */
+    if (!w) w = Math.min(Math.max(94, W * 0.13), 170);
+    if (!h) h = w * 391 / 400;
   }
 
   /* 把速度方向偏转一个随机角后重新归一化。
@@ -51,13 +58,53 @@
     vy = vy / m * SPEED;
   }
 
+  /* 当前角度下外接盒的半宽/半高（角色绕自身中心转）。
+     只按未旋转的 w×h 判边界是不够的：45° 时外接盒最大约 1.41 倍，
+     170px 宽的角色会占到 240px —— 左上角没越界，视觉上已经出框了。 */
+  function bounds() {
+    var rad = rot * Math.PI / 180;
+    var c = Math.abs(Math.cos(rad)), s = Math.abs(Math.sin(rad));
+    return { hw: (w * c + h * s) / 2, hh: (w * s + h * c) / 2 };
+  }
+
+  /* 在「旋转后也不出框」的允许范围里随机落一个位置。
+     允许范围是中心点 ∈ [hw, W-hw] × [hh, H-hh]，再减半盒子换回左上角。 */
+  function seed() {
+    if (!w || !h) return;
+    var b = bounds();
+    var hw = Math.min(b.hw, W / 2), hh = Math.min(b.hh, H / 2);
+    var loX = hw - w / 2, hiX = W - hw - w / 2;
+    var loY = hh - h / 2, hiY = H - hh - h / 2;
+    x = hiX > loX ? rnd(loX, hiX) : (W - w) / 2;
+    y = hiY > loY ? rnd(loY, hiY) : (H - h) / 2;
+  }
+
+  /* 撞边：夹回 + 反转该轴速度 + 随机偏转。
+     两件事不能省：
+       - 夹回用**中心点 ± 外接盒半宽**，不是左上角 ± w/h；
+       - 视角比外接盒还小时（窄屏/矮屏）没有可飘空间，`min(…, W/2)` 把角色钉在中间，
+         否则反复夹来夹去会抖成一条竖线。 */
   function bounce() {
-    var hit = false;
-    if (x < 0) { x = 0; vx = -vx; hit = true; }
-    else if (x > W - w) { x = W - w; vx = -vx; hit = true; }
-    if (y < 0) { y = 0; vy = -vy; hit = true; }
-    else if (y > H - h) { y = H - h; vy = -vy; hit = true; }
-    if (hit) retarget();
+    if (!w || !h) return;              /* 图还没解码，量不到盒子 */
+    var b = bounds();
+    var hw = Math.min(b.hw, W / 2);
+    var hh = Math.min(b.hh, H / 2);
+    var cx = x + w / 2, cy = y + h / 2;
+    var dirX = 0, dirY = 0;
+
+    if (cx - hw < 0) { cx = hw; dirX = 1; }          /* 撞左墙 → 之后必须朝右 */
+    else if (cx + hw > W) { cx = W - hw; dirX = -1; }
+    if (cy - hh < 0) { cy = hh; dirY = 1; }
+    else if (cy + hh > H) { cy = H - hh; dirY = -1; }
+
+    if (!dirX && !dirY) return;
+    x = cx - w / 2;
+    y = cy - h / 2;
+    retarget();
+    /* retarget 是随机偏转，在角落两墙同时命中时可能又指回墙上 —— 强制朝内。
+       Math.abs 只改符号不改大小，SPEED 保持不变。 */
+    if (dirX) vx = Math.abs(vx) * dirX;
+    if (dirY) vy = Math.abs(vy) * dirY;
   }
 
   function place() {
@@ -90,21 +137,30 @@
     document.body.appendChild(box);
 
     measure();
-    /* 从画面中间某一侧出发，方向随机 */
-    x = rnd(0, Math.max(1, W - w));
-    y = rnd(0, Math.max(1, H - h));
+    rot = rnd(0, 360);
+    spin = Math.random() < 0.5 ? -SPIN : SPIN;
+    /* 初始位置也要按「旋转后」的盒子算，否则一启动就在边上裁掉一块 */
+    seed();
     var a = rnd(0, Math.PI * 2);
     vx = Math.cos(a) * SPEED;
     vy = Math.sin(a) * SPEED;
-    rot = rnd(0, 360);
-    spin = Math.random() < 0.5 ? -SPIN : SPIN;
     place();
+
+    /* 图还没解码完时 offsetHeight 是 0，量出来的盒子不可信 → 解码后重新落位。
+       盒子尺寸没变就别动，免得已经在飘的时候突然跳一下。 */
+    function relayout() {
+      var hadH = h;
+      measure();
+      if (hadH === h) return;
+      seed();
+      place();
+    }
+    if (img.complete && img.naturalWidth) relayout();
+    else img.addEventListener('load', relayout);
 
     window.addEventListener('resize', function () {
       measure();
-      /* 窗口变小后可能整个落在边界外，夹回来再继续 */
-      x = Math.max(0, Math.min(x, Math.max(0, W - w)));
-      y = Math.max(0, Math.min(y, Math.max(0, H - h)));
+      bounce();            /* 变小后可能整个落在边界外，夹回来再继续 */
       if (!running) place();
     });
     document.addEventListener('visibilitychange', function () {
