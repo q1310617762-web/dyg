@@ -3380,16 +3380,19 @@ html[data-theme="ly"] .ly-mi-i { display: grid; flex: none; width: 16px; height:
 html[data-theme="ly"] .ly-mi-i svg { width: 16px; height: 16px; fill: currentColor; }
 
 /* ---------- 中区：刊头 + 搜索 ---------- */
-/* 原图中间是一整幅插画，站里对应的是图集里那张横构图的「晨曦平原」。
-   所以中栏不做文字版式，做成一整块画布：图铺满、刊头压在左下角，
-   底部叠一层暗渐变把白字托出来。 */
+/* 原图中间是一整幅插画，所以中栏做成一整块画布：图铺满、刊头压在左下角。
+   这张底图是从「【哲风壁纸】二次元-光效-崩坏.mp4」（4K/60fps）里截的——
+   抽 12 帧按亮度/细节/色相熵打分，挑的是色相最丰富、几乎无过曝的那一帧，
+   按画布的 737:558 比例从 3840 宽里居中裁出 2853x2160 再缩到 1200。
+   它本身就很暗（亮度中位 76、32.8% 是深色区），所以底部那层压暗渐变
+   从 .68 收到 .45 —— 原来那个强度是给明亮的海边照片配的，放在这张上会糊成黑块。 */
 html[data-theme="ly"] .st-mast {
   position: relative;
   width: 100%;
   height: 100%;
   min-height: 240px;
   --mast-f: clamp(36px, 9vh, 88px);
-  background: #26313a url("assets/photos/0621547bba79.webp") center / cover no-repeat;
+  background: #171b22 url("assets/img/ly-stage.webp") center / cover no-repeat;
   border-radius: var(--r-card);
   outline: 3px solid var(--ink);
   outline-offset: 0;
@@ -3405,7 +3408,7 @@ html[data-theme="ly"] .st-mast::after {
   position: absolute;
   inset: 0;
   background: linear-gradient(to top,
-    rgba(16, 18, 12, .68) 0%, rgba(16, 18, 12, .16) 44%, transparent 70%);
+    rgba(12, 14, 18, .46) 0%, rgba(12, 14, 18, .12) 46%, transparent 72%);
   pointer-events: none;
 }
 html[data-theme="ly"] .st-mast .st-hello,
