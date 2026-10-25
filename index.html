@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261025135201" />
+<link rel="stylesheet" href="theme.css?v=20261025140642" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -145,6 +145,16 @@
       <span class="ly-mi-i"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="5.8" cy="6" r="2.5"/><circle cx="10.6" cy="6.6" r="2"/><path d="M1.6 13c0-2.4 1.9-3.9 4.2-3.9s4.2 1.5 4.2 3.9z"/><path d="M9.6 13c.2-1.9 1.4-3 3-3 1.5 0 2.6 1.1 2.8 3z"/></svg></span>
       <span>友链</span>
     </a>
+
+    <!-- 色块装饰：照原图底部那组「实心块 + 马赛克小方块」做的，
+         三色取自原图实测（青 60,156,156 / 芥末黄 204,192,72 / 玫红 204,72,120）。
+         挂在菜单容器里面是为了不单独占一行 grid —— 单独占行会把收藏卡挤矮
+         （实测 188px → 121px）。纯装饰，读屏跳过。 -->
+    <div class="ly-chips" aria-hidden="true">
+      <i class="ly-chip c-teal"></i>
+      <i class="ly-chip c-gold"></i>
+      <i class="ly-chip c-rose"></i>
+    </div>
   </nav>
 
   <!-- 乐园皮肤右栏的四张信息卡（照原图那四块：图标 + 名称 + 数值 + 进度条）。
@@ -470,13 +480,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261025135201"></script>
-<script src="assets/petals.js?v=20261025135201"></script>
-<script src="assets/starfield.js?v=20261025135201"></script>
-<script src="ui.js?v=20261025135201"></script>
-<script src="home.js?v=20261025135201"></script>
-<script src="assets/miko-talk.js?v=20261025135201"></script>
-<script src="assets/viz.js?v=20261025135201"></script>
+<script src="cursor.js?v=20261025140642"></script>
+<script src="assets/petals.js?v=20261025140642"></script>
+<script src="assets/starfield.js?v=20261025140642"></script>
+<script src="ui.js?v=20261025140642"></script>
+<script src="home.js?v=20261025140642"></script>
+<script src="assets/miko-talk.js?v=20261025140642"></script>
+<script src="assets/viz.js?v=20261025140642"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -499,6 +509,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261025135201"></script>
+<script src="fx.js?v=20261025140642"></script>
 </body>
 </html>
