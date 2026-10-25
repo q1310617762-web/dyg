@@ -26,12 +26,15 @@
     { href: 'about.html',   text: '关于' }
   ];
 
+  /* 音频统一转 Opus 立体声 40k：这条线路到 GitHub Pages 实测只有 8.6 KB/s
+     ≈ 68.8 kbps，原文件 66~81 kbps 比带宽还高，缓冲永远攒不起来。
+     40k 占带宽 57%，能顺畅起播。改了文件记得把 sw.js 的 ASSET 版本号加一。 */
   var TRACKS = [
-    { title: '夜诞的花冠',     artist: 'HOYO-MiX · 挪德卡莱', src: 'assets/music/nights-crown.webm' },
-    { title: '晚祷的钟声',     artist: 'HOYO-MiX · 晨昏之庭', src: 'assets/music/vespers-bells.webm' },
-    { title: '渡鸦与温柔月色', artist: 'HOYO-MiX · 夜之组曲', src: 'assets/music/raven-tender-moon.webm' },
-    { title: '雪国主题',       artist: 'HOYO-MiX · 至冬印象', src: 'assets/music/snezhnaya-theme.webm' },
-    { title: '自由之颂',       artist: 'HOYO-MiX · 蒙德纪念', src: 'assets/music/ode-to-liberty.webm' }
+    { title: '夜诞的花冠',   artist: 'HOYO-MiX · 挪德卡莱',   src: 'assets/music/nights-crown.webm' },
+    { title: '柔月下的暗鸦', artist: 'HOYO-MiX · 夜之组曲',   src: 'assets/music/raven-tender-moon.webm' },
+    { title: '至冬',         artist: 'HOYO-MiX · 至冬印象',   src: 'assets/music/snezhnaya-theme.webm' },
+    { title: '自由之颂',     artist: 'HOYO-MiX · 蒙德纪念',   src: 'assets/music/ode-to-liberty.webm' },
+    { title: '乐园漫记',     artist: 'HOYO-MiX · 差分宇宙',   src: 'assets/music/divergent-universe.webm' }
   ];
 
   function pageFile() {
