@@ -28,7 +28,10 @@
   /* defer: true 的角色等首屏忙完再加载 */
   var CAST = [
     { id: 'dyg-drift-teacher', src: 'assets/img/teacher.webp', defer: false },
-    { id: 'dyg-drift-bunny', src: 'assets/img/bunny.webp', defer: true }
+    { id: 'dyg-drift-bunny', src: 'assets/img/bunny.webp', defer: true },
+    /* 小埋：11 帧 / 110ms 的 GIF 抠出来的（isnet-anime 模型，帧间差异均值 1.09%）。
+       横构图 280x182，飘起来比另外两个矮一点，正好错开。 */
+    { id: 'dyg-drift-umaru', src: 'assets/img/umaru.webp', defer: true }
   ];
 
   var SPEED = 26;        /* px/s，飘动速度 */
