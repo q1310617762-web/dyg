@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261025133832" />
+<link rel="stylesheet" href="theme.css?v=20261025135201" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -146,6 +146,43 @@
       <span>友链</span>
     </a>
   </nav>
+
+  <!-- 乐园皮肤右栏的四张信息卡（照原图那四块：图标 + 名称 + 数值 + 进度条）。
+       别的皮肤 display:none 不占位。数字是手写维护的，改内容记得同步。 -->
+  <aside class="ly-stats" aria-label="站点概览">
+    <a class="ly-stat" href="archive.html">
+      <span class="ly-stat-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.4h6.2v13.2H3zM10.8 3.4H17v13.2h-6.2z"/><path d="M3 3.4h6.2v3.2H3z" opacity=".45"/></svg></span>
+      <span class="ly-stat-b">
+        <span class="ly-stat-t">文章</span>
+        <span class="ly-stat-v">2<em>/24</em></span>
+        <span class="ly-stat-bar"><i style="--p:8%"></i></span>
+      </span>
+    </a>
+    <a class="ly-stat" href="gallery.html">
+      <span class="ly-stat-i"><svg viewBox="0 0 20 20" aria-hidden="true"><rect x="2.6" y="3.4" width="14.8" height="13.2" rx="2"/><circle cx="7.4" cy="8" r="1.7" fill="#fff"/><path d="M4.4 14.6l4-4.2 3 3 2.2-2.2 2.4 3.4z" fill="#fff"/></svg></span>
+      <span class="ly-stat-b">
+        <span class="ly-stat-t">图集</span>
+        <span class="ly-stat-v">12<em>/12</em></span>
+        <span class="ly-stat-bar"><i style="--p:100%"></i></span>
+      </span>
+    </a>
+    <a class="ly-stat" href="tags.html">
+      <span class="ly-stat-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4.2h6.1l7.2 6.9-5.6 5.6L3 9.6z"/><circle cx="7" cy="7.4" r="1.5" fill="#fff"/></svg></span>
+      <span class="ly-stat-b">
+        <span class="ly-stat-t">标签</span>
+        <span class="ly-stat-v">2<em>/8</em></span>
+        <span class="ly-stat-bar"><i style="--p:25%"></i></span>
+      </span>
+    </a>
+    <div class="ly-stat is-static">
+      <span class="ly-stat-i"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M7.6 13.2a3.6 3.6 0 0 1 0-6.4V3.2a8.4 8.4 0 0 0 0 13.6z"/><circle cx="13.6" cy="10" r="2.6"/></svg></span>
+      <span class="ly-stat-b">
+        <span class="ly-stat-t">曲目</span>
+        <span class="ly-stat-v">5<em>/5</em></span>
+        <span class="ly-stat-bar"><i style="--p:100%"></i></span>
+      </span>
+    </div>
+  </aside>
 
   <div class="start-core">
 
@@ -433,13 +470,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261025133832"></script>
-<script src="assets/petals.js?v=20261025133832"></script>
-<script src="assets/starfield.js?v=20261025133832"></script>
-<script src="ui.js?v=20261025133832"></script>
-<script src="home.js?v=20261025133832"></script>
-<script src="assets/miko-talk.js?v=20261025133832"></script>
-<script src="assets/viz.js?v=20261025133832"></script>
+<script src="cursor.js?v=20261025135201"></script>
+<script src="assets/petals.js?v=20261025135201"></script>
+<script src="assets/starfield.js?v=20261025135201"></script>
+<script src="ui.js?v=20261025135201"></script>
+<script src="home.js?v=20261025135201"></script>
+<script src="assets/miko-talk.js?v=20261025135201"></script>
+<script src="assets/viz.js?v=20261025135201"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -462,6 +499,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261025133832"></script>
+<script src="fx.js?v=20261025135201"></script>
 </body>
 </html>

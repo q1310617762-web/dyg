@@ -3253,8 +3253,9 @@ html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
    所以它退出「四套 rect 必须一致」的比较，见 check-align.mjs。
    ============================================================ */
 
-/* 这两个节点只在乐园下存在，别的皮肤不占位 */
+/* 这几个节点只在乐园下存在，别的皮肤不占位 */
 .ly-menu,
+.ly-stats,
 .ly-cta { display: none; }
 
 html[data-theme="ly"] .start {
@@ -3267,7 +3268,7 @@ html[data-theme="ly"] .start {
     "brand mast  top"
     "greet mast  ."
     "menu  mast  clock"
-    "menu  mast  bm"
+    "menu  mast  stats"
     "menu  stage bm"
     "foot  stage cta";
   column-gap: 3.2%;
@@ -3296,7 +3297,9 @@ html[data-theme="ly"] .start-right { grid-area: top;   justify-self: end;  align
 html[data-theme="ly"] .st-mast     { grid-area: mast;  align-self: center; }
 html[data-theme="ly"] .search      { grid-area: stage; align-self: center; }
 html[data-theme="ly"] .st-clock    { grid-area: clock; align-self: start; margin: 0; }
-html[data-theme="ly"] .bm          { grid-area: bm;    align-self: stretch; margin: 0; min-height: 0; }
+html[data-theme="ly"] .ly-stats    { grid-area: stats; align-self: start; }
+html[data-theme="ly"] .bm          { grid-area: bm;    align-self: stretch; margin: 0; min-height: 0;
+                                     display: flex; flex-direction: column; }
 /* 菜单贴着自己那几行的顶对齐 —— 若居中，右栏那张很高的收藏卡
    会把这几行拉长，菜单就跟着沉到半屏以下（原图它从 24.5% 就开始了） */
 html[data-theme="ly"] .ly-menu     { grid-area: menu;  align-self: start; }
@@ -3371,18 +3374,43 @@ html[data-theme="ly"] .ly-mi-i { display: grid; flex: none; width: 16px; height:
 html[data-theme="ly"] .ly-mi-i svg { width: 16px; height: 16px; fill: currentColor; }
 
 /* ---------- 中区：刊头 + 搜索 ---------- */
+/* 原图中间是一整幅插画，站里对应的是图集里那张横构图的「晨曦平原」。
+   所以中栏不做文字版式，做成一整块画布：图铺满、刊头压在左下角，
+   底部叠一层暗渐变把白字托出来。 */
 html[data-theme="ly"] .st-mast {
-  /* 中栏比原来的整幅窄一些，字号跟着收；这里没有看板娘，
-     所以不必再守「只跟 vh 不跟 vw」那条（那条是为了角色和 word 不裂开）。
-     宽度取 fit-content 再居中：写 100% 的话文字只占左边一半，
-     右边留 400 多像素空白 —— 一块里半边空是明确不要的。 */
-  --mast-f: clamp(50px, 15.5vh, 146px);
-  width: fit-content;
-  max-width: 100%;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  --mast-f: clamp(36px, 9vh, 88px);
+  background: #26313a url("assets/photos/0621547bba79.webp") center / cover no-repeat;
+  border-radius: var(--r-card);
+  outline: 3px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard);
+  display: flex;
+  align-items: flex-end;
+  padding: 20px 24px 22px;
+  overflow: hidden;
   text-align: left;
-  justify-self: center;
-  align-self: center;
 }
+html[data-theme="ly"] .st-mast::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top,
+    rgba(16, 18, 12, .68) 0%, rgba(16, 18, 12, .16) 44%, transparent 70%);
+  pointer-events: none;
+}
+html[data-theme="ly"] .st-mast .st-hello,
+html[data-theme="ly"] .st-mast .st-kicker { position: relative; z-index: 1; }
+html[data-theme="ly"] .st-hello {
+  color: #fff;
+  text-shadow: 0 3px 0 rgba(16, 18, 12, .72), 0 0 26px rgba(16, 18, 12, .5);
+}
+/* 看板娘和花瓣是另外两套皮肤的东西，这里不要 */
+html[data-theme="ly"] .mast-miko-wrap,
+html[data-theme="ly"] .mast-petals { display: none; }
 /* 原图中部是一整幅插画，没有 eyebrow 那种小标签 */
 html[data-theme="ly"] .st-mast .st-kicker { display: none; }
 
@@ -3391,6 +3419,9 @@ html[data-theme="ly"] .search {
   max-width: none;
   margin: 0;
   border-radius: var(--r-pill);
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard-sm);
 }
 
 /* ---------- 右栏：白卡 + 左侧红标签条 ---------- */
@@ -3418,6 +3449,85 @@ html[data-theme="ly"] .bm { overflow-y: auto; overscroll-behavior: contain; }
 html[data-theme="ly"] .bm-head { margin-bottom: 8px; }
 html[data-theme="ly"] .bm-groups { gap: 10px 14px; }
 html[data-theme="ly"] .bm-l { font-size: 12.5px; }
+
+/* ---------- 右栏：四张信息卡（原图那四块：图标 + 名称 + 数值 + 进度条） ----------
+   数值是手写维护的（和 .bm-note 的「21 个」一样），改内容要同步改这里。
+   进度条用 --p 控制宽度，卡本身不改高度。 */
+html[data-theme="ly"] .ly-stats {
+  display: grid;
+  gap: 8px;
+}
+html[data-theme="ly"] .ly-stat {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 8px 13px;
+  background: #fff;
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard-sm);
+  border-radius: var(--r-card);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform .12s var(--ease-out), box-shadow .12s var(--ease-out);
+}
+html[data-theme="ly"] .ly-stat.is-static { cursor: default; }
+html[data-theme="ly"] .ly-stat-i {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  border-radius: 7px;
+  background: var(--acc-fill);
+  outline: 2px solid var(--ink);
+  outline-offset: 0;
+}
+html[data-theme="ly"] .ly-stat-i svg { width: 16px; height: 16px; fill: var(--ink); }
+html[data-theme="ly"] .ly-stat-b {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+html[data-theme="ly"] .ly-stat-t {
+  font-size: 11.5px;
+  line-height: 1.1;
+  color: var(--text-3);
+  letter-spacing: .04em;
+}
+html[data-theme="ly"] .ly-stat-v {
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+html[data-theme="ly"] .ly-stat-v em {
+  font-style: normal;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--text-3);
+  margin-left: 1px;
+}
+html[data-theme="ly"] .ly-stat-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(20, 20, 20, .13);
+  overflow: hidden;
+  margin-top: 1px;
+}
+html[data-theme="ly"] .ly-stat-bar i {
+  display: block;
+  height: 100%;
+  width: var(--p, 0%);
+  border-radius: 2px;
+  background: var(--acc-fill);
+  box-shadow: inset 0 0 0 1px rgba(20, 20, 20, .28);
+}
+
+/* ---------- 收藏卡：标题固定、列表自己滚 ---------- */
+html[data-theme="ly"] .bm-head { flex: none; }
+html[data-theme="ly"] .bm-groups { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
 
 /* ---------- 右下：大黄绿按钮（原图「开始游戏」） ---------- */
 html[data-theme="ly"] .ly-cta {
@@ -3461,6 +3571,8 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
     color: var(--ink);
   }
   html[data-theme="ly"] .ly-cta:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
+  html[data-theme="ly"] .ly-stat:not(.is-static):hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+  html[data-theme="ly"] .ly-stat:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
 }
 
 /* ---------- 窄屏：退回竖排流，别硬套三栏 ---------- */
@@ -3494,7 +3606,9 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
     gap: 7px;
   }
   html[data-theme="ly"] .ly-mi { height: 34px; padding: 0 12px; font-size: 13px; }
+  html[data-theme="ly"] .ly-stats { grid-template-columns: 1fr 1fr; }
   html[data-theme="ly"] .bm { max-height: 46vh; }
+  html[data-theme="ly"] .st-mast { min-height: 180px; --mast-f: clamp(30px, 7.5vw, 56px); }
   html[data-theme="ly"] .ly-cta { height: 48px; margin-top: 4px; }
   html[data-theme="ly"] .start-foot { flex-direction: row; gap: 10px; }
 }
