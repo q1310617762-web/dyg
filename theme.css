@@ -3262,7 +3262,10 @@ html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
 html[data-theme="ly"] .start {
   display: grid;
   grid-template-columns: 13.4% minmax(0, 1fr) 26.1%;
-  grid-template-rows: auto auto auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  /* 第 4 行给 stats 用 auto（它内容只有 123px），第 5 行留 1fr 全都给收藏卡。
+     两行都写 1fr 的话，stats 省下来的高度会被它自己那行的空白吃掉，
+     收藏卡一点都拿不到（实测：stats 212→123 省了 89px，收藏卡却纹丝不动）。 */
+  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
   /* 刊头占中上部（原图那一整幅插画的位置），搜索压在它下面近处，
      两者之间不能空一大片 —— 所以 mast 跨到第 4 行，stage 只占 5~6 行。
      色块装饰挂在 .ly-menu 里面（不单独占 grid 行），否则会把收藏卡挤矮。 */
@@ -3447,7 +3450,14 @@ html[data-theme="ly"] .st-clock {
 }
 html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
 
-html[data-theme="ly"] .bm { overflow-y: auto; overscroll-behavior: contain; }
+/* 卡本身不滚，只有里面的 .bm-groups 滚（标题固定在上面）。
+   两层都设 overflow-y:auto 会打架：滚轮到卡上时内层没得滚、外层先滚，
+   表现就是「标题跟着一起跑」。 */
+html[data-theme="ly"] .bm { overflow: hidden; }
+html[data-theme="ly"] .bm-groups {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 20, 20, .3) transparent;
+}
 html[data-theme="ly"] .bm-head { margin-bottom: 8px; }
 html[data-theme="ly"] .bm-groups { gap: 10px 14px; }
 html[data-theme="ly"] .bm-l { font-size: 12.5px; }
@@ -3495,8 +3505,11 @@ html[data-theme="ly"] .c-rose { color: #cc4878; }
 /* ---------- 右栏：四张信息卡（原图那四块：图标 + 名称 + 数值 + 进度条） ----------
    数值是手写维护的（和 .bm-note 的「21 个」一样），改内容要同步改这里。
    进度条用 --p 控制宽度，卡本身不改高度。 */
+/* 四张卡排成 2×2 而不是竖排四行：右栏高度要留给下面的收藏区，
+   竖排四张会把收藏卡压到只剩 120px（实测内容 571px，要滚近 5 屏）。 */
 html[data-theme="ly"] .ly-stats {
   display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 8px;
 }
 html[data-theme="ly"] .ly-stat {
@@ -3567,6 +3580,91 @@ html[data-theme="ly"] .ly-stat-bar i {
   box-shadow: inset 0 0 0 1px rgba(20, 20, 20, .28);
 }
 
+/* ---------- 收藏区（乐园下重做） ----------
+   其它皮肤是 4 列平铺的清单；右栏只有 356px，照那个排会糊成一团。
+   改成：每组一张淡底小卡（左上角一个色块当标记），组内链接两列排，
+   链接本身是白底描边的小胶囊、首字母是黄绿实心块。
+   四个组的标记色沿用原图那三种 + 一个紫，和左栏色块装饰呼应。 */
+html[data-theme="ly"] .bm-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding-bottom: 7px;
+  margin-bottom: 9px;
+  box-shadow: inset 0 -2px 0 var(--ink);
+}
+html[data-theme="ly"] .bm-title { font-size: 15px; font-weight: 700; letter-spacing: .02em; }
+html[data-theme="ly"] .bm-note { font-size: 11.5px; color: var(--text-3); }
+
+html[data-theme="ly"] .bm-groups {
+  grid-template-columns: 1fr;
+  gap: 9px;
+  padding-top: 0;
+}
+html[data-theme="ly"] .bm-g {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 6px;
+  padding: 8px 9px 9px;
+  background: var(--bg-lift);
+  border-radius: 9px;
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+html[data-theme="ly"] .bm-g h3 {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: .05em;
+}
+html[data-theme="ly"] .bm-g h3::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--chip, #ccc048);
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+html[data-theme="ly"] .bm-g:nth-child(1) { --chip: #3c9c9c; }
+html[data-theme="ly"] .bm-g:nth-child(2) { --chip: #ccc048; }
+html[data-theme="ly"] .bm-g:nth-child(3) { --chip: #cc4878; }
+html[data-theme="ly"] .bm-g:nth-child(4) { --chip: #8e7ad0; }
+
+html[data-theme="ly"] .bm-l {
+  margin: 0;
+  gap: 6px;
+  padding: 4px 7px 4px 4px;
+  font-size: 12px;
+  color: var(--ink);
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px var(--ink);
+  min-width: 0;
+  transition: background-color .15s, color .15s;
+}
+html[data-theme="ly"] .bm-l > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+html[data-theme="ly"] .bm-l i {
+  width: 19px;
+  height: 19px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--ink);
+  background: var(--acc-fill);
+  border-radius: 5px;
+  box-shadow: inset 0 0 0 1.5px var(--ink);
+}
+
 /* ---------- 收藏卡：标题固定、列表自己滚 ---------- */
 html[data-theme="ly"] .bm-head { flex: none; }
 html[data-theme="ly"] .bm-groups { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
@@ -3615,6 +3713,8 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
   html[data-theme="ly"] .ly-cta:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
   html[data-theme="ly"] .ly-stat:not(.is-static):hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
   html[data-theme="ly"] .ly-stat:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  html[data-theme="ly"] .bm-l:hover { background: var(--acc-fill); }
+  html[data-theme="ly"] .bm-l:hover i { background: #fff; }
 }
 
 /* ---------- 窄屏：退回竖排流，别硬套三栏 ---------- */
@@ -3648,7 +3748,6 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
     gap: 7px;
   }
   html[data-theme="ly"] .ly-mi { height: 34px; padding: 0 12px; font-size: 13px; }
-  html[data-theme="ly"] .ly-stats { grid-template-columns: 1fr 1fr; }
   html[data-theme="ly"] .ly-chips { grid-template-columns: repeat(3, 1fr); width: 100%;
     margin-top: 14px; padding-right: 0; gap: 26px; }
   html[data-theme="ly"] .bm { max-height: 46vh; }
