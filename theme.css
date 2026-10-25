@@ -3017,9 +3017,9 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
 }
 #dyg-sky.on { display: block; }
 
-/* ---------- 飘动的角色（夜色皮肤专属）----------
-   元素由 assets/teacher-drift.js 动态插入 body，z 2 正好压在星野（z 1）之上、
-   内容（z 50）之下 —— 它是背景里的活物，不该挡字也不该吃点击。
+/* ---------- 飘动的角色（夜幕皮肤专属，可多个）----------
+   元素由 assets/drift.js 动态插入 body，z 2 正好压在星野（z 1）之上、
+   内容（z 50）之下 —— 它们是背景里的活物，不该挡字也不该吃点击。
 
    尺寸只跟 vw 走：它是背景装饰，不参与任何布局，改这个宽度不会推动
    页面上的任何东西（也就不违反「换肤零位移」那条）。
@@ -3027,8 +3027,9 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
    用 visibility 而不是 display:none —— display:none 会让 offsetWidth/Height 量到 0，
    而边界判断全靠这两个数，量到 0 就等于没有边界，角色会一路飘出视口。
    投影是压暗不发光：夜色底上角色偏亮，靠下方一层暗投影把它从星野里托出来，
-   不要用荧光描边那种做法。 */
-#dyg-drift {
+   不要用荧光描边那种做法。
+   opacity 的过渡是给「延迟加载的那个角色」用的：它晚到，淡入比硬跳出自然。 */
+.dyg-drift {
   position: fixed;
   left: 0;
   top: 0;
@@ -3039,9 +3040,10 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
   opacity: 0;
   will-change: transform;
   filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .55));
+  transition: opacity .5s ease;
 }
-#dyg-drift.on { visibility: visible; opacity: .92; }
-#dyg-drift img {
+.dyg-drift.on { visibility: visible; opacity: .92; }
+.dyg-drift img {
   display: block;
   width: 100%;
   height: auto;

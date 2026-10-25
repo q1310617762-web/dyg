@@ -158,7 +158,7 @@
     var v = assetVersion();
     var sc = document.createElement('script');
     sc.id = 'dyg-drift-js';
-    sc.src = 'assets/teacher-drift.js' + (v ? '?v=' + v : '');
+    sc.src = 'assets/drift.js' + (v ? '?v=' + v : '');
     sc.onload = function () { syncDrift(root.getAttribute('data-theme') || 'miko'); };
     document.head.appendChild(sc);
   }
@@ -743,7 +743,7 @@
         /* 收尾：形态、地址栏、滚动、动画层、目录 */
         function settle() {
           if (isIndex) ensureViz();
-          /* 子页面的 HTML 里没有 teacher-drift.js：从首页路由过来时，
+          /* 子页面的 HTML 里没有 drift.js：从首页路由过来时，
              夜幕皮肤下要补上这一层（元素挂在 body 上，换页不会把它带走，
              但从来没加载过脚本的话就是没有）。 */
           syncDrift(root.getAttribute('data-theme') || 'miko');
