@@ -3257,7 +3257,8 @@ html[data-theme="dark"] .tc-s .tc-f { color: #7d838d; }
 .ly-menu,
 .ly-chips,
 .ly-stats,
-.ly-cta { display: none; }
+.ly-cta,
+.bm-tabs { display: none; }
 
 html[data-theme="ly"] .start {
   display: grid;
@@ -3446,7 +3447,11 @@ html[data-theme="ly"] .st-clock {
   width: auto;
   gap: 14px;
   justify-content: space-between;
-  margin-top: clamp(8px, 6.5vh, 74px);
+  /* 原来这里留 6.5vh（900 高下 58px），是为了把卡片压到原图的 30% 高度。
+     但收藏区加了组标签栏后，「游戏」那组 7 条要 168px、可视只有 147px，
+     差 21px 就得滚。用户要的是「空间不够整体往上移」，所以把这段留白收掉：
+     现在是 3.5vh（31px），卡片上移约 3%，换来收藏区多 27px。 */
+  margin-top: clamp(6px, 3.5vh, 44px);
 }
 html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
 
@@ -3597,6 +3602,56 @@ html[data-theme="ly"] .bm-head {
 html[data-theme="ly"] .bm-title { font-size: 15px; font-weight: 700; letter-spacing: .02em; }
 html[data-theme="ly"] .bm-note { font-size: 11.5px; color: var(--text-3); }
 
+/* ---------- 收藏区的组标签 ----------
+   原来四组一起上下排，21 条要滚 3 屏。改成标签切换：一次只显示一组，
+   单组最多 4 行（165px），现在这个卡高（253）一屏就装得下，不用滚。
+   标签栏只在乐园下出现；.is-off 也只在乐园下生效，其他皮肤四组照常全列。 */
+html[data-theme="ly"] .bm-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  flex: none;
+  margin-bottom: 7px;
+}
+html[data-theme="ly"] .bm-tab {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  color: var(--ink);
+  background: #fff;
+  border: 0;
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 2px var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color .15s, box-shadow .15s, transform .12s var(--ease-out);
+}
+html[data-theme="ly"] .bm-tab i {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 2px;
+  background: var(--chip, #ccc048);
+  box-shadow: inset 0 0 0 1.2px var(--ink);
+}
+html[data-theme="ly"] .bm-tab.is-on {
+  background: var(--acc-fill);
+  box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
+}
+html[data-theme="ly"] .bm-tab:active { transform: translate(1px, 1px); }
+html[data-theme="ly"] .bm-tab:nth-child(1) { --chip: #3c9c9c; }
+html[data-theme="ly"] .bm-tab:nth-child(2) { --chip: #ccc048; }
+html[data-theme="ly"] .bm-tab:nth-child(3) { --chip: #cc4878; }
+html[data-theme="ly"] .bm-tab:nth-child(4) { --chip: #8e7ad0; }
+
+/* 只在乐园下隐藏没选中的组 —— 另外三套皮肤要四组全列 */
+html[data-theme="ly"] .bm-g.is-off { display: none; }
+
 html[data-theme="ly"] .bm-groups {
   grid-template-columns: 1fr;
   gap: 9px;
@@ -3713,6 +3768,7 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
   html[data-theme="ly"] .ly-cta:hover { transform: translate(-1px, -1px); box-shadow: 6px 6px 0 var(--ink); }
   html[data-theme="ly"] .ly-stat:not(.is-static):hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
   html[data-theme="ly"] .ly-stat:active { transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+  html[data-theme="ly"] .bm-tab:hover:not(.is-on) { background: var(--bg-lift); }
   html[data-theme="ly"] .bm-l:hover { background: var(--acc-fill); }
   html[data-theme="ly"] .bm-l:hover i { background: #fff; }
 }

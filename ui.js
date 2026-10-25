@@ -570,6 +570,32 @@
   }
 
   /* ============================================================
+     起始页收藏区的组标签（乐园皮肤）
+     ------------------------------------------------------------
+     一次只显示一组，省掉上下滚。用 document 委托而不是给按钮一个个绑：
+     站内换页是路由，起始页那块会被 importNode 搬进来重建，
+     绑在元素上的监听会跟着旧节点一起丢掉。
+     隐藏靠 .is-off 这个类，而 .bm-g.is-off 的 display:none 只写在
+     html[data-theme="ly"] 下 —— 所以别的皮肤四组照常全列。
+     ============================================================ */
+  document.addEventListener('click', function (e) {
+    var tab = e.target.closest ? e.target.closest('[data-bmk]') : null;
+    if (!tab) return;
+    var box = tab.closest('.bm');
+    if (!box) return;
+    e.preventDefault();
+
+    var pick = parseInt(tab.getAttribute('data-bmk'), 10) || 0;
+    [].forEach.call(box.querySelectorAll('.bm-tab'), function (b, i) {
+      b.classList.toggle('is-on', i === pick);
+      b.setAttribute('aria-selected', i === pick ? 'true' : 'false');
+    });
+    [].forEach.call(box.querySelectorAll('.bm-g'), function (g, i) {
+      g.classList.toggle('is-off', i !== pick);
+    });
+  });
+
+  /* ============================================================
      站内路由：只换内容区
      ============================================================ */
   var CONTENT_SKIP = '[data-nav], [data-menu], footer';
