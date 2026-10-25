@@ -3017,6 +3017,34 @@ html[data-theme="miko"] .clock-time { color: var(--accent); }
 }
 #dyg-sky.on { display: block; }
 
+/* ---------- 飘动的角色（夜色皮肤专属）----------
+   元素由 assets/teacher-drift.js 动态插入 body，z 2 正好压在星野（z 1）之上、
+   内容（z 50）之下 —— 它是背景里的活物，不该挡字也不该吃点击。
+
+   尺寸只跟 vw 走：它是背景装饰，不参与任何布局，改这个宽度不会推动
+   页面上的任何东西（也就不违反「换肤零位移」那条）。
+
+   投影是压暗不发光：夜色底上角色偏亮，靠下方一层暗投影把它从星野里托出来，
+   不要用荧光描边那种做法。 */
+#dyg-drift {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: none;
+  width: clamp(94px, 13vw, 170px);
+  opacity: .92;
+  will-change: transform;
+  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, .55));
+}
+#dyg-drift.on { display: block; }
+#dyg-drift img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 /* 樱花飘落（八重皮肤专属）。和星野同一层：body 背景之上、内容之下，
    所以花瓣是从字和卡片后面落下来的，不挡字、不吃点击。 */
 #dyg-petals {

@@ -115,6 +115,7 @@
     var mt = document.querySelector('meta[name="theme-color"]');
     if (mt) mt.setAttribute('content', t.color);
     syncSky(id);
+    syncDrift(id);
     syncPetals(id);
     syncViz(id);
   }
@@ -133,6 +134,33 @@
     if (!window.__dygSky) return;
     if (id !== 'dark') { window.__dygSky.stop(); return; }
     window.__dygSky.start(motionOff());
+  }
+
+  /* 飘动的角色只在「夜幕」下开。它靠 transform 位移 + 自转，
+     减弱动效时没有等价的「只改透明度」版本 —— 留一个停在半空、转到一半的
+     角色比不画更奇怪，所以和樱花一样整层不出现。 */
+  function syncDrift(id) {
+    if (id !== 'dark') {
+      if (window.__dygDrift) window.__dygDrift.stop();
+      return;
+    }
+    /* 不是夜幕就不加载，是夜幕才补脚本 —— 所以这条分支自己负责 ensure，
+       调用方（applyTheme / boot / settle）不用各写一遍。 */
+    ensureDrift();
+    if (window.__dygDrift) window.__dygDrift.start(motionOff());
+  }
+
+  /* 按需加载：子页面的 HTML 里压根没有这个 script，
+     而且只有夜幕皮肤才需要 —— 别的皮肤连 104KB 的动图都不该下。
+     加载完要再同步一次，因为脚本到位时 applyTheme 可能早就跑完了。 */
+  function ensureDrift() {
+    if (window.__dygDrift || document.getElementById('dyg-drift-js')) return;
+    var v = assetVersion();
+    var sc = document.createElement('script');
+    sc.id = 'dyg-drift-js';
+    sc.src = 'assets/teacher-drift.js' + (v ? '?v=' + v : '');
+    sc.onload = function () { syncDrift(root.getAttribute('data-theme') || 'miko'); };
+    document.head.appendChild(sc);
   }
 
   /* 樱花飘落只在「八重」下开。减弱动效时整层不出现 ——
@@ -715,6 +743,10 @@
         /* 收尾：形态、地址栏、滚动、动画层、目录 */
         function settle() {
           if (isIndex) ensureViz();
+          /* 子页面的 HTML 里没有 teacher-drift.js：从首页路由过来时，
+             夜幕皮肤下要补上这一层（元素挂在 body 上，换页不会把它带走，
+             但从来没加载过脚本的话就是没有）。 */
+          syncDrift(root.getAttribute('data-theme') || 'miko');
           if (isIndex && window.DYG_HOME) {
             window.DYG_HOME.setMode(mode, false);
             /* 换进来的 .start 是全新节点：必须重新 init，
@@ -904,6 +936,7 @@
     initPlayer();
     initTheme();
     syncSky(root.getAttribute('data-theme') || 'miko');
+    syncDrift(root.getAttribute('data-theme') || 'miko');
     syncPetals(root.getAttribute('data-theme') || 'miko');
     syncViz(root.getAttribute('data-theme') || 'miko');
     fileModeTip();

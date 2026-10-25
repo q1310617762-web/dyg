@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261025113118" />
+<link rel="stylesheet" href="theme.css?v=20261025115311" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -66,6 +66,14 @@
         if (r[1] === 'font') { l.type = r[2]; l.crossOrigin = 'anonymous'; }
         document.head.appendChild(l);
       });
+    }
+    /* 夜幕皮肤下那张飘动的角色动图（104KB）。它由 teacher-drift.js 在运行中
+       才创建 <img>，不提前要的话要等脚本下载 + 执行才发起请求。
+       起始页和博客形态都会飘，所以只判皮肤、不判形态。 */
+    if (document.documentElement.getAttribute('data-theme') === 'dark') {
+      var l2 = document.createElement('link');
+      l2.rel = 'preload'; l2.as = 'image'; l2.href = 'assets/img/teacher.webp';
+      document.head.appendChild(l2);
     }
   } catch (e2) {}
 })();
@@ -386,13 +394,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261025113118"></script>
-<script src="assets/petals.js?v=20261025113118"></script>
-<script src="assets/starfield.js?v=20261025113118"></script>
-<script src="ui.js?v=20261025113118"></script>
-<script src="home.js?v=20261025113118"></script>
-<script src="assets/miko-talk.js?v=20261025113118"></script>
-<script src="assets/viz.js?v=20261025113118"></script>
+<script src="cursor.js?v=20261025115311"></script>
+<script src="assets/petals.js?v=20261025115311"></script>
+<script src="assets/starfield.js?v=20261025115311"></script>
+<script src="ui.js?v=20261025115311"></script>
+<script src="home.js?v=20261025115311"></script>
+<script src="assets/miko-talk.js?v=20261025115311"></script>
+<script src="assets/viz.js?v=20261025115311"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -415,6 +423,6 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261025113118"></script>
+<script src="fx.js?v=20261025115311"></script>
 </body>
 </html>
