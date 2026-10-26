@@ -3282,12 +3282,16 @@ html[data-theme="ly"] .start {
   /* 刊头占中上部（原图那一整幅插画的位置），搜索压在它下面近处，
      两者之间不能空一大片 —— 所以 mast 跨到第 4 行，stage 只占 5~6 行。
      色块装饰挂在 .ly-menu 里面（不单独占 grid 行），否则会把收藏卡挤矮。 */
+  /* 最后一行放「搜索框 + 进入博客」两个东西：它们并排、等高、都居中，
+     自然落在同一条水平线上。原来搜索框跨 5~6 行居中、按钮只在第 6 行贴底，
+     两者差了将近 100px（实测 729 vs 828），看着是错开的。
+     收藏卡因此只占第 5 行 —— 少了原来占的那半行，但 1fr 全给它，反而更高。 */
   grid-template-areas:
     "brand mast  top"
     "greet mast  ."
     "menu  mast  clock"
     "menu  mast  stats"
-    "menu  stage bm"
+    "menu  .     bm"
     "foot  stage cta";
   column-gap: 3.2%;
   row-gap: 10px;
@@ -3333,7 +3337,7 @@ html[data-theme="ly"] .bm          { grid-area: bm;    align-self: stretch; marg
 /* 菜单贴着自己那几行的顶对齐 —— 若居中，右栏那张很高的收藏卡
    会把这几行拉长，菜单就跟着沉到半屏以下（原图它从 24.5% 就开始了） */
 html[data-theme="ly"] .ly-menu     { grid-area: menu;  align-self: start; }
-html[data-theme="ly"] .ly-cta      { grid-area: cta;   align-self: end; justify-self: stretch; }
+html[data-theme="ly"] .ly-cta      { grid-area: cta;   align-self: center; justify-self: stretch; }
 html[data-theme="ly"] .start-foot  { grid-area: foot;  align-self: end; margin: 0; }
 
 /* ---------- 左上：品牌做成便签（原图那块白底黑框、略歪的标题牌） ----------
