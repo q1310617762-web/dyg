@@ -30,13 +30,16 @@
   var SPEED = 116;        // px/s，比 B 站慢一点，读得完
   var LANE_H = 34;        // 轨道高（含行距）
   var GAP = 28;           // 同轨两条之间至少留这么多
-  var MIN_GAP = 2400;     // 自动弹幕的间隔（毫秒，会加随机）
-  var MAX_GAP = 5200;
+  /* 补水间隔：每轮看一眼「画面里还有几条」，少于 MIN_ON_SCREEN 就补一条。
+     间隔别太长（空了没人补），也别太短（同时挤成一团）。 */
+  var PUMP_MIN = 900;
+  var PUMP_MAX = 1900;
   var MAX_USER = 20;      // 本地最多留 20 条自己的留言
   var KEY = 'dyg-dm';
   var MIN_W = 720;        // 窄到这个宽度就不放了，挤得没法看
 
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
+  var lastKick = {}, lastFail = '';
   var lastIdx = -1;
 
   function readUser() {
@@ -57,8 +60,8 @@
   function layout() {
     if (!layer) return;
     var h = layer.clientHeight, w = layer.clientWidth;
-    /* 只用画布上半部分：下半是刊头（Hello World），弹幕压上去会糊成一片 */
-    var usable = Math.max(0, Math.floor(h * 0.56));
+    /* 这块区域整片都是空的，不用再像待在画布里那样只敢用上半 56% */
+    var usable = Math.max(0, h - 16);
     var n = Math.max(1, Math.min(8, Math.floor(usable / LANE_H)));
     var ns = [];
     for (var i = 0; i < n; i++) {
@@ -97,16 +100,22 @@
     return !!(layer && layer.isConnected && layer.clientWidth > 8);
   }
 
+  var lastFail = '';
   function spawn(text, mine) {
-    if (!layer || !lanes.length || !visible()) return null;
+    if (!layer) { lastFail = 'no-layer'; return null; }
+    if (!lanes.length) { lastFail = 'no-lanes'; return null; }
+    if (!visible()) { lastFail = 'invisible:cw=' + layer.clientWidth; return null; }
     text = String(text || '').trim().slice(0, 32);
     if (!text) return null;
 
-    if (!visible()) return null;
     var now = performance.now();
     var idx = pickLane(now);
     /* 没有空轨就丢掉这条，别硬塞（硬塞会叠字） */
-    if (idx < 0) return null;
+    if (idx < 0) {
+      lastFail = 'no-lane free:' + lanes.map(function (l) { return Math.round(l.freeAt - now); }).join(',');
+      return null;
+    }
+    lastFail = 'ok';
     var lane = lanes[idx];
 
     var el = document.createElement('i');
@@ -127,9 +136,14 @@
 
     lane.freeAt = now + ((w + GAP) / SPEED) * 1000;
 
-    el.addEventListener('animationend', function () {
+    /* 生命周期用定时器管，不监听 animationend。
+       动画事件在某些情况下会比预期早得多地触发（查了两轮没坐实原因），
+       一旦早触发元素就被删了 —— 表现就是「发了但看不见」。
+       定时器按算出来的时长兜底，早到不了、晚一点也无害（那时它已经在
+       overflow 外面了，本来就不该被看见）。 */
+    setTimeout(function () {
       if (el.parentNode) el.parentNode.removeChild(el);
-    }, { once: true });
+    }, Math.ceil(dur * 1000) + 400);
     return el;
   }
 
@@ -145,11 +159,19 @@
     return { t: POOL[i], mine: false };
   }
 
-  function tick() {
+  var MIN_ON_SCREEN = 3;      // 低于这个数就补水
+
+  function countOn() {
+    return layer ? layer.querySelectorAll('.dm-item').length : 0;
+  }
+
+  function pump() {
     if (!running) return;
-    var n = nextText();
-    spawn(n.t, n.mine);
-    timer = setTimeout(tick, MIN_GAP + Math.random() * (MAX_GAP - MIN_GAP));
+    if (!visible()) { timer = setTimeout(pump, 150); return; }   // 等层量出尺寸
+    if (!lanes.length) layout();
+    lastKick = { vis: true, cw: layer.clientWidth, on: countOn() };
+    if (countOn() < MIN_ON_SCREEN) { var n = nextText(); spawn(n.t, n.mine); }
+    timer = setTimeout(pump, PUMP_MIN + Math.random() * (PUMP_MAX - PUMP_MIN));
   }
 
   /* ---------- 对外 ---------- */
@@ -159,13 +181,17 @@
     if (!ensure()) return;
     if (running) return;
     running = true;
-    /* 开局先铺三条（错开轨道），否则要等好几秒画面才有东西 */
-    [0, 900, 1800].forEach(function (d) {
-      setTimeout(function () {
-        if (running) { var n = nextText(); spawn(n.t, n.mine); }
-      }, d);
-    });
-    timer = setTimeout(tick, MIN_GAP + 1200);
+    /* 等层量出尺寸再开炮。
+       层是刚被 syncDanmaku 拉起来的，这一刻它还排在网格里没量过，
+       clientWidth 是 0 —— spawn 里的 visible() 会把开局这几条全当成
+       「看不见」丢掉，结果就是「刷新后几乎没有弹幕」。
+       这里用 setTimeout 轮询而不是 requestAnimationFrame：页面被判定为
+       隐藏时（切后台、无头浏览器）rAF 会停，setTimeout 至少还会滴答。 */
+    /* 保底补水：每 1~1.9 秒看一眼，画面上少于 3 条就补一条。
+       原来是「开局用一串 setTimeout 一次铺满」，只要某一条因为层还没量出
+       尺寸被丢掉，那就永远少一条，刷新几次看到 0 条、1 条都正常。
+       现在改成持续补水 —— 任何一次失败，下一轮自然补上，不需要谁去补救。 */
+    pump();
   }
 
   function stop() {
@@ -204,7 +230,7 @@
       clearTimeout(timer);
     } else if (running) {
       clearTimeout(timer);
-      timer = setTimeout(tick, MIN_GAP);
+      timer = setTimeout(pump, PUMP_MIN);
     }
   });
 
@@ -220,12 +246,19 @@
         on: layer ? layer.querySelectorAll('.dm-item').length : 0,
         box: layer ? [layer.clientWidth, layer.clientHeight] : null,
         pool: POOL.length,
+        kick: lastKick, fail: lastFail,
+        layers: document.querySelectorAll('[data-dm-layer]').length,
         mine: readUser().length,
-        items: layer ? [].map.call(layer.querySelectorAll('.dm-item'), function (e) {
-          var r = e.getBoundingClientRect();
-          return { t: e.textContent, x: Math.round(r.left), y: Math.round(r.top),
-                   w: Math.round(r.width), mine: e.classList.contains('is-mine') };
-        }) : []
+        items: layer ? (function () {
+          var lr = layer.getBoundingClientRect();
+          return [].map.call(layer.querySelectorAll('.dm-item'), function (e) {
+            var r = e.getBoundingClientRect();
+            /* x 是屏幕坐标（给人看的），rx 是相对容器左边缘的（给断言用的） */
+            return { t: e.textContent, x: Math.round(r.left), rx: Math.round(r.left - lr.left),
+                     y: Math.round(r.top), w: Math.round(r.width),
+                     mine: e.classList.contains('is-mine') };
+          });
+        })() : []
       };
     }
   };

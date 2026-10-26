@@ -3879,13 +3879,16 @@ html[data-theme="ly"] .np.playing .np-btn {
    ============================================================ */
 .dm-layer { display: none; }
 
+/* 落在画布下方那块空白：网格第 5 行第 2 列（areas 里写的是 "."）。
+   不再用 absolute —— 它现在是正儿八经的一个格子，高度跟着 1fr 走。 */
 html[data-theme="ly"] .dm-layer {
   display: block;
-  position: absolute;
-  inset: 0;
+  grid-area: 5 / 2 / 6 / 3;
+  align-self: stretch;
+  position: relative;
   overflow: hidden;
   pointer-events: none;
-  z-index: 2;          /* 压在刊头（z-index:1）之上，但不挡点击 */
+  z-index: 1;
 }
 
 .dm-item {
