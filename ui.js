@@ -117,6 +117,7 @@
     syncSky(id);
     syncDrift(id);
     syncPetals(id);
+    syncDanmaku(id);
     syncViz(id);
   }
 
@@ -162,6 +163,95 @@
     sc.onload = function () { syncDrift(root.getAttribute('data-theme') || 'miko'); };
     document.head.appendChild(sc);
   }
+
+  /* ---------- 弹幕（乐园） ----------
+     和角色一样按需加载：别的皮肤连这个脚本都不该下。
+     弹幕只在起始页那块画布里有意义，所以 start/stop 跟着皮肤走，
+     形态切到博客时画布整个隐藏，弹幕自然跟着看不见。 */
+  function syncDanmaku(id) {
+    if (id !== 'ly') {
+      if (window.__dygDanmaku) window.__dygDanmaku.stop();
+      return;
+    }
+    ensureDanmaku();
+    if (window.__dygDanmaku) window.__dygDanmaku.start(motionOff());
+  }
+
+  function ensureDanmaku() {
+    if (window.__dygDanmaku || document.getElementById('dyg-dm-js')) return;
+    var v = assetVersion();
+    var sc = document.createElement('script');
+    sc.id = 'dyg-dm-js';
+    sc.src = 'assets/danmaku.js' + (v ? '?v=' + v : '');
+    sc.onload = function () { syncDanmaku(root.getAttribute('data-theme') || 'miko'); };
+    document.head.appendChild(sc);
+  }
+
+  /* 发弹幕：按钮开浮层、回车/按钮发射、点空白或 Esc 收起。
+     全部走 document 委托 —— 起始页那块会被路由搬走重建，绑在元素上会丢。 */
+  (function () {
+    function pop() { return document.querySelector('[data-dm-pop]'); }
+    function btn() { return document.querySelector('[data-dm-btn]'); }
+    function close() {
+      var p = pop(), b = btn();
+      if (p && !p.hasAttribute('hidden')) p.setAttribute('hidden', '');
+      if (b) b.setAttribute('aria-expanded', 'false');
+    }
+    function open() {
+      var p = pop(), b = btn();
+      if (!p) return;
+      p.removeAttribute('hidden');
+      if (b) b.setAttribute('aria-expanded', 'true');
+      var i = p.querySelector('[data-dm-in]');
+      if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } }
+    }
+    function fire() {
+      var p = pop();
+      if (!p) return;
+      var i = p.querySelector('[data-dm-in]');
+      var t = i ? i.value.trim() : '';
+      if (!t) { if (i) i.focus(); return; }
+
+      /* 成功才清空并收起：脚本可能还在按需加载（甚至加载失败），
+         没发出去就把用户输入清掉是最讨人厌的 */
+      var go = function () {
+        if (window.__dygDanmaku && window.__dygDanmaku.send(t)) {
+          if (i) i.value = '';
+          close();
+          return true;
+        }
+        return false;
+      };
+      if (go()) return;
+      if (!window.__dygDanmaku) ensureDanmaku();
+      var n = 0;
+      var retry = setInterval(function () {
+        if (go() || ++n > 16) clearInterval(retry);
+      }, 120);
+    }
+
+    document.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t.closest && t.closest('[data-dm-btn]')) { e.preventDefault(); pop() && pop().hasAttribute('hidden') ? open() : close(); return; }
+      if (t.closest && t.closest('[data-dm-send]')) { e.preventDefault(); fire(); return; }
+      /* 点浮层外面收起来 */
+      if (!t.closest || !t.closest('[data-dm-pop]')) {
+        var p = pop();
+        if (p && !p.hasAttribute('hidden')) close();
+      }
+    });
+
+    document.addEventListener('keydown', function (e) {
+      var p = pop();
+      if (!p || p.hasAttribute('hidden')) return;
+      if (e.key === 'Escape') { e.preventDefault(); close(); return; }
+      if (e.key === 'Enter' && e.target && e.target.matches && e.target.matches('[data-dm-in]')) {
+        e.preventDefault();
+        e.stopPropagation();      // 别让搜索框的回车把表单提交了
+        fire();
+      }
+    }, true);
+  })();
 
   /* 樱花飘落只在「八重」下开。减弱动效时整层不出现 ——
      飘落没有「只改透明度」的等价写法，留一堆停在半空的花瓣比不画更奇怪。 */
@@ -773,6 +863,7 @@
              夜幕皮肤下要补上这一层（元素挂在 body 上，换页不会把它带走，
              但从来没加载过脚本的话就是没有）。 */
           syncDrift(root.getAttribute('data-theme') || 'miko');
+          syncDanmaku(root.getAttribute('data-theme') || 'miko');
           if (isIndex && window.DYG_HOME) {
             window.DYG_HOME.setMode(mode, false);
             /* 换进来的 .start 是全新节点：必须重新 init，
