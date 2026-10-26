@@ -140,13 +140,23 @@
 
     /* 相对 .start 的坐标要叠上它自己的滚动量，否则滚动后位置会跟着跑 */
     var sc = start.scrollTop || 0;
-    var left = mr.left - sr.left;
     var top = mr.bottom - sr.top + sc;
     var h = Math.max(0, gap);
-    layer.style.left = Math.round(left) + 'px';
-    layer.style.width = Math.round(mr.width) + 'px';
     layer.style.top = Math.round(top) + 'px';
     layer.style.height = Math.round(h) + 'px';
+
+    /* 左右：CSS 里给的是 13.4% / 26.1% 兜底，但百分比算不进 grid 的 column-gap，
+       量出来会比画布宽 125px（862 vs 737），弹幕会飘到左右栏上。
+       所以优先用画布的实测宽精确覆盖 —— 但**只接受合理值**：
+       一旦量到异常的小值（比如布局还没完成时读到个位数），
+       就把 inline 清掉退回 CSS 百分比，绝不把整层写成 1px 宽的一条竖线。
+       用户截图里那道「会变化的黑痕」就是整层被压成 1px、几条弹幕叠成一列。 */
+    if (mr.width > 100) {
+      layer.style.left = Math.round(mr.left - sr.left) + 'px';
+      layer.style.width = Math.round(mr.width) + 'px';
+    } else {
+      layer.style.left = layer.style.width = '';
+    }
   }
 
   function pickLane(now) {

@@ -3896,6 +3896,11 @@ html[data-theme="ly"] .np.playing .np-btn {
 html[data-theme="ly"] .dm-layer {
   display: block;
   position: absolute;
+  /* 宽度交给 CSS 百分比（和 grid 的 13.4% / 26.1% 对齐），JS 只管上下。
+     之前宽度是 JS 写像素的，某个时刻量到异常值就会把整层压成一条 1px 宽的竖线
+     —— 三条弹幕叠着只剩一列，看起来像「一道会变化的黑痕」。 */
+  left: 13.4%;
+  right: 26.1%;
   pointer-events: none;
   overflow: hidden;
   z-index: 1;
