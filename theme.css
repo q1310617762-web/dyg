@@ -3278,7 +3278,9 @@ html[data-theme="ly"] .start {
   /* 第 4 行给 stats 用 auto（它内容只有 123px），第 5 行留 1fr 全都给收藏卡。
      两行都写 1fr 的话，stats 省下来的高度会被它自己那行的空白吃掉，
      收藏卡一点都拿不到（实测：stats 212→123 省了 89px，收藏卡却纹丝不动）。 */
-  grid-template-rows: auto auto auto auto minmax(0, 1fr) auto;
+  /* 收藏 / 弹幕层所在那行给 96px 兜底。写 minmax(0,1fr) 的话视口一矮就被压到 0，
+     卡片和弹幕全被 overflow 裁掉（实测 1440x600 下收藏只剩 26px）。 */
+  grid-template-rows: auto auto auto auto minmax(96px, 1fr) auto;
   /* 刊头占中上部（原图那一整幅插画的位置），搜索压在它下面近处，
      两者之间不能空一大片 —— 所以 mast 跨到第 4 行，stage 只占 5~6 行。
      色块装饰挂在 .ly-menu 里面（不单独占 grid 行），否则会把收藏卡挤矮。 */
@@ -3294,12 +3296,16 @@ html[data-theme="ly"] .start {
     "menu  .     bm"
     "foot  stage cta";
   column-gap: 3.2%;
-  row-gap: 10px;
+  /* 行距跟着视口收：5 个间隙，矮屏下能省出 15~20px，正好够不被挤爆 */
+  row-gap: clamp(6px, 1.1vh, 10px);
   /* 原图上内容整体偏下：右上胶囊在 4.9%、品牌块在 6%，
      所以顶边不能只留 16px */
+  /* 上下留白也绑视口：固定 34+44 在 900 高下恰到好处，但 600 高时会白占 78px。
+     .start 本来就有 overflow-y:auto，可 grid 的 1fr 是「优先压缩、不溢出」，
+     所以光有滚动没用 —— 还得给那一行兜个最小高度（见 grid-template-rows）。 */
   padding:
-    calc(34px + env(safe-area-inset-top, 0px)) 2.2%
-    calc(44px + env(safe-area-inset-bottom, 0px)) 2.2%;
+    calc(clamp(12px, 3.8vh, 34px) + env(safe-area-inset-top, 0px)) 2.2%
+    calc(clamp(16px, 4.9vh, 44px) + env(safe-area-inset-bottom, 0px)) 2.2%;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
@@ -3358,7 +3364,9 @@ html[data-theme="ly"] .mark {
   padding: 12px 18px 14px;
   transform: rotate(-1.4deg);
   transform-origin: left top;
-  font-size: 32px;
+  /* 字号跟视口收：上限还是 32（900 高下不变），矮屏能压到 24，
+     整块跟着矮 16px 左右。牌子上的字缩到 24 还看得清。 */
+  font-size: clamp(24px, 3.6vh, 32px);
   font-weight: 600;
   line-height: 1.05;
   letter-spacing: .02em;
@@ -3374,11 +3382,11 @@ html[data-theme="ly"] .mark small {
 
 /* 原图左上那行「下次扩充时间 ⏱…」，站里对应日期 + 问候 */
 html[data-theme="ly"] .st-greet {
-  margin-top: 14px;
-  font-size: 12.5px;
+  margin-top: clamp(6px, 1.5vh, 14px);
+  font-size: clamp(11px, 1.45vh, 12.5px);
   color: var(--text-3);
   max-width: 15ch;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* ---------- 左侧：五颗黑色药丸（原图 menus） ---------- */
@@ -3386,14 +3394,17 @@ html[data-theme="ly"] .ly-menu {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 9px;
+  gap: clamp(5px, 1vh, 9px);
   min-width: 0;
+  min-height: 0;
 }
 html[data-theme="ly"] .ly-mi {
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 40px;
+  /* 药丸高度跟着视口收：左栏菜单跨了 3 行，矮屏下那 3 行加起来不够它高，
+     它会溢出压到左下角的提示文字上（1440x588 实测重叠）。 */
+  height: clamp(30px, 4.4vh, 40px);
   padding: 0 15px;
   border-radius: var(--r-pill);
   background: #141414;
@@ -3506,8 +3517,8 @@ html[data-theme="ly"] .bm-l { font-size: 12.5px; }
    纯装饰，不参与任何交互。 */
 html[data-theme="ly"] .ly-chips {
   display: grid;
-  gap: 10px;
-  margin-top: 46px;
+  gap: clamp(6px, 1.2vh, 10px);
+  margin-top: clamp(12px, 5vh, 46px);
   width: 74%;
   padding-right: 30px;
   flex: none;
@@ -3552,7 +3563,7 @@ html[data-theme="ly"] .ly-stat {
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 8px 13px;
+  padding: clamp(4px, 0.95vh, 8px) 13px;
   background: #fff;
   outline: 2.5px solid var(--ink);
   outline-offset: 0;
