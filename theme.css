@@ -3920,6 +3920,11 @@ html[data-theme="ly"] .dm-layer {
   to { transform: translate3d(var(--dm-to, -100%), 0, 0); }
 }
 
+/* 颜文字那几条放大一号：它们是一串半角符号拼的，14px 下会缩成一堆看不清的小点。
+   注意放在 .is-mine 之后 —— 两条规则特异性一样，靠顺序决定。
+   再补一条 .is-mine.is-kao：用户自己发颜文字时也不该被胶囊那 13px 压小。 */
+.dm-item.is-kao { font-size: 17px; letter-spacing: .03em; }
+
 /* 自己发的用黄绿胶囊，和预置的白字一眼分开 */
 .dm-item.is-mine {
   padding: 2px 9px;
@@ -3930,6 +3935,7 @@ html[data-theme="ly"] .dm-layer {
   text-shadow: none;
   box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
 }
+.dm-item.is-mine.is-kao { font-size: 17px; }
 
 /* ---------- 搜索框里的发弹幕按钮 ---------- */
 .dm-btn { display: none; }
