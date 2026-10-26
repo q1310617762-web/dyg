@@ -196,7 +196,8 @@
 
   /* ---------- 对外 ---------- */
   function start(stillMode) {
-    if (stillMode || reduceMotion()) { stop(); return; }
+    /* stillMode / reduceMotion 不再拦截启动（见 ui.js 那边的说明）：
+       静默不显示比「动一点」更糟。参数留着是为了兼容调用方。 */
     if (window.innerWidth < MIN_W) { stop(); return; }
     if (!ensure()) return;
     if (running) return;

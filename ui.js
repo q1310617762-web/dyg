@@ -119,11 +119,6 @@
     syncPetals(id);
     syncDanmaku(id);
     syncViz(id);
-
-    /* 切到乐园就开声。只在 save=true（用户主动点的按钮）时做 ——
-       页面加载时直接落在乐园不该突然出声。
-       皮肤按钮本身就是一次用户手势，在这个调用链里 play() 不会被拦。 */
-    if (id === 'ly' && save && playOnEnterLy) playOnEnterLy();
   }
 
   /* 音乐可视化只在「八重」下开，并且要正在播放才出现 ——
@@ -179,7 +174,10 @@
       return;
     }
     ensureDanmaku();
-    if (window.__dygDanmaku) window.__dygDanmaku.start(motionOff());
+    /* 传 false 而不是 motionOff()：减弱动效不再拦弹幕。
+       原来一开系统动画效果就整层不出现、还不给任何提示，用户只会觉得坏了。
+       弹幕是横向匀速滑过的文字，不属于「减弱动效」想避免的那类大幅缩放/视差。 */
+    if (window.__dygDanmaku) window.__dygDanmaku.start(false);
   }
 
   function ensureDanmaku() {
@@ -418,10 +416,6 @@
      所以切页面时这首曲子始终是同一个 <audio> 在放，不会断。
      ============================================================ */
   var audio = null;
-  /* initPlayer 里会把它填上。播放相关的函数（playIndex / paint）都是
-     initPlayer 的局部函数，applyTheme 够不着，所以留一个钩子。
-     切到乐园时要「顺手开声」，就是调它。 */
-  var playOnEnterLy = null;
   var cur = -1;
 
   /* 让 Service Worker 把当前这一首整首存进 Cache Storage。
@@ -522,22 +516,6 @@
       else audio.pause();
       paint();
     }
-
-    /* 切到乐园皮肤时自动开声。已经在放就什么都不做（别把进度条打回 0）。
-       被浏览器拦了也不弹提示 —— 播放键还在，用户自己点一下就行。 */
-    playOnEnterLy = function () {
-      if (!audio) return;
-      if (cur < 0) {
-        /* 曲单最后一首就叫「乐园漫记」（差分宇宙），切到乐园放它比放第一首贴题。
-           用户自己在列表里选过就不动他选的，只处理「还没开始放」的情况。 */
-        playIndex(TRACKS.length - 1);
-        return;
-      }
-      if (audio.paused) {
-        audio.play().catch(function () {});
-        paint();
-      }
-    };
 
     /* 事件委托：起始页那颗是路由后才有的事件源，挂不到具体节点上。
        而且 ui.js 只 boot 一次，这里挂 document 也只挂一次。 */
