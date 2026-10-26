@@ -118,17 +118,35 @@
     if (!layer) return;
     var mast = document.querySelector('.st-mast');
     var sp = document.querySelector('.search');
-    if (!mast) return;
-    var gap = sp ? (sp.getBoundingClientRect().top - mast.getBoundingClientRect().bottom) : 0;
-    var toMast = gap < MAST_MIN_GAP;
+    var start = document.querySelector('.start');
+    if (!mast || !start) return;
 
-    if (toMast) {
+    var mr = mast.getBoundingClientRect();
+    var sr = start.getBoundingClientRect();
+    var gap = sp ? (sp.getBoundingClientRect().top - mr.bottom) : 0;
+
+    if (gap < MAST_MIN_GAP) {
+      /* 画布和搜索框之间挤没了：贴到画布中部那条带，用 CSS 的 inset */
       if (layer.parentNode !== mast) mast.appendChild(layer);
       layer.classList.add('is-in-mast');
-    } else {
-      if (home && layer.parentNode !== home) home.appendChild(layer);
-      layer.classList.remove('is-in-mast');
+      layer.style.left = layer.style.top = layer.style.width = layer.style.height = '';
+      return;
     }
+
+    /* 正常情况：把层钉死在「画布底 → 搜索框顶」这块矩形里。
+       直接写像素，不依赖 grid 行高 —— 行高会被上方内容挤，视口一矮就成 0。 */
+    if (home && layer.parentNode !== home) home.appendChild(layer);
+    layer.classList.remove('is-in-mast');
+
+    /* 相对 .start 的坐标要叠上它自己的滚动量，否则滚动后位置会跟着跑 */
+    var sc = start.scrollTop || 0;
+    var left = mr.left - sr.left;
+    var top = mr.bottom - sr.top + sc;
+    var h = Math.max(0, gap);
+    layer.style.left = Math.round(left) + 'px';
+    layer.style.width = Math.round(mr.width) + 'px';
+    layer.style.top = Math.round(top) + 'px';
+    layer.style.height = Math.round(h) + 'px';
   }
 
   function pickLane(now) {
@@ -275,6 +293,11 @@
   });
 
   /* 切到后台就停表：CSS 动画由浏览器自己挂起，但我们的定时器不会 */
+  /* .start 自己会滚（矮屏兜底），滚完搜索框上沿变了，层的 top/height 得重算 */
+  window.addEventListener('scroll', function () {
+    if (running && layer && !layer.classList.contains('is-in-mast')) place();
+  }, { passive: true });
+
   document.addEventListener('visibilitychange', function () {
     if (document.hidden) {
       clearTimeout(timer);
