@@ -3879,8 +3879,18 @@ html[data-theme="ly"] .np.playing .np-btn {
    ============================================================ */
 .dm-layer { display: none; }
 
+/* 视口矮的时候（画布下方那格被挤到 <90px），弹幕层会被 JS 挪进画布中部：
+   贴在 26%~60% 这条带里，正好避开左下角的 Hello World 刊头。
+   不这么兜底的话，1440x600 以下那格是 0 高度，弹幕发了也全被裁掉。 */
+html[data-theme="ly"] .dm-layer.is-in-mast {
+  position: absolute;
+  grid-area: auto;
+  inset: 26% 0 40% 0;
+  z-index: 2;
+}
+
 /* 落在画布下方那块空白：网格第 5 行第 2 列（areas 里写的是 "."）。
-   不再用 absolute —— 它现在是正儿八经的一个格子，高度跟着 1fr 走。 */
+   正常高度用它；不再是 absolute —— 它是个正儿八经的格子，高度跟着 1fr 走。 */
 html[data-theme="ly"] .dm-layer {
   display: block;
   grid-area: 5 / 2 / 6 / 3;

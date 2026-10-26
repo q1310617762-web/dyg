@@ -56,6 +56,7 @@
   var MIN_W = 720;        // 窄到这个宽度就不放了，挤得没法看
 
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
+  var home = null;        // 层原本所在的父节点（画布下方那一格）
   var lastKick = {}, lastFail = '';
   var lastIdx = -1;
 
@@ -76,6 +77,7 @@
   /* ---------- 轨道 ---------- */
   function layout() {
     if (!layer) return;
+    place();
     var h = layer.clientHeight, w = layer.clientWidth;
     /* 这块区域整片都是空的，不用再像待在画布里那样只敢用上半 56% */
     var usable = Math.max(0, h - 16);
@@ -97,9 +99,34 @@
     if (layer && layer.isConnected) return layer;
     layer = document.querySelector('[data-dm-layer]');
     if (!layer) return null;
+    if (!home) home = layer.parentNode;
     lanes = [];
     layout();
     return layer;
+  }
+
+  /* 画布下方那一格的高度 = 画布底 到 搜索框顶 的距离。
+     视口矮的时候上面几块会把 1fr 挤成 0，弹幕层就没地方了 ——
+     这时候把它挪进画布中部（避开左下角的 Hello World 刊头），
+     大屏再挪回来。不这么做的话，1440x600 以下弹幕永远是 0 高度，
+     元素在发、但被 overflow 全裁掉，用户只会觉得「没有弹幕」。 */
+  var MAST_MIN_GAP = 90;
+
+  function place() {
+    if (!layer) return;
+    var mast = document.querySelector('.st-mast');
+    var sp = document.querySelector('.search');
+    if (!mast) return;
+    var gap = sp ? (sp.getBoundingClientRect().top - mast.getBoundingClientRect().bottom) : 0;
+    var toMast = gap < MAST_MIN_GAP;
+
+    if (toMast) {
+      if (layer.parentNode !== mast) mast.appendChild(layer);
+      layer.classList.add('is-in-mast');
+    } else {
+      if (home && layer.parentNode !== home) home.appendChild(layer);
+      layer.classList.remove('is-in-mast');
+    }
   }
 
   function pickLane(now) {
