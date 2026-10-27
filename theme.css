@@ -3903,17 +3903,18 @@ html[data-theme="ly"] .dm-layer {
   display: block;
   position: fixed;
   inset: 0;
-  clip-path: inset(18% 30% 10% 17%);
+  /* 上下边界由 JS 量「画布底 → 搜索框顶」后写进这两个变量（像素值），
+     默认的百分比只是兜底。用户要的是「只在画布下方那片空白飘」，
+     写死 18% 会盖到画布上。左右仍用百分比（对应 grid 的 17% / 30%）。 */
+  clip-path: inset(var(--dm-top, 18%) 30% var(--dm-bottom, 10%) 17%);
   pointer-events: none;
   overflow: hidden;
   z-index: 4;
 }
 
-/* 画布矮到放不下时也照样能飘 —— 这个实现不挑容器，所以不需要再分支 */
+/* 画布和搜索框之间挤到 <120px 时，退到画布中部这条带（同样由 JS 给变量） */
 html[data-theme="ly"] .dm-layer.is-in-mast {
-  position: fixed;
-  inset: 0;
-  clip-path: inset(24% 30% 42% 17%);
+  clip-path: inset(var(--dm-top, 26%) 30% var(--dm-bottom, 40%) 17%);
   z-index: 4;
 }
 
@@ -3921,20 +3922,29 @@ html[data-theme="ly"] .dm-layer.is-in-mast {
   position: absolute;
   left: 0;
   white-space: nowrap;
-  font-size: 14px;
+  /* 字号由 JS 每发一条随机抽一档写进 --dm-fs（12.5 / 14.5 / 17.5 / 20.5），
+     真弹幕本来就有大有小，统一 14px 看着像一堵砖墙。
+     写变量而不是 inline 的 font-size，是为了让下面 .is-kao / .is-mine
+     能按同一基准做倍率 —— 否则每条都要 JS 算三种字号。 */
+  font-size: var(--dm-fs, 14px);
   font-weight: 600;
   font-style: normal;
   letter-spacing: .02em;
   line-height: 1.25;
-  color: #fff;
-  /* 白字压在任意画面上都要能读：一圈 1px 硬描边 + 一层柔影 */
+  /* 颜色分两套，因为弹幕会飘在两种底色上：
+     ① 默认 —— 画布下方那片浅黄绿空地：**墨色字 + 浅色光晕**。
+        原来是白字配黑描边，可这套皮肤的地是 #e9f2c4，白字只有 1.1:1，
+        全靠那圈 1px 黑描边撑，字号一小描边就把笔画吃光，看着是一团灰。
+        乐园整套语言本来就是黑字 + 黑描边，墨色字反而更贴，也不违反「深色主题
+        才用白色强调」那条。
+     ② 退到画布中部（.is-in-mast，压在暗插画上）—— 见下面那条，换回白字深描边。 */
+  color: var(--ink, #141414);
   text-shadow:
-    0 0 2px rgba(8, 10, 6, .92),
-    1px 1px 0 rgba(8, 10, 6, .85),
-    -1px 1px 0 rgba(8, 10, 6, .85),
-    1px -1px 0 rgba(8, 10, 6, .85),
-    -1px -1px 0 rgba(8, 10, 6, .85),
-    0 2px 7px rgba(8, 10, 6, .55);
+    0 0 3px rgba(243, 248, 220, .95),
+    1px 1px 0 rgba(243, 248, 220, .82),
+    -1px 1px 0 rgba(243, 248, 220, .82),
+    1px -1px 0 rgba(243, 248, 220, .82),
+    -1px -1px 0 rgba(243, 248, 220, .82);
   animation-name: dm-run;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
@@ -3952,22 +3962,44 @@ html[data-theme="ly"] .dm-layer.is-in-mast {
   to { transform: translate3d(var(--dm-to, -100%), 0, 0); }
 }
 
-/* 颜文字那几条放大一号：它们是一串半角符号拼的，14px 下会缩成一堆看不清的小点。
-   注意放在 .is-mine 之后 —— 两条规则特异性一样，靠顺序决定。
-   再补一条 .is-mine.is-kao：用户自己发颜文字时也不该被胶囊那 13px 压小。 */
-.dm-item.is-kao { font-size: 17px; letter-spacing: .03em; }
+/* 退到画布中部时（暗插画上）才用白字。
+   `:not(.is-mine)` 不能省 —— 自己发的弹幕是黄绿胶囊 + 黑字，
+   被这条盖成白字就成了白压黄绿（对比度不到 2:1），字直接消失。 */
+html[data-theme="ly"] .dm-layer.is-in-mast .dm-item:not(.is-mine) {
+  color: #fff;
+  text-shadow:
+    0 0 2px rgba(8, 10, 6, .92),
+    1px 1px 0 rgba(8, 10, 6, .85),
+    -1px 1px 0 rgba(8, 10, 6, .85),
+    1px -1px 0 rgba(8, 10, 6, .85),
+    -1px -1px 0 rgba(8, 10, 6, .85),
+    0 2px 7px rgba(8, 10, 6, .55);
+}
+
+/* 颜文字 / emoji 那几条按 1.2 倍放大：它们是一串半角符号拼的，
+   跟中文同一个字号下会缩成一堆看不清的小点，emoji 更是会糊掉。
+   用倍率而不是写死 17px —— 字号是每条随机的，写死就会把大号弹幕压小。
+   注意放在 .is-mine 之前 —— 两条规则特异性一样，靠顺序决定（下面还有一条
+   .is-mine.is-kao 兜住「自己发颜文字」这种情况）。 */
+.dm-item.is-kao { font-size: calc(var(--dm-fs, 14px) * 1.2); letter-spacing: .03em; }
+
+/* emoji 单独放大：彩色字形自带一圈内边距，同一个字号下画出来只有中文的 ~0.8 倍，
+   17px 的弹幕里那个 🎉 小得像粒灰。跟 is-kao 是叠加的（1.2 × 1.25）。 */
+.dm-item .dm-e { font-size: 1.25em; letter-spacing: 0; }
 
 /* 自己发的用黄绿胶囊，和预置的白字一眼分开 */
 .dm-item.is-mine {
   padding: 2px 9px;
-  font-size: 13px;
+  /* 胶囊带底和描边，视觉上比裸字大一圈，字号收一点才跟白字弹幕齐平 */
+  font-size: calc(var(--dm-fs, 14px) * .92);
   color: var(--ink);
   background: var(--acc-fill);
   border-radius: 7px;
   text-shadow: none;
   box-shadow: inset 0 0 0 2px var(--ink), 2px 2px 0 var(--ink);
 }
-.dm-item.is-mine.is-kao { font-size: 17px; }
+/* 用户自己发颜文字 / emoji 时，既不该被胶囊的 .92 压小，也要保留 1.2 倍符号放大 */
+.dm-item.is-mine.is-kao { font-size: calc(var(--dm-fs, 14px) * 1.2); }
 
 /* ---------- 搜索框里的发弹幕按钮 ---------- */
 .dm-btn { display: none; }

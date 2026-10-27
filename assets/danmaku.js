@@ -32,7 +32,14 @@
     '妙啊', 'awsl', '爷青回', '泪目', '666', 'DNA 动了',
     /* ② 颜文字 —— 弹幕文化里本来就有一大类是这个 */
     '(๑•̀ㅂ•́)و✧', 'ヽ(°▽°)ノ', '(´▽`ʃ♡ƪ)', '╮(￣▽￣)╭', '✧*。٩(ˊωˋ*)و✧*。',
-    /* ③ 夸画面 */
+    '(≧∇≦)ﾉ', '(*´∀`)~♥', '(￣▽￣)ノ', '(*/ω＼*)', '(｡･ω･｡)ﾉ♡',
+    '∑(ﾟДﾟノ)ノ', 'o(╥﹏╥)o', '٩(๑❛ᴗ❛๑)۶', '(๑˃̵ᴗ˂̵)و',
+    /* ③ 带 emoji 的（光有颜文字不够，真彩表情也要有）。
+       挑的都是**深色或高饱和**的：🎨🖼 这类淡色字形压在浅黄绿底上几乎看不见，
+       彩色等于没有，所以换掉了。 */
+    '太好看了吧✨', '收藏啦🌸', '截图存下来了📸', '已加入书签🔖',
+    '天天来报到🎉', '来沾沾喜气🍀', 'awsl🥰', '笑不活了😂',
+    /* ④ 夸画面 */
     '神仙配色', '这构图绝了', '已收藏', '这手艺绝了',
     '什么神仙页面', '我愿意天天来', '这排版值一个赞', '细节拉满了',
     /* ④ 贴这个站 */
@@ -44,13 +51,65 @@
     '乐园漫记单曲循环', '壁纸库该更新了吧', '弹幕从这儿飘过去真好看'
   ];
 
+  /* 字号档位：真弹幕本来就有大有小，全用 14px 看着像一堵砖墙。
+     每发一条随机抽一档，写进 --dm-fs，CSS 的 font-size 读这个变量
+     （不能写 inline 的 font-size —— 那会和「换肤零位移」那条规矩打架，
+     而且没法让颜文字按同比例放大）。
+     权重偏向中间两档：最大和最小都是点缀，多了就乱、看着像故障。 */
+  var SIZES = [
+    { px: 12.5, w: 0.26 },
+    { px: 14.5, w: 0.38 },
+    { px: 17.5, w: 0.24 },
+    { px: 20.5, w: 0.12 }
+  ];
+  var SIZE_W = SIZES.reduce(function (a, s) { return a + s.w; }, 0);
+  function pickSize() {
+    var r = Math.random() * SIZE_W;
+    for (var i = 0; i < SIZES.length; i++) { r -= SIZES[i].w; if (r <= 0) return SIZES[i].px; }
+    return SIZES[1].px;
+  }
+
+  /* emoji 的字形自带一圈内边距，同一个 font-size 下画出来只有中文的 ~0.8 倍，
+     17px 的弹幕里那个 🎉 小得像一粒灰。所以把 emoji 单独包成 .dm-e 放大一号。
+     这里用 ES6 的 u 标志（\u{...} 需要它），站点其它地方没有更强的语法要求，没问题。 */
+  var EMO_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]+/gu;
+
+  /* 把文字填进元素：没有 emoji 就整段 textContent，有就按 emoji 切开。
+     全程用 createTextNode，不拼 innerHTML —— 这是用户输入，不能过 HTML 解析。 */
+  function fill(el, text) {
+    if (!EMO_RE.test(text)) { el.textContent = text; return 0; }
+    EMO_RE.lastIndex = 0;
+    var i = 0, n = 0, m;
+    while ((m = EMO_RE.exec(text))) {
+      if (m.index > i) el.appendChild(document.createTextNode(text.slice(i, m.index)));
+      var s = document.createElement('span');
+      s.className = 'dm-e';
+      s.textContent = m[0];
+      el.appendChild(s);
+      i = m.index + m[0].length;
+      n++;
+    }
+    if (i < text.length) el.appendChild(document.createTextNode(text.slice(i)));
+    return n;
+  }
+
+  /* 截断别把 emoji 劈成两半（surrogate pair 切一半会渲染成 �） */
+  function cut(s, max) {
+    var t = String(s || '').trim();
+    if (t.length <= max) return t;
+    t = t.slice(0, max);
+    var c = t.charCodeAt(t.length - 1);
+    if (c >= 0xD800 && c <= 0xDBFF) t = t.slice(0, -1);
+    return t;
+  }
+
   var SPEED = 116;        // px/s，比 B 站慢一点，读得完
-  var LANE_H = 34;        // 轨道高（含行距）
+  var LANE_H = 36;        // 轨道高（含行距）。最大档 20.5px × 1.2 = 24.6px，行高 1.25 → 31px，34 太挤
   var GAP = 28;           // 同轨两条之间至少留这么多
   /* 补水间隔：每轮看一眼「画面里还有几条」，少于 MIN_ON_SCREEN 就补一条。
      间隔别太长（空了没人补），也别太短（同时挤成一团）。 */
-  var PUMP_MIN = 900;
-  var PUMP_MAX = 1900;
+  var PUMP_MIN = 700;
+  var PUMP_MAX = 1500;
   var MAX_USER = 20;      // 本地最多留 20 条自己的留言
   var KEY = 'dyg-dm';
   /* 480 而不是 720。现在层是 fixed 全屏 + clip-path，不依赖任何布局，
@@ -61,6 +120,7 @@
 
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
   var lastKick = {}, lastFail = '';
+  var rangeTop = 0, rangeBottom = 0;   // 弹幕可见区的上下边界（像素，视口坐标）
   var lastIdx = -1;
 
   function readUser() {
@@ -87,18 +147,20 @@
 
   function layout() {
     if (!layer) return;
-    place();                       /* 先决定用哪条带（画布下 / 画布中） */
-    /* 轨道范围直接按视口算，不去量任何元素 —— 层现在是 fixed 全屏，
-       上下由 CSS 的 clip-path 裁掉，这里只要和它对齐就行。 */
-    var vh = window.innerHeight;
-    var top = vh * (layer.classList.contains('is-in-mast') ? 0.24 : 0.18);
-    var bottom = vh * (layer.classList.contains('is-in-mast') ? 0.58 : 0.90);
-    var usable = Math.max(0, bottom - top - 12);
+    place();
+    /* 轨道全部落在可见区里 —— rangeTop / rangeBottom 由 place() 算好，
+       就是 clip-path 裁出来的那条带，不再自己猜百分比。 */
+    var usable = Math.max(0, rangeBottom - rangeTop - 12);
     var n = Math.max(1, Math.min(8, Math.floor(usable / LANE_H)));
+    /* 轨道在整条带里**均分**，不是按 LANE_H 一条条贴着往上堆。
+       带子通常有五百多像素高（画布底 → 搜索框顶），按 36px 堆 8 条只占上半截，
+       下面一大片永远空着 —— 一屏里一半留白是设计红线里明写不许的。
+       上限 10 条，再多就成密集恐惧；矮屏仍然退回按 LANE_H 紧排。 */
+    var step = usable / n;
     var ns = [];
     for (var i = 0; i < n; i++) {
       var old = lanes[i];
-      ns.push({ y: Math.round(top + 8 + i * LANE_H), freeAt: old ? old.freeAt : 0 });
+      ns.push({ y: Math.round(rangeTop + 8 + i * step), freeAt: old ? old.freeAt : 0 });
     }
     lanes = ns;
   }
@@ -125,19 +187,38 @@
     if (!layer) return;
     var mast = document.querySelector('.st-mast');
     var sp = document.querySelector('.search');
-    if (!mast) return;
-    var gap = sp ? (sp.getBoundingClientRect().top - mast.getBoundingClientRect().bottom) : 0;
-    /* 画布和搜索框之间还有 120px 以上 → 用「画布底到搜索框顶」那条；
-       挤没了就退到画布中部。两种都只是切 clip-path，不写像素。 */
-    layer.classList.toggle('is-in-mast', gap < 120);
+    if (!mast || !sp) return;
+    var mr = mast.getBoundingClientRect();
+    var spTop = sp.getBoundingClientRect().top;
+    var gap = spTop - mr.bottom;
+
+    if (gap >= 120) {
+      /* 用户要的位置：只在画布下方那片空白里飘 */
+      layer.classList.remove('is-in-mast');
+      rangeTop = mr.bottom;
+      rangeBottom = spTop;
+    } else {
+      /* 画布和搜索框挤到没地方了，退到画布中部（避开左下角的刊头） */
+      layer.classList.add('is-in-mast');
+      rangeTop = mr.top + mr.height * 0.26;
+      rangeBottom = mr.top + mr.height * 0.62;
+    }
+    /* 上下用像素精确传给 clip-path，左右仍由 CSS 的百分比管 */
+    layer.style.setProperty('--dm-top', Math.round(rangeTop) + 'px');
+    layer.style.setProperty('--dm-bottom', Math.round(window.innerHeight - rangeBottom) + 'px');
   }
 
+  /* 在所有空轨里**随机**挑一条。
+     原来是「挑 freeAt 最早的那条」，等于从上往下一条条填 —— 带子有五百多像素高，
+     结果是弹幕永远挤在最上面三行，下面三分之二一片空白。随机挑就自然散开，
+     整条带子都会用到；仍然只挑空的，所以不会叠字。 */
   function pickLane(now) {
-    var best = 0;
-    for (var i = 1; i < lanes.length; i++) {
-      if (lanes[i].freeAt < lanes[best].freeAt) best = i;
+    var free = [];
+    for (var i = 0; i < lanes.length; i++) {
+      if (lanes[i].freeAt <= now) free.push(i);
     }
-    return lanes[best] && lanes[best].freeAt <= now ? best : -1;
+    if (!free.length) return -1;
+    return free[Math.floor(Math.random() * free.length)];
   }
 
   /* ---------- 发射 ---------- */
@@ -152,7 +233,7 @@
     if (!layer) { lastFail = 'no-layer'; return null; }
     if (!lanes.length) { lastFail = 'no-lanes'; return null; }
     if (!visible()) { lastFail = 'invisible:cw=' + layer.clientWidth; return null; }
-    text = String(text || '').trim().slice(0, 32);
+    text = cut(text, 32);
     if (!text) return null;
 
     var now = performance.now();
@@ -166,11 +247,14 @@
     var lane = lanes[idx];
 
     var el = document.createElement('i');
-    /* 颜文字（含非中文/非 ASCII 符号的那些）单独给个类，字号要放大：
-       14px 下一串半角符号挤成一团，看着是一堆小点，反而不如中文弹幕清楚。 */
+    /* 颜文字 / emoji（含非中文、非 ASCII 符号的那些）单独给个类，字号按倍率放大：
+       小字号下一串半角符号挤成一团，看着是一堆小点，反而不如中文弹幕清楚。 */
     var kao = /[^\u4e00-\u9fa5A-Za-z0-9 ，。！？、：；（）]/.test(text);
     el.className = 'dm-item' + (mine ? ' is-mine' : '') + (kao ? ' is-kao' : '');
-    el.textContent = text;
+    /* 字号必须在入 DOM 之前写 —— 下面 offsetWidth 要按最终字号量，
+       量小了轨道间隔算错，两条会叠在一起 */
+    el.style.setProperty('--dm-fs', pickSize() + 'px');
+    fill(el, text);
     el.style.top = lane.y + 'px';
     el.style.visibility = 'hidden';
     layer.appendChild(el);
@@ -224,7 +308,9 @@
     return { t: POOL[i], mine: false };
   }
 
-  var MIN_ON_SCREEN = 3;      // 低于这个数就补水
+  /* 5 而不是 3：画布下方那条带有五百多像素高、能放 10 条轨道，
+     只维持 3 条不但空，字号大小的差别也看不出来（要有得比才看得出「有大有小」）。 */
+  var MIN_ON_SCREEN = 5;      // 低于这个数就补水
 
   function countOn() {
     return layer ? layer.querySelectorAll('.dm-item').length : 0;
@@ -274,7 +360,7 @@
   }
 
   function send(text) {
-    var t = String(text || '').trim().slice(0, 32);
+    var t = cut(text, 32);
     if (!t) return false;
     var list = readUser();
     if (list.indexOf(t) < 0) { list.push(t); writeUser(list); }
@@ -328,6 +414,8 @@
             /* x 是屏幕坐标（给人看的），rx 是相对容器左边缘的（给断言用的） */
             return { t: e.textContent, x: Math.round(r.left), rx: Math.round(r.left - lr.left),
                      y: Math.round(r.top), w: Math.round(r.width),
+                     fs: Math.round(parseFloat(getComputedStyle(e).fontSize) * 10) / 10,
+                     kao: e.classList.contains('is-kao'),
                      mine: e.classList.contains('is-mine') };
           });
         })() : []
