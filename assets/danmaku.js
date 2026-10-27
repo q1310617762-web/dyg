@@ -188,6 +188,11 @@
   var PUMP_MAX = 580;
   var MAX_USER = 20;      // 本地最多留 20 条自己的留言
   var KEY = 'dyg-dm';
+  /* 报到 /「你好」类：池子里已经一条不剩，**用户自己发的也一并拦掉**
+     （2026-10-27 用户要求）。本地存过的老留言同样在这里过滤，
+     否则它还会被 nextText() 随机抽出来重播。 */
+  var BLOCK_RE = /你好|你们好|您[好早]|(?:早上|中午|下午|晚上)好|哈喽|嗨|大家好|各位好|hello|\bhi\b|来了来了|打卡|签到|报到|路过|蹲一个|浮上来|冒个泡|到此一游|今日份快乐|天天来/i;
+  function blocked(t) { return BLOCK_RE.test(String(t || '')); }
   /* 480 而不是 720。现在层是 fixed 全屏 + clip-path，不依赖任何布局，
      窄屏也能正常飘；而 720 这个值在「1080 物理像素 + 200% 系统缩放」下会
      把 CSS 宽 540 误判成窄屏 → 弹幕直接不启动，用户永远看不到。
@@ -203,7 +208,11 @@
   function readUser() {
     try {
       var a = JSON.parse(localStorage.getItem(KEY) || '[]');
-      return Object.prototype.toString.call(a) === '[object Array]' ? a : [];
+      if (Object.prototype.toString.call(a) !== '[object Array]') return [];
+      var out = a.filter(function (t) { return typeof t === 'string' && t && !blocked(t); });
+      /* 历史留言里混着「你好」的话顺手从本地清掉 */
+      if (out.length !== a.length) writeUser(out);
+      return out;
     } catch (e) { return []; }
   }
   function writeUser(list) {
@@ -514,6 +523,7 @@
   function send(text) {
     var t = cut(text, 32);
     if (!t) return false;
+    if (blocked(t)) return false;      // 报到/「你好」类，自己发的也不发
     var list = readUser();
     if (list.indexOf(t) < 0) { list.push(t); writeUser(list); }
     /* 发送的弹幕即使画布没开弹幕也要能看见 —— 先把这一层拉起来 */
@@ -547,6 +557,7 @@
     start: start,
     stop: stop,
     send: send,
+    blocked: blocked,
     /* 给测试用 */
     state: function () {
       return {

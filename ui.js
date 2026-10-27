@@ -199,6 +199,8 @@
       var p = pop(), b = btn();
       if (p && !p.hasAttribute('hidden')) p.setAttribute('hidden', '');
       if (b) b.setAttribute('aria-expanded', 'false');
+      var h = p && p.querySelector('[data-dm-hint]');
+      if (h) { clearTimeout(hintT); h.setAttribute('hidden', ''); }
     }
     function open() {
       var p = pop(), b = btn();
@@ -208,6 +210,17 @@
       var i = p.querySelector('[data-dm-in]');
       if (i) { try { i.focus({ preventScroll: true }); } catch (e) { i.focus(); } }
     }
+    var hintT = 0;
+    function hint(msg) {
+      var p = pop();
+      var h = p && p.querySelector('[data-dm-hint]');
+      if (!h) return;
+      h.textContent = msg;
+      h.removeAttribute('hidden');
+      clearTimeout(hintT);
+      hintT = setTimeout(function () { h.setAttribute('hidden', ''); }, 2600);
+    }
+
     function fire() {
       var p = pop();
       if (!p) return;
@@ -218,7 +231,16 @@
       /* 成功才清空并收起：脚本可能还在按需加载（甚至加载失败），
          没发出去就把用户输入清掉是最讨人厌的 */
       var go = function () {
-        if (window.__dygDanmaku && window.__dygDanmaku.send(t)) {
+        var D = window.__dygDanmaku;
+        if (!D) return false;
+        /* 报到/「你好」类直接拦掉，但**不清空输入** ——
+           用户还能接着改，比默默吞掉强 */
+        if (D.blocked && D.blocked(t)) {
+          hint('报到类的就不发啦，换一句吧');
+          if (i) i.focus();
+          return true;
+        }
+        if (D.send(t)) {
           if (i) i.value = '';
           close();
           return true;

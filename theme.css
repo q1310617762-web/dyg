@@ -4078,6 +4078,28 @@ html[data-theme="ly"] .dm-send {
 }
 html[data-theme="ly"] .dm-send:active { transform: translate(1px, 1px); }
 
+/* 被拦下时的提示。绝对定位挂在浮层**上方**，不进 flex 流 ——
+   出现/消失都不会把输入框和按钮挤动。 */
+.dm-hint { display: none; }
+html[data-theme="ly"] .dm-hint {
+  position: absolute;
+  left: 0;
+  bottom: calc(100% + 7px);
+  z-index: 7;
+  display: block;
+  max-width: 100%;
+  padding: 5px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ink);
+  background: #fff;
+  border-radius: 7px;
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard-sm);
+}
+html[data-theme="ly"] .dm-hint[hidden] { display: none; }
+
 /* 窄屏阈值从 720 降到 480（和 danmaku.js 的 MIN_W 保持一致）。
    原来 720 会把「1080 物理宽 + 200% 缩放 = CSS 540」误判成窄屏，弹幕直接消失。 */
 @media (max-width: 480px) {
