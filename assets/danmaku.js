@@ -76,8 +76,43 @@
     '夺笋呐', '我真的会谢', '针不戳', '大受震撼', '格局打开',
     '这波在大气层', '一整个爱住', 'yyds', '躺平了', '细思极恐',
     '猝不及防', '高，实在是高', '懂的都懂', '不愧是你', '太真实了',
-    '有被冒犯到', '给大佬递茶', '这合理吗', '硬控我了', '整不会了'
+    '有被冒犯到', '给大佬递茶', '这合理吗', '硬控我了', '整不会了',
+    /* ⑦ 刷屏弹幕：B 站那种整段复制粘贴刷过去的，✋😡🤚 是「给我变」那个手势梗 */
+    '寿来！✋😡🤚', '牛来！✋😡🤚', '变猫娘！🖐️️😡🤚'
   ];
+
+  /* ---- 图形弹幕：用手势 emoji 拼出来的 ♥ 和 ★ ----
+     模板是 7 列 × 5 行的点阵，'#' 的位置填一个手势 emoji，其余填全角空格
+     （全角空格宽度 ≈ 1em，跟单个 emoji 的步进差不多，对齐最稳）。
+     ♥ 用 ✋😡🤚（寿来 / 牛来那组），★ 用 🖐️️😡🤚（变猫娘那组）。
+     想改成别的图形，只动这两个 mask / set，不用碰别的地方。 */
+  var ART = [
+    { name: 'heart',
+      mask: ['.##.##.', '#######', '.#####.', '..###..', '...#...'],
+      set: ['✋', '😡', '🤚'] },
+    { name: 'star',
+      mask: ['...#...', '..###..', '#######', '.##.##.', '##...##'],
+      set: ['🖐️️', '😡', '🤚'] }
+  ];
+  /* 为什么不用空格占位：实测 7 个手势 emoji 宽 125px（每个 17.86px），
+     而 7 个全角空格只有 91px（每个 13px）—— 用空格补空位的话，
+     emoji 少的那几行就会短一截，心形右边会往左塌。
+     所以每个格子做成**等宽的行内块**（CSS 里 .dm-cell 写死 1.374em），
+     空位就是空的行内块，不管 emoji 实际多宽，栅格永远是直的。 */
+  function buildArt(el, a) {
+    var k = 0;
+    for (var r = 0; r < a.mask.length; r++) {
+      var row = a.mask[r];
+      for (var c = 0; c < row.length; c++) {
+        var s = document.createElement('span');
+        s.className = 'dm-cell';
+        if (row.charAt(c) === '#') s.textContent = a.set[k++ % a.set.length];
+        el.appendChild(s);
+      }
+      if (r < a.mask.length - 1) el.appendChild(document.createElement('br'));
+    }
+  }
+
 
   /* 字号档位：真弹幕本来就有大有小，全用 14px 看着像一堵砖墙。
      每发一条随机抽一档，写进 --dm-fs，CSS 的 font-size 读这个变量
@@ -158,6 +193,7 @@
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
   var lastKick = {}, lastFail = '';
   var rangeTop = 0, rangeBottom = 0;   // 弹幕可见区的上下边界（像素，视口坐标）
+  var laneStep = 0;                    // 相邻两条轨道的间距（layout() 里算出来）
   var lastIdx = -1;
 
   function readUser() {
@@ -194,6 +230,7 @@
        下面一大片永远空着 —— 一屏里一半留白是设计红线里明写不许的。
        上限 10 条，再多就成密集恐惧；矮屏仍然退回按 LANE_H 紧排。 */
     var step = usable / n;
+    laneStep = step;      // 图形弹幕要靠它算「盖住了几条轨道」
     var ns = [];
     for (var i = 0; i < n; i++) {
       var old = lanes[i];
@@ -265,7 +302,7 @@
   }
 
   var lastFail = '';
-  function spawn(text, mine) {
+  function spawn(text, mine, art) {
     if (!layer) { lastFail = 'no-layer'; return null; }
     if (!lanes.length) { lastFail = 'no-lanes'; return null; }
     if (!visible()) { lastFail = 'invisible:cw=' + layer.clientWidth; return null; }
@@ -275,7 +312,8 @@
       lastFail = 'band=' + Math.round(rangeBottom - rangeTop);
       return null;
     }
-    text = cut(text, 32);
+    /* 图形弹幕传进来的是 ART 里那条配置对象，不是字符串，别被 cut 处理 */
+    text = art ? text : cut(text, 32);
     if (!text) return null;
 
     var now = performance.now();
@@ -290,19 +328,23 @@
 
     var el = document.createElement('i');
     /* 颜文字 / emoji（含非中文、非 ASCII 符号的那些）单独给个类，字号按倍率放大：
-       小字号下一串半角符号挤成一团，看着是一堆小点，反而不如中文弹幕清楚。 */
-    var kao = /[^\u4e00-\u9fa5A-Za-z0-9 ，。！？、：；（）]/.test(text);
-    el.className = 'dm-item' + (mine ? ' is-mine' : '') + (kao ? ' is-kao' : '');
+       小字号下一串半角符号挤成一团，看着是一堆小点，反而不如中文弹幕清楚。
+       图形弹幕不要这个倍率 —— 它是按点阵排的，整体放大 1.2 会连行高一起撑。 */
+    var kao = !art && /[^\u4e00-\u9fa5A-Za-z0-9 ，。！？、：；（）]/.test(text);
+    el.className = 'dm-item' + (mine ? ' is-mine' : '') + (kao ? ' is-kao' : '') + (art ? ' is-art' : '');
     /* 字号必须在入 DOM 之前写 —— 下面 offsetWidth 要按最终字号量，
        量小了轨道间隔算错，两条会叠在一起 */
     el.style.setProperty('--dm-fs', pickSize() + 'px');
-    fill(el, text);
+    /* 图形走 buildArt()：按栅格每行每列建等宽的格子，
+       不能走 fill()（会把 emoji 包成 .dm-e 再放大 1.25 倍，格子就宽窄不一了） */
+    if (art) buildArt(el, text); else fill(el, text);
     el.style.top = lane.y + 'px';
     el.style.visibility = 'hidden';
     layer.appendChild(el);
 
     var W = layer.clientWidth;
     var w = el.offsetWidth;                       // 必须先入 DOM 才量得到
+    var hgt = art ? el.offsetHeight : 0;
 
     /* 起点和终点要用**可见区**的边界，不是层的边界。
        层是 fixed 全屏（比如 2216 宽），但 clip-path 把右侧 30% 裁掉了 ——
@@ -326,6 +368,21 @@
     el.style.visibility = '';
 
     lane.freeAt = now + ((w + GAP) / v) * 1000;
+
+    /* 图形弹幕是一整块多行文字，高度顶得上两条轨道 ——
+       光占自己那条轨不够，得把它盖到的所有轨道都锁到它走完为止，
+       否则相邻轨道的弹幕会从它身上穿过去。
+       垂直位置：以所在轨道为中心对齐，再夹进带子里（别顶出壁纸或搜索框）。 */
+    if (art) {
+      var top = lane.y - (hgt - laneStep) / 2;
+      top = Math.max(rangeTop + 2, Math.min(rangeBottom - hgt - 2, top));
+      el.style.top = Math.round(top) + 'px';
+      for (var j = 0; j < lanes.length; j++) {
+        if (lanes[j].y + laneStep > top - 6 && lanes[j].y < top + hgt + 6) {
+          lanes[j].freeAt = now + dur * 1000;
+        }
+      }
+    }
 
     /* 生命周期用定时器管，不监听 animationend。
        动画事件在某些情况下会比预期早得多地触发（查了两轮没坐实原因），
@@ -358,7 +415,22 @@
   var recent = [];
   var RECENT_MAX = 120;
 
+  /* 图形弹幕出现得多稀：太密就成了壁纸，而且它会一次锁住两条轨道。
+     约 4% —— 每秒 2.5 条的话大概每 10 秒来一个。
+     同一时刻最多一块（hasArt()），免得两块叠在一起谁也看不清。 */
+  var ART_CHANCE = 0.04;
+  function hasArt() {
+    return !!(layer && layer.querySelector('.dm-item.is-art'));
+  }
+
   function nextText() {
+    /* 图形弹幕：稀，且同一时刻只有一块 */
+    if (!hasArt() && Math.random() < ART_CHANCE) {
+      /* 传的是 ART 里那条配置（mask + set），不是拼好的字符串 ——
+         拼格子要等进 DOM 之后才好量，交给 spawn 里的 buildArt()。 */
+      var a = ART[Math.floor(Math.random() * ART.length)];
+      return { t: a, mine: false, art: true };
+    }
     /* 自己留过的言有三分之一机会被翻出来重放，剩下的随机取预置 */
     var mine = readUser();
     if (mine.length && Math.random() < 0.33) {
@@ -394,10 +466,10 @@
     if (!visible()) { timer = setTimeout(pump, 150); return; }   // 等层量出尺寸
     if (!lanes.length) layout();
     lastKick = { vis: true, cw: layer.clientWidth, on: countOn() };
-    if (countOn() < MIN_ON_SCREEN) { var n = nextText(); spawn(n.t, n.mine); }
+    if (countOn() < MIN_ON_SCREEN) { var n = nextText(); spawn(n.t, n.mine, n.art); }
     /* 差得多就一次补两条：开局、切回前台、或者一次 resize 之后，
        按每轮一条铺到 9 条要好几秒，那几秒里画面还是空的。 */
-    if (countOn() < MIN_ON_SCREEN - 3) { var m = nextText(); spawn(m.t, m.mine); }
+    if (countOn() < MIN_ON_SCREEN - 3) { var m = nextText(); spawn(m.t, m.mine, m.art); }
     timer = setTimeout(pump, PUMP_MIN + Math.random() * (PUMP_MAX - PUMP_MIN));
   }
 
@@ -489,9 +561,10 @@
             var r = e.getBoundingClientRect();
             /* x 是屏幕坐标（给人看的），rx 是相对容器左边缘的（给断言用的） */
             return { t: e.textContent, x: Math.round(r.left), rx: Math.round(r.left - lr.left),
-                     y: Math.round(r.top), w: Math.round(r.width),
+                     y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height),
                      fs: Math.round(parseFloat(getComputedStyle(e).fontSize) * 10) / 10,
                      kao: e.classList.contains('is-kao'),
+                     art: e.classList.contains('is-art'),
                      mine: e.classList.contains('is-mine') };
           });
         })() : []

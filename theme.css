@@ -3965,6 +3965,27 @@ html[data-theme="ly"] .dm-layer {
    17px 的弹幕里那个 🎉 小得像粒灰。跟 is-kao 是叠加的（1.2 × 1.25）。 */
 .dm-item .dm-e { font-size: 1.25em; letter-spacing: 0; }
 
+/* 图形弹幕：emoji 拼出来的 ♥ / ★，一整块多行文字。
+   换行靠 JS 插的 <br>（nowrap 管不住跨行，只保证一行内不断）。
+   行高收紧到 1.05 —— 默认 1.25 会在行间留太多缝，心形会散成五个横条。
+   字号写死而不是乘 --dm-fs：图形是按格子数排的，跟着随机字号忽大忽小会很怪。 */
+.dm-item.is-art {
+  font-size: 13px;
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+/* 每个格子一个等宽行内块 —— 这是对齐的关键。
+   不能用空格补空位：实测 7 个手势 emoji 宽 125px（每个 17.86px），
+   7 个全角空格只有 91px（每个 13px），emoji 少的行会短一截、右边往左塌。
+   1.374em = 17.86 / 13，实测出来的 emoji 步进，写死它栅格才是直的。 */
+.dm-item.is-art .dm-cell {
+  display: inline-block;
+  width: 1.374em;
+  text-align: center;
+}
+/* 兜底：万一走了 fill() 把 emoji 包成 .dm-e，也别再放大，格子会宽窄不一 */
+.dm-item.is-art .dm-e { font-size: 1em; }
+
 /* 自己发的用黄绿胶囊，和预置的白字一眼分开 */
 .dm-item.is-mine {
   padding: 2px 9px;
