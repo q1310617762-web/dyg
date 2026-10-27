@@ -174,15 +174,16 @@
     return layer;
   }
 
-  /* 画布下方那一格的高度 = 画布底 到 搜索框顶 的距离。
-     视口矮的时候上面几块会把 1fr 挤成 0，弹幕层就没地方了 ——
-     这时候把它挪进画布中部（避开左下角的 Hello World 刊头），
-     大屏再挪回来。不这么做的话，1440x600 以下弹幕永远是 0 高度，
-     元素在发、但被 overflow 全裁掉，用户只会觉得「没有弹幕」。 */
-  /* 120 而不是 90：90 时只放得下 2 条轨道，三条弹幕会挤在一起。
-     120 能放 3 条，低于这个就干脆挪进画布（那里能放 4 条）。 */
-  var MAST_MIN_GAP = 120;
+  /* 弹幕带 = 搜索框上沿往上 BAND_H 的一条，只占画布下方那片空白的下半截。
+     为什么不铺满整段：2k 屏上「壁纸底 → 搜索框顶」有 530px 高，
+     而同时只有五六条在飘 —— 一条孤零零横在正中，像屏幕上的一粒灰，不像弹幕。
+     收成 220px（约 5 条轨道）后弹幕都聚在搜索框上方，上面的留白交回给版面。 */
+  var BAND_H = 220;
 
+  /* 上边界是硬墙：**绝不越过壁纸底**。
+     以前窗口矮的时候会退进画布中部（.is-in-mast），用户明确否掉了这条 ——
+     弹幕只能出现在壁纸下方、搜索框上方这块地里。所以现在哪怕只剩三四十像素，
+     也只在这条窄缝里排 1~2 条轨道，不再翻上去画在画面上。 */
   function place() {
     if (!layer) return;
     var mast = document.querySelector('.st-mast');
@@ -190,19 +191,9 @@
     if (!mast || !sp) return;
     var mr = mast.getBoundingClientRect();
     var spTop = sp.getBoundingClientRect().top;
-    var gap = spTop - mr.bottom;
 
-    if (gap >= 120) {
-      /* 用户要的位置：只在画布下方那片空白里飘 */
-      layer.classList.remove('is-in-mast');
-      rangeTop = mr.bottom;
-      rangeBottom = spTop;
-    } else {
-      /* 画布和搜索框挤到没地方了，退到画布中部（避开左下角的刊头） */
-      layer.classList.add('is-in-mast');
-      rangeTop = mr.top + mr.height * 0.26;
-      rangeBottom = mr.top + mr.height * 0.62;
-    }
+    rangeBottom = spTop;
+    rangeTop = Math.max(mr.bottom, spTop - BAND_H);
     /* 上下用像素精确传给 clip-path，左右仍由 CSS 的百分比管 */
     layer.style.setProperty('--dm-top', Math.round(rangeTop) + 'px');
     layer.style.setProperty('--dm-bottom', Math.round(window.innerHeight - rangeBottom) + 'px');
@@ -233,6 +224,12 @@
     if (!layer) { lastFail = 'no-layer'; return null; }
     if (!lanes.length) { lastFail = 'no-lanes'; return null; }
     if (!visible()) { lastFail = 'invisible:cw=' + layer.clientWidth; return null; }
+    /* 壁纸底和搜索框顶挤到没有一条字的高度：宁可不发，也不许翻上去压壁纸。
+       这里返回 null 就交给 pump 下一轮再看，不会空转。 */
+    if (rangeBottom - rangeTop < 18) {
+      lastFail = 'band=' + Math.round(rangeBottom - rangeTop);
+      return null;
+    }
     text = cut(text, 32);
     if (!text) return null;
 
@@ -379,7 +376,7 @@
   /* 切到后台就停表：CSS 动画由浏览器自己挂起，但我们的定时器不会 */
   /* .start 自己会滚（矮屏兜底），滚完搜索框上沿变了，层的 top/height 得重算 */
   window.addEventListener('scroll', function () {
-    if (running && layer && !layer.classList.contains('is-in-mast')) place();
+    if (running && layer) place();
   }, { passive: true });
 
   document.addEventListener('visibilitychange', function () {

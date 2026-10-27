@@ -3912,12 +3912,6 @@ html[data-theme="ly"] .dm-layer {
   z-index: 4;
 }
 
-/* 画布和搜索框之间挤到 <120px 时，退到画布中部这条带（同样由 JS 给变量） */
-html[data-theme="ly"] .dm-layer.is-in-mast {
-  clip-path: inset(var(--dm-top, 26%) 30% var(--dm-bottom, 40%) 17%);
-  z-index: 4;
-}
-
 .dm-item {
   position: absolute;
   left: 0;
@@ -3931,13 +3925,11 @@ html[data-theme="ly"] .dm-layer.is-in-mast {
   font-style: normal;
   letter-spacing: .02em;
   line-height: 1.25;
-  /* 颜色分两套，因为弹幕会飘在两种底色上：
-     ① 默认 —— 画布下方那片浅黄绿空地：**墨色字 + 浅色光晕**。
-        原来是白字配黑描边，可这套皮肤的地是 #e9f2c4，白字只有 1.1:1，
-        全靠那圈 1px 黑描边撑，字号一小描边就把笔画吃光，看着是一团灰。
-        乐园整套语言本来就是黑字 + 黑描边，墨色字反而更贴，也不违反「深色主题
-        才用白色强调」那条。
-     ② 退到画布中部（.is-in-mast，压在暗插画上）—— 见下面那条，换回白字深描边。 */
+  /* 墨色字 + 浅色光晕，不是白色。
+     弹幕只在搜索框上方那片浅黄绿上飘（壁纸区域是禁区），白字在这里只有 1.1:1，
+     全靠一圈黑描边撑，字号一小描边就把笔画吃光，看着是一团灰。
+     乐园整套语言本来就是黑字 + 黑描边，墨色反而更贴，也不违反
+     「深色主题才用白色强调」那条。 */
   color: var(--ink, #141414);
   text-shadow:
     0 0 3px rgba(243, 248, 220, .95),
@@ -3960,20 +3952,6 @@ html[data-theme="ly"] .dm-layer.is-in-mast {
 @keyframes dm-run {
   from { transform: translate3d(var(--dm-from, 100%), 0, 0); }
   to { transform: translate3d(var(--dm-to, -100%), 0, 0); }
-}
-
-/* 退到画布中部时（暗插画上）才用白字。
-   `:not(.is-mine)` 不能省 —— 自己发的弹幕是黄绿胶囊 + 黑字，
-   被这条盖成白字就成了白压黄绿（对比度不到 2:1），字直接消失。 */
-html[data-theme="ly"] .dm-layer.is-in-mast .dm-item:not(.is-mine) {
-  color: #fff;
-  text-shadow:
-    0 0 2px rgba(8, 10, 6, .92),
-    1px 1px 0 rgba(8, 10, 6, .85),
-    -1px 1px 0 rgba(8, 10, 6, .85),
-    1px -1px 0 rgba(8, 10, 6, .85),
-    -1px -1px 0 rgba(8, 10, 6, .85),
-    0 2px 7px rgba(8, 10, 6, .55);
 }
 
 /* 颜文字 / emoji 那几条按 1.2 倍放大：它们是一串半角符号拼的，
