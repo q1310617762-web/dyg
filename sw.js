@@ -40,7 +40,7 @@
  *   - POST 等非 GET。
  */
 
-const V = '20261027104420';
+const V = '20261027105021';
 const CODE = 'dyg-code-' + V;   /* HTML / CSS / JS：随代码版本走 */
 /* v2 → v3：图片重新压过一遍（见下方 WARM 注释里那条吞吐数据）。
    v3 → v4：音乐重编码成 Opus 立体声 40k，并换了一首（删《晚祷的钟声》、
@@ -209,7 +209,13 @@ self.addEventListener('fetch', e => {
   if (wantsHtml) {
     e.respondWith((async () => {
       try {
-        const net = await fetch(req);
+        /* ★ cache:'no-cache' 是关键，别去掉。
+           GitHub Pages 给 HTML 固定 max-age=600，默认 fetch 会直接吃浏览器 HTTP
+           缓存 —— 十分钟内 F5 拿到的还是旧 HTML，里面带着旧的 ?v=，于是加载的
+           还是旧 CSS / 旧 JS。表现就是「改了代码，用户刷新还是老样子」，
+           非得 Ctrl+Shift+R 才看得到。no-cache 是「每次向服务器校验」，
+           没变时回 304，代价很小。 */
+        const net = await fetch(req, { cache: 'no-cache' });
         put(await caches.open(CODE), req, net.clone());
         return net;
       } catch (err) {
