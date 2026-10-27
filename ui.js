@@ -1101,6 +1101,12 @@
     var st = window.__dygDanmaku ? window.__dygDanmaku.state() : null;
     var l = document.querySelector('[data-dm-layer]');
     var b = l ? l.getBoundingClientRect() : null;
+    /* 可见区按 CSS 里的 clip-path 算：左右各裁 17% / 30% */
+    var vL = innerWidth * 0.17, vR = innerWidth * 0.70;
+    var items = st ? st.items : [];
+    var vis = items.filter(function (x) { return x.rx + x.w > vL && x.rx < vR; });
+    var first = items.length ? items[0] : null;
+
     box.textContent =
       '弹幕诊断\n' +
       'CSS 视口   ' + innerWidth + ' × ' + innerHeight + '\n' +
@@ -1109,7 +1115,13 @@
       '脚本       ' + (st ? '已加载' : '未加载') + '\n' +
       'running    ' + (st ? st.running : '-') + '\n' +
       '在飘       ' + (st ? st.on + ' 条 · 轨道 ' + st.lanes : '-') + '\n' +
-      '层尺寸     ' + (b ? Math.round(b.width) + ' × ' + Math.round(b.height) : '无') + '\n' +
+      '层 rect    ' + (b ? Math.round(b.x) + ',' + Math.round(b.y) + ' ' +
+                       Math.round(b.width) + '×' + Math.round(b.height) : '无') + '\n' +
+      '可见区     x ' + Math.round(vL) + ' ~ ' + Math.round(vR) + '\n' +
+      '可见条数   ' + vis.length + ' / ' + items.length + '\n' +
+      (first ? '首条       "' + String(first.t).slice(0, 8) + '" x=' + Math.round(first.rx) +
+               ' y=' + Math.round(first.y) + ' 宽' + Math.round(first.w) + '\n' : '') +
+      (vis.length ? '首条可见   ' + (vis[0] ? '是' : '否') + '\n' : '') +
       '窄屏拦截   ' + (innerWidth < 480 ? '是（<' + 480 + '）' : '否') + '\n' +
       (err ? '报错       ' + err : '');
   }
