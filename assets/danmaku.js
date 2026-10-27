@@ -183,10 +183,10 @@
     return layer;
   }
 
-  /* 弹幕带 = 搜索框上沿往上 BAND_H 的一条，只占画布下方那片空白的下半截。
+  /* 弹幕带 = 空白区正中间、高 BAND_H 的一条。
      为什么不铺满整段：2k 屏上「壁纸底 → 搜索框顶」有 530px 高，
-     而同时只有五六条在飘 —— 一条孤零零横在正中，像屏幕上的一粒灰，不像弹幕。
-     收成 220px（约 5 条轨道）后弹幕都聚在搜索框上方，上面的留白交回给版面。 */
+     而同时只飘十来条 —— 铺满反而显得散。也不再贴着搜索框（那是上一版），
+     用户要的是「空白区域的中间」：上下各留一半，看上是留白不是空地。 */
   var BAND_H = 220;
 
   /* 上边界是硬墙：**绝不越过壁纸底**。
@@ -201,8 +201,16 @@
     var mr = mast.getBoundingClientRect();
     var spTop = sp.getBoundingClientRect().top;
 
-    rangeBottom = spTop;
-    rangeTop = Math.max(mr.bottom, spTop - BAND_H);
+    /* 空白区的上下边界是硬墙：**绝不越过壁纸底，也不越过搜索框顶**。
+       以前窗口矮的时候会退进画布中部（.is-in-mast），用户明确否掉了 ——
+       弹幕只能出现在这块地里；窗口矮到只剩几十像素就只在那条窄缝里排 1~2 轨。 */
+    var top0 = mr.bottom, bot0 = spTop;
+    var gap = Math.max(0, bot0 - top0);
+    /* 带子在空白区里居中：上下各留一半余量。
+       gap 不够 BAND_H 时整段都用上（居中退化成铺满），不会溢出到两边。 */
+    var h = Math.min(BAND_H, gap);
+    rangeTop = top0 + (gap - h) / 2;
+    rangeBottom = rangeTop + h;
     /* 上下用像素精确传给 clip-path，左右仍由 CSS 的百分比管 */
     layer.style.setProperty('--dm-top', Math.round(rangeTop) + 'px');
     layer.style.setProperty('--dm-bottom', Math.round(window.innerHeight - rangeBottom) + 'px');
