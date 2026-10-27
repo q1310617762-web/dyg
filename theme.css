@@ -21,6 +21,17 @@
   font-display: swap;
 }
 
+/* 乐园刊头：照原图那块「差分宇宙 / 乐园漫记」的厚圆体来的。
+   日式 pop 体，笔画粗到几乎没有内白、端点全圆 —— 和原图那套贴纸字是同一路。
+   只取 latin 子集（17.9 KB），自托管，不连 Google CDN。 */
+@font-face {
+  font-family: "Mochiy Pop One";
+  src: url("assets/fonts/mast-mochiy-pop-one.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* ============================================================
    东芽果 DYG · v7
    风格参照 haowallpaper.com：深色底 + 图片密集的大圆角瓦片 +
@@ -1822,10 +1833,69 @@ html[data-theme="ly"] .eng-menu button[aria-current="true"] { background: var(--
 html[data-theme="ly"] .search kbd { background: var(--acc-fill); outline: 2px solid var(--ink); outline-offset: 0; color: var(--text); }
 
 /* ---------- 起始页刊头：粗黑 + 黄绿硬投影 ---------- */
-html[data-theme="ly"] .st-mast { --mast-font: "Arial Black", "Segoe UI Black", Impact, Georgia, serif; }
+/* ---------- 起始页刊头：贴纸字，落在画布右边那块空地上 ----------
+   用户 2026-10-27：字体换成原图（差分宇宙 / 乐园漫记）那种厚圆体，
+   并且把 hello world 从插图左下角搬到插图右侧、时钟卡上方的那块空白里。
+
+   位置不是拍脑袋量的：乐园网格是 13.4% / 1fr / 26.1%，栏距 3.2%，
+   .start 左右内边距各 2.2% —— 换算到「占视口宽」的百分比：
+     左栏 2.2%–15.01% ｜ 中栏（画布）18.07%–69.79% ｜ 右栏 72.85%–97.8%
+   所以 left: 72.85% / right: 2.2% 正好就是右栏那条带子。
+
+   ★ 这套定位能成立的前提是 .st-mast 在乐园下必须是 position:static：
+     刊头的包含块要变成 .start（fixed 定位），百分比才按视口算。
+     画布本身靠自己的 background + outline + box-shadow 成形，不依赖定位；
+     而且乐园下 .mast-petals / .mast-miko-wrap 都是 display:none，
+     不会因为失去这个包含块跑位。 */
+html[data-theme="ly"] .st-mast { --mast-font: "Mochiy Pop One", "Arial Black", "Segoe UI Black", Impact, Georgia, serif; }
+
 html[data-theme="ly"] .st-hello {
-  color: var(--ink);
-  text-shadow: 4px 4px 0 var(--acc-fill);
+  position: absolute;
+  left: 72.85%;
+  right: 2.2%;
+  /* 顶边要跳过右上那排按钮（底 64）并且留出描边/影子的溢出量 ——
+     文字墨迹会比盒子高 .14em（青影往上），所以盒子必须再往下让一截 */
+  top: clamp(80px, 7.2vh, 88px);
+  width: auto;
+  height: auto;
+  z-index: 3;
+  padding: 0;
+  font-size: clamp(28px, min(4.4vw, 6.2vh), 76px);
+  line-height: .92;
+  letter-spacing: 0;
+  text-align: left;
+  /* 贴纸字三件套：白面 + 黑描边 + 青/玫红错位影子。
+     paint-order:stroke fill 让描边画在字面**后面** —— 不写这条，
+     描边会盖住字面，白面被吃掉一半，字会显得瘦。 */
+  color: #fff;
+  -webkit-text-stroke: .11em var(--ink);
+  paint-order: stroke fill;
+  text-shadow:
+    -.15em .14em 0 #cc4878,
+     .15em -.14em 0 #3c9c9c;
+  text-transform: uppercase;
+}
+/* 第一行小一号、右移一点 —— 原图上下两行的错位感 */
+html[data-theme="ly"] .st-hello span:first-child {
+  font-size: .82em;
+  margin-left: .5em;
+}
+html[data-theme="ly"] .st-hello span:last-child { margin-left: 0; }
+
+/* 宽屏下那块空地是「又宽又矮」（2216 时 549×153），两行字根本填不满宽度，
+   硬填就会撞到上面的按钮和下面的时钟卡 —— 这一档改成一行「HELLO WORLD」，
+   字号只跟宽度走，整行铺满右栏。两行只在 ≤1700 用，那时空地接近 2.5:1。 */
+@media (min-width: 1700px) {
+  html[data-theme="ly"] .st-hello {
+    /* 实测 Mochiy Pop One 的「HELLO WORLD」是 8.87em 宽，右栏是 0.2495×视口宽，
+       所以字号上限 = 0.2495/8.87 ≈ 2.8vw，再留一点余量取 2.68vw */
+    font-size: clamp(44px, min(2.68vw, 6vh), 76px);
+    top: clamp(84px, 7.2vh, 92px);
+    white-space: nowrap;
+  }
+  html[data-theme="ly"] .st-hello span { display: inline; }
+  html[data-theme="ly"] .st-hello span:first-child { font-size: 1em; margin-left: 0; }
+  html[data-theme="ly"] .st-hello span:last-child { margin-left: .46em; }
 }
 html[data-theme="ly"] .st-kicker { color: var(--text-3); }
 html[data-theme="ly"] .mast-petals { display: none; }
@@ -3437,12 +3507,21 @@ html[data-theme="ly"] .ly-mi-i svg { width: 16px; height: 16px; fill: currentCol
    它本身就很暗（亮度中位 76、32.8% 是深色区），所以底部那层压暗渐变
    从 .68 收到 .45 —— 原来那个强度是给明亮的海边照片配的，放在这张上会糊成黑块。 */
 html[data-theme="ly"] .st-mast {
-  position: relative;
+  /* ★ 必须 static：刊头要脱出画布落到右栏空地，只有让它的包含块
+     变成 .start（fixed）才能按视口百分比定位。详见刊头那段注释。 */
+  position: static;
   width: 100%;
   height: 100%;
   min-height: 240px;
   --mast-f: clamp(36px, 9vh, 88px);
-  background: #171b22 url("assets/img/ly-stage.webp") center / cover no-repeat;
+  /* 底部压暗直接做成第二层背景。
+     以前是 .st-mast::after{position:absolute;inset:0} —— 而乐园下 .st-mast 必须是
+     static（刊头要脱出画布），伪元素就会改以 .start 为包含块，把整页压暗。
+     背景层没有这个问题。 */
+  background:
+    linear-gradient(to top,
+      rgba(12, 14, 18, .46) 0%, rgba(12, 14, 18, .12) 46%, transparent 72%),
+    #171b22 url("assets/img/ly-stage.webp") center / cover no-repeat;
   border-radius: var(--r-card);
   outline: 3px solid var(--ink);
   outline-offset: 0;
@@ -3453,20 +3532,13 @@ html[data-theme="ly"] .st-mast {
   overflow: hidden;
   text-align: left;
 }
-html[data-theme="ly"] .st-mast::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top,
-    rgba(12, 14, 18, .46) 0%, rgba(12, 14, 18, .12) 46%, transparent 72%);
-  pointer-events: none;
-}
-html[data-theme="ly"] .st-mast .st-hello,
+/* 压暗已经并进 .st-mast 的背景层，这条留着只会变成整页的暗罩 */
+html[data-theme="ly"] .st-mast::after { content: none; }
+/* 刊头的定位/配色/描边统一写在上面「起始页刊头」那段（约 300 行），
+   这里只剩副标题 —— 它在乐园下是 display:none，留着只是让 z-index 有个出处。
+   以前这里还有一条 `.st-mast .st-hello{position:relative;z-index:1}` 和白字
+   暗投影，特异性 (0,3,1) 会盖掉上面那段的绝对定位，刊头就永远出不了画布。 */
 html[data-theme="ly"] .st-mast .st-kicker { position: relative; z-index: 1; }
-html[data-theme="ly"] .st-hello {
-  color: #fff;
-  text-shadow: 0 3px 0 rgba(16, 18, 12, .72), 0 0 26px rgba(16, 18, 12, .5);
-}
 /* 看板娘和花瓣是另外两套皮肤的东西，这里不要 */
 html[data-theme="ly"] .mast-miko-wrap,
 html[data-theme="ly"] .mast-petals { display: none; }
@@ -3871,7 +3943,22 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
   html[data-theme="ly"] .ly-chips { grid-template-columns: repeat(3, 1fr); width: 100%;
     margin-top: 14px; padding-right: 0; gap: 26px; }
   html[data-theme="ly"] .bm { max-height: 46vh; }
-  html[data-theme="ly"] .st-mast { min-height: 180px; --mast-f: clamp(30px, 7.5vw, 56px); }
+  html[data-theme="ly"] .st-mast { min-height: 180px; --mast-f: clamp(30px, 7.5vw, 56px); position: relative; }
+  /* 竖排档没有「右栏那块空地」了（网格退回 flex 单列），刊头必须回到插画里，
+     否则 left:72.85% 会让它飘到插画右边去压住别的内容。
+     白面 + 黑描边的贴纸字压在暗插画上反而比原来更好读。 */
+  html[data-theme="ly"] .st-hello {
+    position: static;
+    left: auto; right: auto; top: auto;
+    width: auto;
+    height: auto;
+    font-size: calc(var(--mast-f) * .95);
+    line-height: .84;
+    white-space: normal;
+  }
+  html[data-theme="ly"] .st-hello span { display: block; }
+  html[data-theme="ly"] .st-hello span:first-child { font-size: .82em; margin-left: .35em; }
+  html[data-theme="ly"] .st-hello span:last-child { margin-left: 0; }
   html[data-theme="ly"] .ly-cta { height: 48px; margin-top: 4px; }
   html[data-theme="ly"] .start-foot { flex-direction: row; gap: 10px; }
 }
