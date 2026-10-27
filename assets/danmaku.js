@@ -56,7 +56,6 @@
   var MIN_W = 720;        // 窄到这个宽度就不放了，挤得没法看
 
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
-  var home = null;        // 层原本所在的父节点（画布下方那一格）
   var lastKick = {}, lastFail = '';
   var lastIdx = -1;
 
@@ -77,29 +76,26 @@
   /* ---------- 轨道 ---------- */
   function layout() {
     if (!layer) return;
-    place();
-    var h = layer.clientHeight, w = layer.clientWidth;
-    /* 这块区域整片都是空的，不用再像待在画布里那样只敢用上半 56% */
-    var usable = Math.max(0, h - 16);
+    place();                       /* 先决定用哪条带（画布下 / 画布中） */
+    /* 轨道范围直接按视口算，不去量任何元素 —— 层现在是 fixed 全屏，
+       上下由 CSS 的 clip-path 裁掉，这里只要和它对齐就行。 */
+    var vh = window.innerHeight;
+    var top = vh * (layer.classList.contains('is-in-mast') ? 0.24 : 0.18);
+    var bottom = vh * (layer.classList.contains('is-in-mast') ? 0.58 : 0.90);
+    var usable = Math.max(0, bottom - top - 12);
     var n = Math.max(1, Math.min(8, Math.floor(usable / LANE_H)));
     var ns = [];
     for (var i = 0; i < n; i++) {
       var old = lanes[i];
-      ns.push({
-        y: 14 + i * LANE_H,
-        /* 重排轨道后旧的时间戳不能直接沿用，否则会「一开局全挤在一条上」 */
-        freeAt: old ? old.freeAt : 0
-      });
+      ns.push({ y: Math.round(top + 8 + i * LANE_H), freeAt: old ? old.freeAt : 0 });
     }
     lanes = ns;
-    layer.style.width = w + 'px';
   }
 
   function ensure() {
     if (layer && layer.isConnected) return layer;
     layer = document.querySelector('[data-dm-layer]');
     if (!layer) return null;
-    if (!home) home = layer.parentNode;
     lanes = [];
     layout();
     return layer;
@@ -118,45 +114,11 @@
     if (!layer) return;
     var mast = document.querySelector('.st-mast');
     var sp = document.querySelector('.search');
-    var start = document.querySelector('.start');
-    if (!mast || !start) return;
-
-    var mr = mast.getBoundingClientRect();
-    var sr = start.getBoundingClientRect();
-    var gap = sp ? (sp.getBoundingClientRect().top - mr.bottom) : 0;
-
-    if (gap < MAST_MIN_GAP) {
-      /* 画布和搜索框之间挤没了：贴到画布中部那条带，用 CSS 的 inset */
-      if (layer.parentNode !== mast) mast.appendChild(layer);
-      layer.classList.add('is-in-mast');
-      layer.style.left = layer.style.top = layer.style.width = layer.style.height = '';
-      return;
-    }
-
-    /* 正常情况：把层钉死在「画布底 → 搜索框顶」这块矩形里。
-       直接写像素，不依赖 grid 行高 —— 行高会被上方内容挤，视口一矮就成 0。 */
-    if (home && layer.parentNode !== home) home.appendChild(layer);
-    layer.classList.remove('is-in-mast');
-
-    /* 相对 .start 的坐标要叠上它自己的滚动量，否则滚动后位置会跟着跑 */
-    var sc = start.scrollTop || 0;
-    var top = mr.bottom - sr.top + sc;
-    var h = Math.max(0, gap);
-    layer.style.top = Math.round(top) + 'px';
-    layer.style.height = Math.round(h) + 'px';
-
-    /* 左右：CSS 里给的是 13.4% / 26.1% 兜底，但百分比算不进 grid 的 column-gap，
-       量出来会比画布宽 125px（862 vs 737），弹幕会飘到左右栏上。
-       所以优先用画布的实测宽精确覆盖 —— 但**只接受合理值**：
-       一旦量到异常的小值（比如布局还没完成时读到个位数），
-       就把 inline 清掉退回 CSS 百分比，绝不把整层写成 1px 宽的一条竖线。
-       用户截图里那道「会变化的黑痕」就是整层被压成 1px、几条弹幕叠成一列。 */
-    if (mr.width > 100) {
-      layer.style.left = Math.round(mr.left - sr.left) + 'px';
-      layer.style.width = Math.round(mr.width) + 'px';
-    } else {
-      layer.style.left = layer.style.width = '';
-    }
+    if (!mast) return;
+    var gap = sp ? (sp.getBoundingClientRect().top - mast.getBoundingClientRect().bottom) : 0;
+    /* 画布和搜索框之间还有 120px 以上 → 用「画布底到搜索框顶」那条；
+       挤没了就退到画布中部。两种都只是切 clip-path，不写像素。 */
+    layer.classList.toggle('is-in-mast', gap < 120);
   }
 
   function pickLane(now) {

@@ -3890,28 +3890,28 @@ html[data-theme="ly"] .np.playing .np-btn {
    ============================================================ */
 .dm-layer { display: none; }
 
-/* 弹幕层不再靠 grid 行高定位 —— 行高会被上方内容挤，视口一矮就变 0。
-   现在由 JS 量出「画布底 → 搜索框顶」这块矩形，直接写死 left/top/width/height。
-   这样不管窗口多矮，只要画布和搜索框之间还有距离，弹幕就有地方飘。 */
+/* 弹幕层：固定铺满整个视口，再用 clip-path 裁出中间那条。
+   为什么这么做 —— 前面五版都靠「量某个元素再写像素」，只要有一次量到异常值
+   （布局没完成、元素被折叠、grid 行被压成 0），整层就变成 0 宽或 1px 宽，
+   弹幕全被 overflow 裁掉，屏幕上只剩一道会动的黑线。
+   现在宽高恒等于视口，**没有可算错的量**，clip-path 只负责裁掉左右栏和页头页脚。
+   1.4rem 的横向留白对应 grid 的 13.4% / 26.1%，上下留出页头和搜索框。 */
 html[data-theme="ly"] .dm-layer {
   display: block;
-  position: absolute;
-  /* 宽度交给 CSS 百分比（和 grid 的 13.4% / 26.1% 对齐），JS 只管上下。
-     之前宽度是 JS 写像素的，某个时刻量到异常值就会把整层压成一条 1px 宽的竖线
-     —— 三条弹幕叠着只剩一列，看起来像「一道会变化的黑痕」。 */
-  left: 13.4%;
-  right: 26.1%;
+  position: fixed;
+  inset: 0;
+  clip-path: inset(18% 30% 10% 17%);
   pointer-events: none;
   overflow: hidden;
-  z-index: 1;
+  z-index: 4;
 }
 
-/* 画布和搜索框之间挤到 <120px 时（极矮），改贴画布中部这条带。
-   避开左下角的 Hello World 刊头。 */
+/* 画布矮到放不下时也照样能飘 —— 这个实现不挑容器，所以不需要再分支 */
 html[data-theme="ly"] .dm-layer.is-in-mast {
-  position: absolute;
-  inset: 26% 0 40% 0;
-  z-index: 2;
+  position: fixed;
+  inset: 0;
+  clip-path: inset(24% 30% 42% 17%);
+  z-index: 4;
 }
 
 .dm-item {
