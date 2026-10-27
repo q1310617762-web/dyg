@@ -4023,27 +4023,39 @@ html[data-theme="ly"] .dm-layer {
 .dm-btn { display: none; }
 
 html[data-theme="ly"] .dm-btn {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   flex: none;
-  margin-right: 2px;
-  padding: 0;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
+  height: 32px;
+  padding: 0 11px 0 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
   color: var(--ink);
+  background: var(--acc-fill);      /* 只配 --text/--ink 用，对比度 12:1 */
+  border: 0;
+  border-radius: var(--r-pill);     /* 乐园的胶囊是 10px 不是圆到头 */
+  /* 描边用 outline、投影硬的 —— 这套皮肤的语言，也不进盒模型 */
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard-sm);
   cursor: pointer;
   touch-action: manipulation;
-  transition: background-color .15s, transform .12s var(--ease-out);
+  transition: transform .12s var(--ease-out), box-shadow .12s var(--ease-out);
 }
 html[data-theme="ly"] .dm-btn svg { display: block; }
+html[data-theme="ly"] .dm-btn-t { line-height: 1; }
 @media (hover: hover) and (pointer: fine) {
-  html[data-theme="ly"] .dm-btn:hover { background: var(--acc-fill); }
+  html[data-theme="ly"] .dm-btn:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
 }
-html[data-theme="ly"] .dm-btn:active { transform: translate(1px, 1px); }
-html[data-theme="ly"] .dm-btn[aria-expanded="true"] { background: var(--acc-fill); box-shadow: inset 0 0 0 2px var(--ink); }
+/* 按下 / 展开都走「陷下去」：位移挪过去、投影收回来，看着是真按进了桌面 */
+html[data-theme="ly"] .dm-btn:active,
+html[data-theme="ly"] .dm-btn[aria-expanded="true"] {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
 
 /* ---------- 输入浮层 ---------- */
 html[data-theme="ly"] .dm-pop {

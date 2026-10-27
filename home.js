@@ -149,9 +149,14 @@
     return /^([\w-]+\.)+[a-z]{2,}(:\d+)?(\/.*)?$/i.test(s);
   }
 
-  document.addEventListener('submit', function (e) {
-    if (!e.target.matches || !e.target.matches('[data-search]')) return;
-    e.preventDefault();
+  /* 回车必须单独兜一层 —— 表单里有**两个**可输入字段（搜索框 + 弹幕浮层里的
+     [data-dm-in]），而表单本身没有 submit 按钮。按规范，这种「多于一个可输入
+     字段且没有提交按钮」的表单**不触发隐式提交**：浏览器一次 submit 事件都不派发
+     （实测 submit 计数 = 0，地址栏纹丝不动）。
+     移动端软键盘那个「搜索 / 前往」键走的也是隐式提交这条路，所以同样没反应。
+     显式监听 [data-q] 的 Enter，绕开隐式提交那套规则 ——
+     顺手也比改表单结构安全（弹幕浮层定位依赖 .search 这个包含块）。 */
+  function submitSearch() {
     grabSearch();
     if (!q) return;
     var v = q.value.trim();
@@ -161,6 +166,22 @@
     } else {
       location.href = ENGINES[engine].url + encodeURIComponent(v);
     }
+  }
+
+  document.addEventListener('submit', function (e) {
+    if (!e.target.matches || !e.target.matches('[data-search]')) return;
+    e.preventDefault();
+    submitSearch();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    /* 输入法候选还没落到输入框里（keyCode 229 是 IME 合成中）别抢 */
+    if (e.isComposing || e.keyCode === 229) return;
+    var t = e.target;
+    if (!t || !t.matches || !t.matches('[data-q]')) return;
+    e.preventDefault();
+    submitSearch();
   });
 
   /* ============================================================
