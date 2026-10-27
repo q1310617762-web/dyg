@@ -104,12 +104,21 @@
   }
 
   var SPEED = 116;        // px/s，比 B 站慢一点，读得完
-  var LANE_H = 36;        // 轨道高（含行距）。最大档 20.5px × 1.2 = 24.6px，行高 1.25 → 31px，34 太挤
+  /* 轨道间距下限。最坏一条的行盒是：最大档 20.5px × 1.2(颜文字) × 1.25(emoji)
+     × 1.25(行高) ≈ 38px，所以间距不能低于 40，否则大号的带 emoji 弹幕
+     会和相邻轨道的糊到一起。写 36 时 208px 的带子会排 5 轨（step 41.6）没问题，
+     但更矮的带子（150px）会排 4 轨、step 37.5，就压线了。 */
+  var LANE_H = 40;
   var GAP = 28;           // 同轨两条之间至少留这么多
   /* 补水间隔：每轮看一眼「画面里还有几条」，少于 MIN_ON_SCREEN 就补一条。
-     间隔别太长（空了没人补），也别太短（同时挤成一团）。 */
-  var PUMP_MIN = 700;
-  var PUMP_MAX = 1500;
+     这个值受一条硬约束：一条弹幕从进场到出场大约 4.5 秒（宽屏 v≈280px/s、
+     全程 ~1300px），所以要在画面上同时维持 N 条，每秒就得发出 N/4.5 条。
+     想维持 12 条 → 每秒得发 12/4.5≈2.7 条，间隔写 250~650 才供得上；
+     写 700~1500 的话发送速度追不上消失速度，画面永远停在五六条。
+     （实测 2216×1145：300~800 → 平均 7.7 条；250~650 → 10 条；220~580 → 10.3 条。
+     再快也上不去了 —— 补水是一轮一条，池子再密就成糊墙了。峰值都是 12。） */
+  var PUMP_MIN = 220;
+  var PUMP_MAX = 580;
   var MAX_USER = 20;      // 本地最多留 20 条自己的留言
   var KEY = 'dyg-dm';
   /* 480 而不是 720。现在层是 fixed 全屏 + clip-path，不依赖任何布局，
@@ -293,21 +302,40 @@
     return el;
   }
 
+  /* 画面上正在飘的那些文字。密起来以后（同时十来条）撞车的概率不小 ——
+     76 条池子里抽 12 条，同一屏出现两条「天天来报到🎉」看着很廉价。 */
+  function onScreen() {
+    var s = {};
+    if (layer) {
+      var ns = layer.querySelectorAll('.dm-item');
+      for (var i = 0; i < ns.length; i++) s[ns[i].textContent] = 1;
+    }
+    return s;
+  }
+
   function nextText() {
     /* 自己留过的言有三分之一机会被翻出来重放，剩下的随机取预置 */
     var mine = readUser();
     if (mine.length && Math.random() < 0.33) {
       return { t: mine[Math.floor(Math.random() * mine.length)], mine: true };
     }
-    var i = Math.floor(Math.random() * POOL.length);
-    if (i === lastIdx) i = (i + 1) % POOL.length;   // 别连着两条一样
+    var on = onScreen();
+    var i = -1;
+    /* 抽 8 次，避开已经在画面上的；实在抽不到（池子被占满）就随便给一条 */
+    for (var k = 0; k < 8; k++) {
+      var j = Math.floor(Math.random() * POOL.length);
+      if (j !== lastIdx && !on[POOL[j]]) { i = j; break; }
+      if (i < 0) i = j;
+    }
     lastIdx = i;
     return { t: POOL[i], mine: false };
   }
 
-  /* 5 而不是 3：画布下方那条带有五百多像素高、能放 10 条轨道，
-     只维持 3 条不但空，字号大小的差别也看不出来（要有得比才看得出「有大有小」）。 */
-  var MIN_ON_SCREEN = 5;      // 低于这个数就补水
+  /* 12：用户要「密一些」。轨道只有 5 条，但同一条轨道可以前后错开排好几条
+     （前一条挪出 GAP 之后就能放下一条，宽屏上只要 0.6 秒），所以「几轨」不等于
+     「几条」—— 5 条轨道上可以同时在飘十来条。可见区 1157px 宽，一条平均 110px
+     加 28 间距，一条轨道最多排得下 8 条，12 条摊到 5 轨平均每轨 2.4 条，还早。 */
+  var MIN_ON_SCREEN = 12;     // 低于这个数就补水
 
   function countOn() {
     return layer ? layer.querySelectorAll('.dm-item').length : 0;
@@ -319,6 +347,9 @@
     if (!lanes.length) layout();
     lastKick = { vis: true, cw: layer.clientWidth, on: countOn() };
     if (countOn() < MIN_ON_SCREEN) { var n = nextText(); spawn(n.t, n.mine); }
+    /* 差得多就一次补两条：开局、切回前台、或者一次 resize 之后，
+       按每轮一条铺到 9 条要好几秒，那几秒里画面还是空的。 */
+    if (countOn() < MIN_ON_SCREEN - 3) { var m = nextText(); spawn(m.t, m.mine); }
     timer = setTimeout(pump, PUMP_MIN + Math.random() * (PUMP_MAX - PUMP_MIN));
   }
 
