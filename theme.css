@@ -3324,18 +3324,26 @@ html[data-theme="ly"] .start-viz { display: none !important; }
 /* ---------- 槽位分配 ---------- */
 html[data-theme="ly"] .mark        { grid-area: brand; justify-self: start; align-self: start; }
 html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin: 0; }
-/* 和另外三套皮肤对齐：那边是「.start padding 32 + .start-top padding 32」两层，
-   按钮组离右边 64px；乐园因为 .start-top 被判成 display:contents，只剩一层 31px，
-   所以整个按钮组比别处右移了 33px。这里补一个 --pad 补回来。
-   垂直方向同理：那套装在 .start-top 里是垂直居中（按钮 y=27），
-   乐园直接贴在网格行顶（y=37），往上一行的高度补 10px。 */
-html[data-theme="ly"] .start-right {
-  grid-area: top;
-  justify-self: end;
-  align-self: start;
-  /* +1px 是为了抹掉另外三套 .start-top 上那 0.5px 的 margin 取整差 */
-  margin-right: calc(var(--pad) + 1px);
-  margin-top: -10px;
+/* 位置必须和另外三套皮肤**一模一样**：那边是「.start 内缩 --pad → .start-top
+   居中且不超过 1360 → 再内缩 --pad」，所以按钮组离视口右边
+   max(2×--pad, (视口宽 − 1360)/2 + --pad)，顶边恒为 24px
+   （.start 的 padding-top 22 + .start-top 的 padding-top 2）。
+   乐园这边 .start-top 是 display:contents，按钮组直接落进网格右栏，
+   右栏贴着视口右边只有 2.2% —— 宽屏下比别处右移两三百像素
+   （实测 2216 宽：别处距右 452，乐园只有 96），矮屏下还高 4~5px
+   （.start 的 padding-top 是绑 vh 的 clamp）。
+   所以这里脱离网格、用绝对定位直接按上面那套算。
+   ★ 千万别给它写 grid-area：绝对定位的网格子项一旦有确定格位，
+     包含块就变成那一格而不是 .start 的 padding box，百分比全错。 */
+@media (min-width: 961px) {
+  html[data-theme="ly"] .start-right {
+    position: absolute;
+    top: calc(24px + env(safe-area-inset-top, 0px));
+    right: max(calc(var(--pad) * 2),
+               calc((100% - 1360px) / 2 + var(--pad)));
+    z-index: 3;
+    margin: 0;
+  }
 }
 html[data-theme="ly"] .st-mast     { grid-area: mast;  align-self: center; }
 html[data-theme="ly"] .search      { grid-area: stage; align-self: center; }
@@ -3831,6 +3839,17 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
     align-items: center;
     justify-content: space-between;
   }
+  /* 竖排这档下 .start 的内边距改回 --pad（三栏那档是 2.2%），
+     和另外三套同一个盒子，按钮组才不会左右差 7~11px。
+     .mark 在乐园下是那张高便签，.start-top 的 align-items:center
+     会把按钮组往下顶十几到二十几像素 —— 改回 flex-start 贴顶。 */
+  /* 顶边也回到另外三套的 22px（三栏那档是绑 vh 的 clamp(12,3.8vh,34)，
+     900 高时会算出 34，比别处低 12px） */
+  html[data-theme="ly"] .start {
+    padding-inline: var(--pad);
+    padding-top: calc(22px + env(safe-area-inset-top, 0px));
+  }
+  html[data-theme="ly"] .start-right { align-self: flex-start; }
   html[data-theme="ly"] .start-core {
     display: flex;
     flex-direction: column;
