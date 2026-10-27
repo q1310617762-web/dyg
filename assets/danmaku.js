@@ -78,6 +78,13 @@
   }
 
   /* ---------- 轨道 ---------- */
+  /* 可见区边界（和 CSS 的 clip-path 同步）。
+     inset(18% 30% 10% 17%) → 左右各裁 17% / 30% */
+  function clipBox() {
+    var W = layer ? layer.clientWidth : 0;
+    return { left: W * 0.17, right: W * 0.70 };
+  }
+
   function layout() {
     if (!layer) return;
     place();                       /* 先决定用哪条带（画布下 / 画布中） */
@@ -170,14 +177,26 @@
 
     var W = layer.clientWidth;
     var w = el.offsetWidth;                       // 必须先入 DOM 才量得到
-    var dur = (W + w) / SPEED;
 
-    el.style.setProperty('--dm-from', W + 'px');
-    el.style.setProperty('--dm-to', (-w) + 'px');
+    /* 起点和终点要用**可见区**的边界，不是层的边界。
+       层是 fixed 全屏（比如 2216 宽），但 clip-path 把右侧 30% 裁掉了 ——
+       可见区右边界在 W*0.70。从 W 出发的话，弹幕要先在不可见区里走 665px，
+       按 116px/s 要 5.7 秒才露头、走完全程 19 秒，用户根本等不到。
+       实测层 2216 宽时就是这个症状：running=true、在飘 3 条，但一条都看不见。 */
+    var box = clipBox();
+    var from = Math.round(box.right) + 4;
+    var to = Math.round(box.left - w) - 4;
+    var dist = Math.max(80, from - to);
+    /* 大屏要提速：固定 116px/s 在 2000px 宽的屏上要跑 12 秒，读都读完了还在飘 */
+    var v = Math.max(SPEED, W * 0.13);
+    var dur = dist / v;
+
+    el.style.setProperty('--dm-from', from + 'px');
+    el.style.setProperty('--dm-to', to + 'px');
     el.style.animationDuration = dur.toFixed(3) + 's';
     el.style.visibility = '';
 
-    lane.freeAt = now + ((w + GAP) / SPEED) * 1000;
+    lane.freeAt = now + ((w + GAP) / v) * 1000;
 
     /* 生命周期用定时器管，不监听 animationend。
        动画事件在某些情况下会比预期早得多地触发（查了两轮没坐实原因），
