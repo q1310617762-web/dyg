@@ -4038,7 +4038,8 @@ html[data-theme="ly"] .dm-send {
 }
 html[data-theme="ly"] .dm-send:active { transform: translate(1px, 1px); }
 
-/* 窄屏不放弹幕：画布本来就矮，再飘字就看不见图了 */
-@media (max-width: 720px) {
+/* 窄屏阈值从 720 降到 480（和 danmaku.js 的 MIN_W 保持一致）。
+   原来 720 会把「1080 物理宽 + 200% 缩放 = CSS 540」误判成窄屏，弹幕直接消失。 */
+@media (max-width: 480px) {
   html[data-theme="ly"] .dm-layer { display: none; }
 }

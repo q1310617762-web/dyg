@@ -53,7 +53,11 @@
   var PUMP_MAX = 1900;
   var MAX_USER = 20;      // 本地最多留 20 条自己的留言
   var KEY = 'dyg-dm';
-  var MIN_W = 720;        // 窄到这个宽度就不放了，挤得没法看
+  /* 480 而不是 720。现在层是 fixed 全屏 + clip-path，不依赖任何布局，
+     窄屏也能正常飘；而 720 这个值在「1080 物理像素 + 200% 系统缩放」下会
+     把 CSS 宽 540 误判成窄屏 → 弹幕直接不启动，用户永远看不到。
+     这很可能是前面六轮都没解决的真正原因。 */
+  var MIN_W = 480;
 
   var layer = null, lanes = [], running = false, timer = 0, resizeT = 0;
   var lastKick = {}, lastFail = '';

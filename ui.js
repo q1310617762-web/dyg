@@ -1083,6 +1083,40 @@
   else boot();
 })();
 
+/* ---- 弹幕诊断面板：URL 带 ?dmdiag=1 才出现 ----
+   六轮排查都没解决，根本原因是拿不到用户浏览器里的真实数值 ——
+   我一直在自己的 1440x900 / 1080x599 下验证，都很正常。
+   这个面板把关键状态直接画在页面上，用户截一张图就能说清楚。 */
+(function () {
+  if (!/[?&]dmdiag=1/.test(location.search)) return;
+  var box = document.createElement('div');
+  box.style.cssText = 'position:fixed;left:8px;top:8px;z-index:99999;' +
+    'background:#fff;color:#000;font:12px/1.7 ui-monospace,Consolas,monospace;' +
+    'padding:10px 12px;border:3px solid #000;border-radius:8px;' +
+    'box-shadow:4px 4px 0 #000;max-width:340px;white-space:pre-wrap';
+  document.body.appendChild(box);
+  var err = '';
+  window.addEventListener('error', function (e) { err = String(e.message).slice(0, 60); });
+  function tick() {
+    var st = window.__dygDanmaku ? window.__dygDanmaku.state() : null;
+    var l = document.querySelector('[data-dm-layer]');
+    var b = l ? l.getBoundingClientRect() : null;
+    box.textContent =
+      '弹幕诊断\n' +
+      'CSS 视口   ' + innerWidth + ' × ' + innerHeight + '\n' +
+      '像素比     ' + (window.devicePixelRatio || 1) + '\n' +
+      '主题       ' + document.documentElement.getAttribute('data-theme') + '\n' +
+      '脚本       ' + (st ? '已加载' : '未加载') + '\n' +
+      'running    ' + (st ? st.running : '-') + '\n' +
+      '在飘       ' + (st ? st.on + ' 条 · 轨道 ' + st.lanes : '-') + '\n' +
+      '层尺寸     ' + (b ? Math.round(b.width) + ' × ' + Math.round(b.height) : '无') + '\n' +
+      '窄屏拦截   ' + (innerWidth < 480 ? '是（<' + 480 + '）' : '否') + '\n' +
+      (err ? '报错       ' + err : '');
+  }
+  tick();
+  setInterval(tick, 800);
+})();
+
 /* ---- 版本自检：绕开 GitHub Pages 那 10 分钟的 HTML 缓存 ----
    为什么需要：HTML 的 Cache-Control 是 max-age=600 且改不了，F5 拿到的很可能
    还是十分钟内那份旧 HTML（带旧的 ?v=），于是加载的也是旧 CSS / 旧 JS。
