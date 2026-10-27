@@ -1604,6 +1604,9 @@ html.reveal .rv.in { opacity: 1; transform: none; }
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
   }
+  /* 弹幕是例外：动画就是它的全部意义，压成 .01ms 等于「发了但看不见」。
+     用变量把 JS 算好的时长带回来（inline 样式在 !important 面前无效）。 */
+  .dm-item { animation-duration: var(--dm-dur, 6.5s) !important; }
   /* 去掉位移与缩放，保留透明度：一刀切会让切换变成硬切 */
   .start, .blog, .rv, .g-item, .g-item img { transform: none !important; }
   html.reveal .rv { opacity: 1; transform: none; }
@@ -3935,6 +3938,12 @@ html[data-theme="ly"] .dm-layer.is-in-mast {
   animation-name: dm-run;
   animation-timing-function: linear;
   animation-fill-mode: forwards;
+  /* 时长走变量而不是 inline 的 animation-duration：
+     下面 reduce 媒体查询里那条全局 `animation-duration: .01ms !important`
+     会盖掉 inline 样式，只有变量能在 !important 下把原值带回来。
+     这正是「弹幕都发了、元素也在，但用户一条都看不见」的根因 ——
+     用户系统开了减弱动效，每条弹幕的动画被压成 0.01ms，瞬间跳到屏幕外。 */
+  animation-duration: var(--dm-dur, 6.5s);
   will-change: transform;
 }
 

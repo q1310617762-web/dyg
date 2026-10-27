@@ -193,7 +193,10 @@
 
     el.style.setProperty('--dm-from', from + 'px');
     el.style.setProperty('--dm-to', to + 'px');
-    el.style.animationDuration = dur.toFixed(3) + 's';
+    /* 时长写成变量，不写 animation-duration —— 见 theme.css 里的说明：
+       全局的 `prefers-reduced-motion` 规则用 !important 压掉了 inline 的
+       animation-duration，只有 var() 能在那种情况下保住原值。 */
+    el.style.setProperty('--dm-dur', dur.toFixed(3) + 's');
     el.style.visibility = '';
 
     lane.freeAt = now + ((w + GAP) / v) * 1000;
