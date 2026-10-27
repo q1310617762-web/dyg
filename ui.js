@@ -1093,9 +1093,26 @@
            h === 'localhost' || h === '127.0.0.1' || h === '[::1]';
   if (!ok) return;
 
+  /* 这个页面是不是本来就受 SW 管着。用来区分「首次安装」和「版本更新」——
+     首次安装也会触发 controllerchange（activate 里 clients.claim），
+     那时候 reload 一次是白刷。
+     ★ 不加下面这段的话，新版本装好了当前页面也不会刷新 ——
+       表现就是「代码明明改了、用户看到的还是旧的」，得手动刷第二次才生效。 */
+  var hadController = !!navigator.serviceWorker.controller;
+  var reloading = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (!hadController || reloading) return;
+    reloading = true;
+    location.reload();
+  });
+
   window.addEventListener('load', function () {
     navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' })
       .then(function (reg) {
+        /* 单页应用里页面几乎不整页导航，而浏览器只在导航时检查 sw.js ——
+           不主动问一声，新版本可能要等下次开标签页才被发现。 */
+        try { reg.update(); } catch (e) {}
+
         /* 页面闲下来再让 SW 去攒博客形态的图，别和首屏抢带宽 */
         var warm = function () {
           var sw = reg.installing || reg.waiting || reg.active ||
