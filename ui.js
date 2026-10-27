@@ -1083,6 +1083,42 @@
   else boot();
 })();
 
+/* ---- 版本自检：绕开 GitHub Pages 那 10 分钟的 HTML 缓存 ----
+   为什么需要：HTML 的 Cache-Control 是 max-age=600 且改不了，F5 拿到的很可能
+   还是十分钟内那份旧 HTML（带旧的 ?v=），于是加载的也是旧 CSS / 旧 JS。
+   表现就是「代码明明改了，用户刷新还是老样子」，非得 Ctrl+Shift+R 才见效。
+   这里在页面空闲后悄悄取一次最新 HTML，版本对不上就带随机参数重载一次。
+   只跳一次（sessionStorage 打标），不会循环；保留原有查询参数。 */
+(function () {
+  var KEY = 'dyg-vcheck';
+  try { if (sessionStorage.getItem(KEY)) return; } catch (e) { return; }
+
+  var link = document.querySelector('link[href*="theme.css"]');
+  if (!link) return;
+  var m = /v=(\d{14})/.exec(link.href);
+  if (!m) return;
+  var cur = m[1];
+
+  function check() {
+    fetch('index.html', { cache: 'no-cache' })
+      .then(function (r) { return r.text(); })
+      .then(function (html) {
+        var n = /theme\.css\?v=(\d{14})/.exec(html);
+        if (!n || n[1] === cur) return;
+        try { sessionStorage.setItem(KEY, '1'); } catch (e) {}
+        /* 保留原来的查询参数（?m=blog 之类），再补一个 r= 用来破缓存 */
+        var q = location.search.replace(/[?&]r=[^&]*/g, '');
+        location.replace(location.pathname + q + (q ? '&' : '?') + 'r=' + n[1]);
+      })
+      .catch(function () {});
+  }
+
+  window.addEventListener('load', function () {
+    if (window.requestIdleCallback) window.requestIdleCallback(check, { timeout: 5000 });
+    else setTimeout(check, 2500);
+  });
+})();
+
 /* ---- Service Worker：二次访问直接从硬盘读 ----
    注册放在 ui.js 里，因为它每页都加载；file:// 和局域网 http 直接跳过。
    sw.js 用 updateViaCache:'none' 注册，免得被 HTTP 缓存挡住拿不到新版本。 */
