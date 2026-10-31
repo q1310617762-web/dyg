@@ -1230,3 +1230,57 @@
   });
 })();
 /* ---- /Service Worker ---- */
+
+/* ---- 收藏卡底部的双人舞 ----
+   透明视频只有 Chromium 系能正确渲染；Safari / 微信 iOS 会把 alpha 当黑底。
+   检测办法：把当前帧画到 8×8 画布上读左上角像素 —— 那里应该是全透明（alpha=0），
+   读到不透明就说明这个浏览器不支持视频 alpha，换成 poster 静帧。
+   ★ 只有真实浏览器行为才可信，不看 canPlayType（Safari 也报支持 webm/vp9）。 */
+(function () {
+  var done = false;
+
+  function pick() {
+    var box = document.querySelector('[data-duo]');
+    if (!box) return null;
+    return { v: box.querySelector('[data-duo-v]'), img: box.querySelector('[data-duo-img]') };
+  }
+
+  function check() {
+    if (done) return;
+    var d = pick();
+    if (!d || !d.v || !d.img) return;
+    if (d.v.readyState < 2 || !d.v.videoWidth) return;
+    done = true;
+    var bad = false;
+    try {
+      var c = document.createElement('canvas');
+      c.width = c.height = 8;
+      var x = c.getContext('2d');
+      x.drawImage(d.v, 0, 0, 8, 8);
+      bad = x.getImageData(0, 0, 8, 8).data[3] !== 0;
+    } catch (e) { bad = true; }
+    if (bad) {
+      d.v.hidden = true;
+      d.img.hidden = false;
+    }
+  }
+
+  /* loadeddata 不冒泡，用捕获阶段接 */
+  document.addEventListener('loadeddata', function (e) {
+    if (e.target && e.target.matches && e.target.matches('[data-duo-v]')) check();
+  }, true);
+
+  /* 起始页被路由 importNode 重建后是个新元素，再补两次 */
+  document.addEventListener('click', function () { setTimeout(check, 400); }, true);
+  setTimeout(check, 1200);
+  setTimeout(check, 3000);
+
+  /* 不在乐园皮肤时把视频停下来，别白耗电 */
+  setInterval(function () {
+    var d = pick();
+    if (!d || !d.v || d.v.hidden) return;
+    var ly = document.documentElement.getAttribute('data-theme') === 'ly';
+    if (ly && d.v.paused) { try { d.v.play(); } catch (e) {} }
+    if (!ly && !d.v.paused) { try { d.v.pause(); } catch (e) {} }
+  }, 1500);
+})();

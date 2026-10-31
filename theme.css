@@ -3584,7 +3584,39 @@ html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
    两层都设 overflow-y:auto 会打架：滚轮到卡上时内层没得滚、外层先滚，
    表现就是「标题跟着一起跑」。 */
 html[data-theme="ly"] .bm { overflow: hidden; }
+
+/* ---------- 收藏卡底部的双人舞 ----------
+   透明 VP9 视频，只在乐园下出现；别的皮肤 display:none 不占位。
+   height 用 clamp 绑视口高：矮屏缩、高屏放，别把收藏列表挤没。
+   .bm 是 flex 列，.bm-groups 是 flex:1 的滚动区 —— 这块固定高度，
+   列表自己让位滚动，卡片总高不变（不破坏网格）。 */
+.bm-duo { display: none; }
+html[data-theme="ly"] .bm-duo {
+  display: flex;
+  justify-content: center;
+  flex: none;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1.5px dashed rgba(20, 20, 20, .18);
+}
+/* ★ [hidden] 是 UA 的 display:none，会被上面这条 display:block 盖掉 ——
+   Safari 回落静帧时就会「视频和静帧同时出现」，看起来像四只角色。必须单独写回。 */
+html[data-theme="ly"] .bm-duo video[hidden],
+html[data-theme="ly"] .bm-duo img[hidden] { display: none; }
+html[data-theme="ly"] .bm-duo video,
+html[data-theme="ly"] .bm-duo img {
+  display: block;
+  /* 高度要跟视口高走：1440×900 下收藏卡只有 285 高，视频一高列表就被挤成一行；
+     2216×1145 下卡片会长到 500+，这里自然放大。 */
+  height: clamp(74px, 9.4vh, 124px);
+  width: auto;
+  pointer-events: none;
+}
 html[data-theme="ly"] .bm-groups {
+  /* 底部渐隐：1440×900 下这块只有 80px 高，列表必然被截断 ——
+     直接切一刀像坏了，渐隐一下读起来是「还能往下滚」。 */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
   scrollbar-width: thin;
   scrollbar-color: rgba(20, 20, 20, .3) transparent;
 }
