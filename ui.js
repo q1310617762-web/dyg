@@ -125,16 +125,30 @@
   /* ============================================================
      乐园皮肤开场动画（黄泉 PV）
      ------------------------------------------------------------
-     默认关，只在 ?intro=1（或 sessionStorage 里开了开关）时才有。
-     不然每个访客都要多下 1.84 MB。
+     **默认开**：切到乐园皮肤、换肤过渡跑完之后播一次。
+     三条约束：
+       ① 一个会话只播一次（sessionStorage 'dyg-intro-played'）——
+          否则来回切皮肤每轮都要看 12 秒。
+       ② ?intro=1 强制每次都播（调样式用），?intro=0 彻底关。
+       ③ 进站就停在乐园**不播**，只在「切过去」这一下播 —— 刷新页面不该弹视频。
      ★ 必须等 View Transition 结束再盖上去：过渡还在跑的时候压一层不透明的黑，
        等于把换肤动画整个吃掉。
      ============================================================ */
   var introEl = null, introV = null, introTimer = 0;
 
+  function introOff() {
+    return /(?:^|[?&])intro=0(?:&|$)/.test(location.search);
+  }
+  function introForce() {
+    return /(?:^|[?&])intro=1(?:&|$)/.test(location.search);
+  }
+  function introPlayed() {
+    try { return sessionStorage.getItem('dyg-intro-played') === '1'; } catch (e) { return false; }
+  }
   function introOn() {
-    if (/(?:^|[?&])intro=1(?:&|$)/.test(location.search)) return true;
-    try { return sessionStorage.getItem('dyg-intro') === '1'; } catch (e) { return false; }
+    if (introOff()) return false;
+    if (introForce()) return true;
+    return !introPlayed();
   }
 
   function grabIntro() {
@@ -172,6 +186,8 @@
     try { v.currentTime = 0; } catch (e) {}
     var pr = v.play();
     if (pr && pr.catch) pr.catch(function () { closeIntro(); });
+    /* 记一笔：这个会话别再播第二遍 */
+    if (!introForce()) { try { sessionStorage.setItem('dyg-intro-played', '1'); } catch (e) {} }
   }
   /* 给末尾那段 boot 用（它在 IIFE 外面） */
   window.__dygIntro = playLyIntro;
@@ -1355,16 +1371,17 @@
   }, 1500);
 })();
 
-/* ---- 开场动画：开着开关才预取；进站就停在乐园的话也给一次 ---- */
+/* ---- 开场动画：空闲时预取，免得切过去先黑一下屏幕等下载 ---- */
 (function () {
   window.addEventListener('load', function () {
-    var on = (function () { try { return sessionStorage.getItem('dyg-intro') === '1'; } catch (e) { return false; } })();
-    if (!on && !/(?:^|[?&])intro=1(?:&|$)/.test(location.search)) return;
-    setTimeout(function () {
-      if (document.documentElement.getAttribute('data-theme') === 'ly' &&
-          document.querySelector('[data-intro]') && !document.querySelector('[data-intro]').classList.contains('on')) {
-        if (window.__dygIntro) window.__dygIntro();
-      }
-    }, 900);
+    if (/(?:^|[?&])intro=0(?:&|$)/.test(location.search)) return;
+    var warm = function () {
+      var v = document.querySelector('[data-intro-v]');
+      if (!v || v.getAttribute('src')) return;
+      var s = v.getAttribute('data-src');
+      if (s) { v.setAttribute('src', s); v.load(); }
+    };
+    if (window.requestIdleCallback) window.requestIdleCallback(warm, { timeout: 6000 });
+    else setTimeout(warm, 3000);
   });
 })();
