@@ -4276,17 +4276,36 @@ html[data-theme="ly"] .dm-hint[hidden] { display: none; }
   place-items: center;
   background: #000;
   opacity: 0;
-  transition: opacity 600ms cubic-bezier(.4, 0, .2, 1);
+  transition: opacity 560ms cubic-bezier(.4, 0, .2, 1);
   pointer-events: none;
 }
 .intro[hidden] { display: none; }
-.intro.on { opacity: 1; pointer-events: auto; }
+/* 进场要快：过渡一结束立刻盖黑，慢吞吞淡入会先看见一瞬主页。
+   出场留 560ms，视频放完收得柔和。 */
+.intro.on { opacity: 1; pointer-events: auto; transition-duration: 220ms; }
 .intro video {
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* cover：整屏铺满、不留上下黑边。代价是横向裁掉两侧 ——
+     2.61:1 的片子铺 16:9 必然如此，想要不裁就只能留黑边。 */
+  object-fit: cover;
 }
+/* 等 canplay 的时候给个提示，别让人对着纯黑屏发呆 */
+.intro-busy {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  letter-spacing: .18em;
+  color: rgba(255, 255, 255, .42);
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+  opacity: 0;
+  transition: opacity 300ms;
+}
+.intro.on .intro-busy { opacity: 1; }
+.intro.ready .intro-busy { opacity: 0; }
 .intro-skip {
   position: absolute;
   right: 22px;

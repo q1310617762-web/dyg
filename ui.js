@@ -178,19 +178,57 @@
     if (!introOn()) return;
     var v = grabIntro();
     if (!v || !introEl) return;
+
+    /* ① 立刻盖黑：不等下载。等的时候显示「载入中…」，
+       否则用户会先看到一瞬主页再突然黑屏（这就是之前的问题）。 */
+    introEl.classList.toggle('ready', v.readyState >= 3);
     introEl.hidden = false;
     /* 隔两帧再加 .on：hidden 拿掉和 opacity 变化同帧的话过渡不触发 */
     requestAnimationFrame(function () {
       requestAnimationFrame(function () { if (introEl) introEl.classList.add('on'); });
     });
-    try { v.currentTime = 0; } catch (e) {}
-    var pr = v.play();
-    if (pr && pr.catch) pr.catch(function () { closeIntro(); });
+
+    /* ② 等 canplay 再播。加载慢就多等，最多 12 秒放弃放行。
+       play() 在没数据时返回的 promise 会一直挂着，画面停在黑屏上，
+       看起来像卡死 —— 所以必须自己等，而不是直接 play()。 */
+    var started = false, timer = 0, t0 = Date.now();
+    function go() {
+      if (started) return;
+      started = true;
+      clearInterval(timer);
+      introEl.classList.add('ready');
+      try { v.currentTime = 0; } catch (e) {}
+      var pr = v.play();
+      if (pr && pr.catch) pr.catch(function () { closeIntro(); });
+    }
+    if (v.readyState >= 3) {
+      go();
+    } else {
+      timer = setInterval(function () {
+        if (started) { clearInterval(timer); return; }
+        if (v.readyState >= 3) go();
+        else if (Date.now() - t0 > 12000) { clearInterval(timer); closeIntro(); }
+      }, 150);
+      v.addEventListener('loadeddata', function () { if (v.readyState < 3) v.load(); });
+    }
+
     /* 记一笔：这个会话别再播第二遍 */
     if (!introForce()) { try { sessionStorage.setItem('dyg-intro-played', '1'); } catch (e) {} }
   }
   /* 给末尾那段 boot 用（它在 IIFE 外面） */
   window.__dygIntro = playLyIntro;
+
+  /* 指针一碰到皮肤按钮就开始拉视频 —— 从犹豫到点下去通常有几百毫秒，
+     足够把 3.8 MB 的头一段缓冲好，点下去就能直接播。 */
+  function preIntro(e) {
+    var t = e.target;
+    if (!t || !t.closest || !t.closest('[data-theme-btn]')) return;
+    var v = grabIntro();
+    if (!v) return;
+    try { v.preload = 'auto'; } catch (err) {}
+  }
+  document.addEventListener('pointerenter', preIntro, true);
+  document.addEventListener('focusin', preIntro, true);
 
   /* 播着的时候点任意处 / 按 Esc 直接跳过 */
   document.addEventListener('click', function (e) {

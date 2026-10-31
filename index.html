@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261031140019" />
+<link rel="stylesheet" href="theme.css?v=20261031143717" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -530,13 +530,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261031140019"></script>
-<script src="assets/petals.js?v=20261031140019"></script>
-<script src="assets/starfield.js?v=20261031140019"></script>
-<script src="ui.js?v=20261031140019"></script>
-<script src="home.js?v=20261031140019"></script>
-<script src="assets/miko-talk.js?v=20261031140019"></script>
-<script src="assets/viz.js?v=20261031140019"></script>
+<script src="cursor.js?v=20261031143717"></script>
+<script src="assets/petals.js?v=20261031143717"></script>
+<script src="assets/starfield.js?v=20261031143717"></script>
+<script src="ui.js?v=20261031143717"></script>
+<script src="home.js?v=20261031143717"></script>
+<script src="assets/miko-talk.js?v=20261031143717"></script>
+<script src="assets/viz.js?v=20261031143717"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -567,7 +567,7 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261031140019"></script>
+<script src="fx.js?v=20261031143717"></script>
 
 <!-- ============================================================
      乐园皮肤开场动画（黄泉 PV，1:54–2:06）
@@ -579,6 +579,7 @@ window.__dygGallery = function () {
 <div class="intro" data-intro hidden aria-hidden="true">
   <video data-intro-v muted playsinline preload="none"
          data-src="assets/video/intro.mp4"></video>
+  <span class="intro-busy" data-intro-busy>载入中…</span>
   <span class="intro-skip">点击跳过</span>
 </div>
 </body>
