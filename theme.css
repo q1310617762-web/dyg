@@ -1851,19 +1851,19 @@ html[data-theme="ly"] .st-mast { --mast-font: "Mochiy Pop One", "Arial Black", "
 
 html[data-theme="ly"] .st-hello {
   position: absolute;
-  left: 72.85%;
-  right: 2.2%;
-  /* 顶边要跳过右上那排按钮（底 64）并且留出描边/影子的溢出量 ——
-     文字墨迹会比盒子高 .14em（青影往上），所以盒子必须再往下让一截 */
-  top: clamp(80px, 7.2vh, 88px);
+  /* 中栏（插画那列）下部：弹幕飘过的那条带子里 */
+  left: 18.07%;
+  right: 30.21%;
+  top: 71%;
+  transform: translateY(-50%);
+  text-align: center;
   width: auto;
   height: auto;
   z-index: 3;
   padding: 0;
-  font-size: clamp(28px, min(4.4vw, 6.2vh), 76px);
+  font-size: clamp(30px, min(6.2vw, 11vh), 104px);
   line-height: .92;
   letter-spacing: 0;
-  text-align: left;
   /* 贴纸字三件套：白面 + 黑描边 + 青/玫红错位影子。
      paint-order:stroke fill 让描边画在字面**后面** —— 不写这条，
      描边会盖住字面，白面被吃掉一半，字会显得瘦。 */
@@ -1875,10 +1875,12 @@ html[data-theme="ly"] .st-hello {
      .15em -.14em 0 #3c9c9c;
   text-transform: uppercase;
 }
-/* 第一行小一号、右移一点 —— 原图上下两行的错位感 */
+/* 两行都居中。★ 基础样式里 `.st-hello span:last-child{text-align:left}` 特异性
+   和这里的父级规则打平、但它写在后面 —— 不单独写一条会把 WORLD 顶到左边。 */
+html[data-theme="ly"] .st-hello span { text-align: center; }
 html[data-theme="ly"] .st-hello span:first-child {
   font-size: .82em;
-  margin-left: .5em;
+  margin-left: .12em;   /* 只留一点点错位，居中时不能大偏移 */
 }
 html[data-theme="ly"] .st-hello span:last-child { margin-left: 0; }
 
@@ -1887,10 +1889,8 @@ html[data-theme="ly"] .st-hello span:last-child { margin-left: 0; }
    字号只跟宽度走，整行铺满右栏。两行只在 ≤1700 用，那时空地接近 2.5:1。 */
 @media (min-width: 1700px) {
   html[data-theme="ly"] .st-hello {
-    /* 实测 Mochiy Pop One 的「HELLO WORLD」是 8.87em 宽，右栏是 0.2495×视口宽，
-       所以字号上限 = 0.2495/8.87 ≈ 2.8vw，再留一点余量取 2.68vw */
-    font-size: clamp(44px, min(2.68vw, 6vh), 76px);
-    top: clamp(84px, 7.2vh, 92px);
+    /* 单行版：中栏宽 0.517×视口，8.87em 一行 → 上限 0.517/8.87 ≈ 5.8vw */
+    font-size: clamp(40px, min(5.6vw, 9vh), 96px);
     white-space: nowrap;
   }
   html[data-theme="ly"] .st-hello span { display: inline; }
@@ -3585,41 +3585,40 @@ html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
    表现就是「标题跟着一起跑」。 */
 html[data-theme="ly"] .bm { overflow: hidden; }
 
-/* ---------- 收藏卡底部的双人舞 ----------
-   透明 VP9 视频，只在乐园下出现；别的皮肤 display:none 不占位。
-   height 用 clamp 绑视口高：矮屏缩、高屏放，别把收藏列表挤没。
-   .bm 是 flex 列，.bm-groups 是 flex:1 的滚动区 —— 这块固定高度，
-   列表自己让位滚动，卡片总高不变（不破坏网格）。 */
+/* ---------- 双人舞：左栏菜单下方的空地 ----------
+   原先塞在收藏卡里（.bm 底部），但 1440×900 下收藏卡只有 285 高，
+   视频一占位就把收藏链接挤到只剩一行 —— 用户反馈「挡住收藏了」。
+   现在挂到网格 area: menu 的底端：菜单 align-self:start 贴顶，
+   这块 align-self:end 贴底，两者共用一个格位、互不打架。
+   video 用 max-width/max-height 双约束，保比例不裁切。 */
 .bm-duo { display: none; }
 html[data-theme="ly"] .bm-duo {
   display: flex;
-  justify-content: center;
+  /* 右栏上方那块空地（刊头搬走后腾出来的）：绝对定位比网格稳 ——
+     用 <code>grid-row:1/3</code> 时行高会被 150px 的视频顶开，
+     align-self:end 反而失效，元素直接贴到页面顶端。 */
+  position: absolute;
+  right: 2.2%;
+  top: 72px;
+  align-items: flex-end;
   flex: none;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1.5px dashed rgba(20, 20, 20, .18);
+  min-height: 0;
+  pointer-events: none;
 }
-/* ★ [hidden] 是 UA 的 display:none，会被上面这条 display:block 盖掉 ——
-   Safari 回落静帧时就会「视频和静帧同时出现」，看起来像四只角色。必须单独写回。 */
+/* ★ [hidden] 是 UA 的 display:none，会被下面 display:block 盖掉 ——
+   Safari 回落静帧时会「视频和静帧同时出现」，看起来像四只角色。 */
 html[data-theme="ly"] .bm-duo video[hidden],
 html[data-theme="ly"] .bm-duo img[hidden] { display: none; }
 html[data-theme="ly"] .bm-duo video,
 html[data-theme="ly"] .bm-duo img {
   display: block;
-  /* 高度要跟视口高走：1440×900 下收藏卡只有 285 高，视频一高列表就被挤成一行；
-     2216×1145 下卡片会长到 500+，这里自然放大。 */
-  height: clamp(74px, 9.4vh, 124px);
+  max-width: 100%;
+  max-height: min(150px, 17vh);
   width: auto;
+  height: auto;
   pointer-events: none;
 }
-html[data-theme="ly"] .bm-groups {
-  /* 底部渐隐：1440×900 下这块只有 80px 高，列表必然被截断 ——
-     直接切一刀像坏了，渐隐一下读起来是「还能往下滚」。 */
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent 100%);
-  scrollbar-width: thin;
-  scrollbar-color: rgba(20, 20, 20, .3) transparent;
-}
+
 html[data-theme="ly"] .bm-head { margin-bottom: 8px; }
 html[data-theme="ly"] .bm-groups { gap: 10px 14px; }
 html[data-theme="ly"] .bm-l { font-size: 12.5px; }

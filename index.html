@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261031131819" />
+<link rel="stylesheet" href="theme.css?v=20261031133216" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -385,18 +385,21 @@
         </div>
       </div>
 
-      <!-- 收藏卡底部的双人舞（只有乐园皮肤下出现，别的皮肤 display:none）。
-           透明视频 VP9+alpha；Safari / 微信 iOS 不支持视频 alpha，
-           由 ui.js 做一次 canvas 取像素探测，不支持就换成 poster 静帧。
-           素材来源见 assets/video/ 的说明：B 站 BV1xAh86rEAh，两段跳舞抠像后拼成一条。 -->
-      <div class="bm-duo" data-duo>
-        <video data-duo-v muted loop playsinline autoplay preload="metadata"
-               poster="assets/video/duo-A-poster.webp" aria-hidden="true">
-          <source src="assets/video/duo-A.webm" type="video/webm">
-        </video>
-        <img data-duo-img src="assets/video/duo-A-poster.webp" alt="" aria-hidden="true" hidden>
-      </div>
     </section>
+
+
+    <!-- 双人舞：乐园皮肤下落在左栏菜单下方的空地（网格 area: menu 的底端）。
+         原先塞在收藏卡里，1440×900 下收藏卡只有 285 高，视频一放就把
+         收藏链接挤到只剩一行 —— 用户反馈「挡住收藏的网页了」，所以挪出来。
+         透明视频 VP9+alpha；Safari / 微信 iOS 不支持视频 alpha，
+         由 ui.js 做一次 canvas 取像素探测，不支持就换成 poster 静帧。 -->
+    <div class="bm-duo" data-duo>
+      <video data-duo-v muted loop playsinline autoplay preload="metadata"
+             poster="assets/video/duo-A-poster.webp" aria-hidden="true">
+        <source src="assets/video/duo-A.webm" type="video/webm">
+      </video>
+      <img data-duo-img src="assets/video/duo-A-poster.webp" alt="" aria-hidden="true" hidden>
+    </div>
 
     <!-- 音乐可视化：只在八重皮肤、且正在播放时出现。
          平时高度 0 不占位，所以不会在下面留一块空白。 -->
@@ -527,13 +530,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261031131819"></script>
-<script src="assets/petals.js?v=20261031131819"></script>
-<script src="assets/starfield.js?v=20261031131819"></script>
-<script src="ui.js?v=20261031131819"></script>
-<script src="home.js?v=20261031131819"></script>
-<script src="assets/miko-talk.js?v=20261031131819"></script>
-<script src="assets/viz.js?v=20261031131819"></script>
+<script src="cursor.js?v=20261031133216"></script>
+<script src="assets/petals.js?v=20261031133216"></script>
+<script src="assets/starfield.js?v=20261031133216"></script>
+<script src="ui.js?v=20261031133216"></script>
+<script src="home.js?v=20261031133216"></script>
+<script src="assets/miko-talk.js?v=20261031133216"></script>
+<script src="assets/viz.js?v=20261031133216"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -564,7 +567,7 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261031131819"></script>
+<script src="fx.js?v=20261031133216"></script>
 
 <!-- ============================================================
      乐园皮肤开场动画（黄泉 PV，1:54–2:06）
