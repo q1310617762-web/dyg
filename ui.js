@@ -121,6 +121,72 @@
     syncViz(id);
   }
 
+
+  /* ============================================================
+     乐园皮肤开场动画（黄泉 PV）
+     ------------------------------------------------------------
+     默认关，只在 ?intro=1（或 sessionStorage 里开了开关）时才有。
+     不然每个访客都要多下 1.84 MB。
+     ★ 必须等 View Transition 结束再盖上去：过渡还在跑的时候压一层不透明的黑，
+       等于把换肤动画整个吃掉。
+     ============================================================ */
+  var introEl = null, introV = null, introTimer = 0;
+
+  function introOn() {
+    if (/(?:^|[?&])intro=1(?:&|$)/.test(location.search)) return true;
+    try { return sessionStorage.getItem('dyg-intro') === '1'; } catch (e) { return false; }
+  }
+
+  function grabIntro() {
+    if (introEl && introEl.isConnected) return introV;
+    introEl = document.querySelector('[data-intro]');
+    if (!introEl) return null;
+    introV = introEl.querySelector('[data-intro-v]');
+    if (!introV) return null;
+    if (!introV.getAttribute('src') && introV.getAttribute('data-src')) {
+      introV.setAttribute('src', introV.getAttribute('data-src'));
+      introV.load();
+    }
+    return introV;
+  }
+
+  function closeIntro() {
+    if (!introEl || !introEl.classList.contains('on')) return;
+    introEl.classList.remove('on');
+    clearTimeout(introTimer);
+    introTimer = setTimeout(function () {
+      if (introEl) introEl.hidden = true;
+      if (introV) { try { introV.pause(); } catch (e) {} }
+    }, 640);
+  }
+
+  function playLyIntro() {
+    if (!introOn()) return;
+    var v = grabIntro();
+    if (!v || !introEl) return;
+    introEl.hidden = false;
+    /* 隔两帧再加 .on：hidden 拿掉和 opacity 变化同帧的话过渡不触发 */
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () { if (introEl) introEl.classList.add('on'); });
+    });
+    try { v.currentTime = 0; } catch (e) {}
+    var pr = v.play();
+    if (pr && pr.catch) pr.catch(function () { closeIntro(); });
+  }
+  /* 给末尾那段 boot 用（它在 IIFE 外面） */
+  window.__dygIntro = playLyIntro;
+
+  /* 播着的时候点任意处 / 按 Esc 直接跳过 */
+  document.addEventListener('click', function (e) {
+    if (introEl && introEl.classList.contains('on')) { e.preventDefault(); closeIntro(); }
+  }, true);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') closeIntro();
+  });
+  document.addEventListener('ended', function (e) {
+    if (e.target && e.target.matches && e.target.matches('[data-intro-v]')) closeIntro();
+  }, true);
+
   /* 音乐可视化只在「八重」下开，并且要正在播放才出现 ——
      不是八重就立刻收起来，免得换皮肤后留一块空画布。 */
   function syncViz(id) {
@@ -301,6 +367,7 @@
       if (typeof document.startViewTransition !== 'function') {
 
         applyTheme(next, true);
+        if (next === 'ly') playLyIntro();
 
         return;
 
@@ -331,6 +398,9 @@
       vt.finished.catch(function () {}).then(function () {
 
         root.removeAttribute('data-vt');
+
+        /* 过渡跑完再盖开场层 —— 早一帧就把换肤动画挡住了 */
+        if (next === 'ly') playLyIntro();
 
       });
     });
@@ -1283,4 +1353,18 @@
     if (ly && d.v.paused) { try { d.v.play(); } catch (e) {} }
     if (!ly && !d.v.paused) { try { d.v.pause(); } catch (e) {} }
   }, 1500);
+})();
+
+/* ---- 开场动画：开着开关才预取；进站就停在乐园的话也给一次 ---- */
+(function () {
+  window.addEventListener('load', function () {
+    var on = (function () { try { return sessionStorage.getItem('dyg-intro') === '1'; } catch (e) { return false; } })();
+    if (!on && !/(?:^|[?&])intro=1(?:&|$)/.test(location.search)) return;
+    setTimeout(function () {
+      if (document.documentElement.getAttribute('data-theme') === 'ly' &&
+          document.querySelector('[data-intro]') && !document.querySelector('[data-intro]').classList.contains('on')) {
+        if (window.__dygIntro) window.__dygIntro();
+      }
+    }, 900);
+  });
 })();

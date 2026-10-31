@@ -4255,3 +4255,40 @@ html[data-theme="ly"] .dm-hint[hidden] { display: none; }
 @media (max-width: 480px) {
   html[data-theme="ly"] .dm-layer { display: none; }
 }
+
+/* ============================================================
+   乐园皮肤开场动画（黄泉 PV）
+   ------------------------------------------------------------
+   整层 fixed 盖在最上面：.start 80 / .nav 60 / VT 之上。
+   黑底 + contain，保留 2.6:1 的电影画幅（上下自然留黑边，不裁内容）。
+   淡入 240ms、淡出 600ms；点击 / Esc 立刻淡出。
+   ★ 不要用 var(--ease)：38% 时长就跑完 85%，等于瞬切，看不出在淡。
+   ============================================================ */
+.intro {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: grid;
+  place-items: center;
+  background: #000;
+  opacity: 0;
+  transition: opacity 600ms cubic-bezier(.4, 0, .2, 1);
+  pointer-events: none;
+}
+.intro[hidden] { display: none; }
+.intro.on { opacity: 1; pointer-events: auto; }
+.intro video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.intro-skip {
+  position: absolute;
+  right: 22px;
+  bottom: 18px;
+  font-size: 12px;
+  letter-spacing: .08em;
+  color: rgba(255, 255, 255, .55);
+  font-family: system-ui, "Microsoft YaHei", sans-serif;
+}
