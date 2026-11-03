@@ -554,15 +554,20 @@ html[data-switching] * { pointer-events: none !important; }
 .hint-m { display: none; }
 
 /* ---------- 音乐可视化（八重皮肤专属，assets/viz.js 驱动）----------
-   高度 0 → clamp() 过渡，全程只有一次布局重排。
-   canvas 自身高度写死 140px，靠容器 overflow:hidden 裁切 ——
-   所以展开过程中画布不用跟着 resize，曲线不会一边长一边抖。 */
+   ★ 必须绝对定位，不能占 flex 流：之前它是 column 的最后一个子项，
+   一展开总高 +h，justify-content:center 就把整块内容顶上去 h/2
+   （1440×900 实测刊头/搜索/时钟全部上移 49px，牌子跟着顶到页头，
+   把「东草莓 DYG」和右上按钮组压没了）。
+   现在脱离文档流、贴内容底部往上长，文字一动不动。
+   z-index:-1 让它画在文字下面：.start-core 自己建了层叠上下文
+   （position:relative + z-index:1），所以 -1 不会掉到页面背景后面。 */
 .start-viz {
-  position: relative;
-  flex: 0 0 auto;
-  /* 宽度跟收藏网格（miko 下 1040）对齐，不跟 620 的刊头栏。
-     620 的时候它是悬在版面正下方的一小块图，左右都留空，
-     看着像「没摆好的控件」；跟网格同宽之后才像压在页脚上的一条频谱带。 */
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  z-index: -1;
+  /* 宽度跟收藏网格（miko 下 1040）对齐，不跟 620 的刊头栏 */
   width: min(1040px, 100%);
   margin-inline: auto;
   height: 0;
@@ -2575,7 +2580,7 @@ html[data-theme="miko"] .emas {
   /* 5% 在 1080 上是 54px，可 1100×700 只有 35px —— 挂绳会正好压在
      「东草莓 DYG」和右上按钮组上。页头固定 24px 顶边 + 40 左右高，
      所以这里兜一个 68px 下限。 */
-  top: max(5%, 68px);
+  top: max(5%, 74px);
   /* 底边 9% 时下排的流苏会压到页脚那一行（1440×900 实测底边 827 / 页脚 800）。
      12% 之后留出 40px 以上（1440×900 实测列底 792 / 页脚 853），矮屏也够。 */
   bottom: 12%;
@@ -2588,8 +2593,12 @@ html[data-theme="miko"] .emas {
   filter: drop-shadow(0 3px 4px rgba(110, 40, 72, .15))
           drop-shadow(0 15px 26px rgba(110, 40, 72, .17));
 }
-.em-col-l { right: calc(50% + 368px); align-items: flex-end; }
-.em-col-r { left:  calc(50% + 368px); align-items: flex-start; }
+/* 贴屏幕两侧，不再按「50% + 368px」挂在中栏旁边 —— 用户要的是四周散布，
+   现在离中间 620px 的刊头更远（1440 下从 17px 拉到 186px）。
+   下限 44px 不是随手写的：牌子带 -11°~+11° 旋转，视觉外框比盒子宽出约 39px，
+   20px 的边距会让左下那块在 1120 宽时被切掉 1px。上限 150px 给超宽屏留的。 */
+.em-col-l { left:  clamp(44px, 3.4vw, 150px); align-items: flex-start; }
+.em-col-r { right: clamp(44px, 3.4vw, 150px); align-items: flex-end; }
 
 .em {
   position: relative;
@@ -2656,11 +2665,11 @@ html[data-theme="miko"] .emas {
 
    四条 margin 是拿来「打散」的：光靠 space-between，左右两排会顶边齐平、
    底边齐平，四块牌子像四个钉子。现在每块单独错开一点 ——
-   上排右边那块往下沉、下排两块各自往外偏，角度也拉开到 -11°~+11°。
+   上排右边那块往下沉、下排两块各自朝内偏，角度也拉开到 -11°~+11°。
    幅度不能大：牌子是固定像素宽，1440×900 的列高只有 700 出头，
    错开太多两块就会挤在一起。 */
 /* --w 里那串 min() 是「按高度封顶」：一列两块牌子高 1.619w，要塞进
-   列里（top max(5%,68px) / bottom 12% ≈ 0.88vh - 68px），两块加起来 +
+   列里（top max(5%,74px) / bottom 12% ≈ 0.88vh - 74px），两块加起来 +
    上下 margin 不能超过它。只按 vw 给宽度的话，1366×620 这种矮窗口
    两落实打实叠 23px。系数 29.5/24.8/29.5/24.8 就是
    「(0.88vh - 130px) ÷ (1 + 1/宽高比) ÷ 1.619」解出来的；
@@ -2669,15 +2678,15 @@ html[data-theme="miko"] .emas {
          --r: -9deg;  --sw: 10deg; margin-top: 0; }
 .em-l2 { --w: min(clamp(146px,  9.6vw, 172px), calc(24.8vh - 40px));
          --r: 11deg;  --sw: 12deg;
-         margin-right: clamp(0px, 3.2vw, 52px); margin-bottom: clamp(10px, 6.4vh, 62px); }
-/* 左右列刻意不做镜像：右列整体往外压 40px、上排往下坐，
-   下排反而收回来贴中线 —— 四块才不会读成「四个角各一个」。 */
+         margin-left: clamp(0px, 3.2vw, 52px); margin-bottom: clamp(10px, 6.4vh, 62px); }
+/* 左右列刻意不做镜像：左列上贴边、下往里缩；右列上往里缩、下贴边。
+   再加上排比左排低 58px，四块才不会读成「四个角各一个」。 */
 .em-r1 { --w: min(clamp(180px, 11.6vw, 214px), calc(29.5vh - 44px));
          --r:  6deg;  --sw: 9deg;
-         margin-top: clamp(12px, 6.4vh, 58px); margin-left: clamp(0px, 2.2vw, 42px); }
+         margin-top: clamp(12px, 6.4vh, 58px); margin-right: clamp(0px, 2.2vw, 42px); }
 .em-r2 { --w: min(clamp(152px, 10.2vw, 180px), calc(24.8vh - 37px));
          --r: -11deg; --sw: 12deg;
-         margin-left: 0; margin-bottom: clamp(2px, .5vh, 4px); }
+         margin-right: 0; margin-bottom: clamp(2px, .5vh, 4px); }
 
 /* ---------- 收藏面板：点牌面弹出来 ---------- */
 
@@ -2815,21 +2824,28 @@ html[data-theme="miko"] .emas {
 /* 1400 往下，下排两块的水平错位要收一收 —— 3.2vw 在 1280 时有 41px，
    左下那块会被推到离屏幕边只剩 34px，投影都没地方放 */
 @media (max-width: 1399px) {
-  .em-l2 { margin-right: clamp(0px, 1.8vw, 26px); }
+  .em-l2 { margin-left: clamp(0px, 1.8vw, 26px); }
 }
 @media (max-width: 1439px) {
   .em-l1 { --w: min(clamp(150px, 12vw,   168px), calc(29.5vh - 44px)); margin-top: 2px; }
   .em-l2 { --w: min(clamp(130px, 10.4vw, 148px), calc(24.8vh - 40px));
-           margin-right: 0; margin-bottom: clamp(8px, 4.2vh, 30px); }
+           margin-left: 0; margin-bottom: clamp(8px, 4.2vh, 30px); }
   .em-r1 { --w: min(clamp(158px, 12.6vw, 180px), calc(29.5vh - 44px));
            margin-top: clamp(6px, 3.4vh, 26px); }
   .em-r2 { --w: min(clamp(136px, 11vw,   154px), calc(24.8vh - 37px));
-           margin-left: 0; margin-bottom: clamp(2px, .5vh, 6px); }
+           margin-right: 0; margin-bottom: clamp(2px, .5vh, 6px); }
+}
+/* 1200 往下，右上那块不能再往里缩了：刊头盒固定 620 宽居中，视口一窄
+   它的右边缘就追上来（1120 时 mast 右边缘 863，牌子外框左边缘 852，
+   咬进 11px）。这里把内缩取消、让它贴回屏幕边，靠 26px 的 margin-top
+   和不同的倾角继续跟下排错开。 */
+@media (max-width: 1199px) {
+  .em-r1 { margin-right: 0; }
 }
 /* 再窄刊头就要吃掉整个宽度，两侧没有空白可挂 —— 退回原来的四列收藏列表。
    这条以前是 display:none 了事，等于窄屏彻底没有收藏入口。
-   阈值是 1119 不是 1079：列偏移固定 50%+368px，1120 往下左列就开始出屏
-   （实测 1080 时牌面左边 -4px、右上那块右边 +1px）。 */
+   阈值是 1119 不是 1079：贴边之后 1120 时左下那块外框左边只剩 5px，
+   再往下就要切到牌子本体了。 */
 @media (max-width: 1119px) {
   html[data-theme="miko"] .emas { display: none; }
   html[data-theme="miko"] .bm { display: block; }

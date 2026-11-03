@@ -30,7 +30,7 @@
   var raf = 0, running = false, painted = false;
   var audio = null, actx = null, anode = null, abuf = null, srcNode = null;
   var wired = false, dead = false, zeroStreak = 0, probeGap = 0;
-  var lastPeak = 0, tPrev = 0, scrollTimer = 0, smooth = 0;
+  var lastPeak = 0, tPrev = 0, smooth = 0;
   var colors = {};
 
   /* ---------- 颜色：从皮肤令牌读，换皮肤不用改代码 ---------- */
@@ -95,32 +95,34 @@
     /* 不能用 scrollHeight 反推：内容比容器矮时 scrollHeight 恒等于 clientHeight，
        算出来的富余永远是 0（踩过）。只能把兄弟块的盒高一个一个加起来。 */
     var rest = 0;
+    var contentBottom = 0;      /* 内容最低点，相对 core 顶 —— 谱线只能长在它下面 */
     var mast = null;
     var kids = core.children;
+    var cr0 = core.getBoundingClientRect();
     for (var i = 0; i < kids.length; i++) {
       if (kids[i] === box) continue;
       if (!mast && kids[i].classList && kids[i].classList.contains('st-mast')) mast = kids[i];
       var cs = getComputedStyle(kids[i]);
-      rest += kids[i].getBoundingClientRect().height +
+      var kr = kids[i].getBoundingClientRect();
+      rest += kr.height +
               (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0);
+      contentBottom = Math.max(contentBottom, kr.bottom - cr0.top + core.scrollTop);
     }
     var pcs = getComputedStyle(core);
     rest += (parseFloat(pcs.paddingTop) || 0) + (parseFloat(pcs.paddingBottom) || 0);
 
-    /* 留 3px 余量。原来是 6px，但刊头盒高度统一之后（八重那档行盒比别的高 27px）
-       起始页的富余少了，6px 会让 1440×900 只剩 88px，够不着「够看」的 90。
-       3px 仍留得住「最后一根柱子的峰值帽不贴容器边」。 */
-    var avail = core.clientHeight - rest - 3;
+    /* 谱线是绝对定位的（不占流），所以这里不再从「总高 - 内容高」里挤，
+       而是直接量文字最低点到底部还剩多少：
+       除 GAP 外再留 10px 底部余量（CSS 里 bottom:10px）。 */
+    var GAP = 12;
+    var avail = core.clientHeight - contentBottom - GAP - 10;
     var want = Math.max(64, Math.min(140, Math.round(window.innerHeight * 0.11)));
 
-    /* 富余不够时理论上可以靠 scrollTop 把它顶出来，但那条路是走不通的：
-       .start-core 是「垂直居中 + 内滚」的容器，可视化一展开，刊头自己就顶到
-       容器上沿了 —— 此时 mast.top - core.top 只剩 4px，可借的余量其实是 0。
-       上一版按「展开前」的刊头位置去估（量出来 21px），预算虚高，
-       1366×768 展开后有 7px 落在可视区外，而滚动兜底因为 maxScroll=0 也救不回来。
-       所以预算就是实打实的可用高度，不预支滚动。 */
-    var cr0 = core.getBoundingClientRect();
-    var topGap = mast ? Math.max(0, mast.getBoundingClientRect().top - cr0.top - 4) : 0;
+    /* 可视区高度就是硬预算，不预支滚动 —— 以前靠 core.scrollTo 把谱线顶进来，
+       代价是把刊头一起顶上去 49px（用户报的「上面的 UI 被遮挡」）。
+       现在谱线不占流，内容不会动，空间不够就是不够，宁可不显示。 */
+    var cr1 = core.getBoundingClientRect();
+    var topGap = mast ? Math.max(0, mast.getBoundingClientRect().top - cr1.top - 4) : 0;
     window.__dygVizGap = { topGap: Math.round(topGap) };   /* 诊断用 */
 
     /* avail 可能是负的（矮屏起始页本来就溢出），负的部分不能算进预算 */
@@ -497,43 +499,14 @@
     if (box) box.classList.add('on');
     if (!raf) raf = requestAnimationFrame(frame);
 
-    /* 展开后如果整块落在可视区外，就把它滚进来。
-       关键：.start-core 是内滚容器，滚多少刊头就往上走多少。
-       所以必须自己算滚动量并夹在 topGap 里 —— 用 scrollIntoView 会一路滚到底，
-       1366×768 把 HELLO WORLD 顶掉 62px，1280×720 直接顶出屏幕。
-       fit() 已经把 h 控制在「avail + topGap」以内，理论上需要的滚动量不会超，
-       这里再夹一次是防过渡期间量到的中间值把预算骗过去。 */
-    if (scrollTimer) clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(function () {
-      if (!running || !box) return;
-      var core = box.parentElement;
-      if (!core) return;
-      var r = box.getBoundingClientRect(), cr = core.getBoundingClientRect();
-      var need = r.bottom - cr.bottom;
-      if (need <= 1) return;
-
-      var mast = core.querySelector('.st-mast');
-      var maxScroll = mast
-        ? Math.max(0, mast.getBoundingClientRect().top - cr.top - 4)
-        : need;
-      var delta = Math.min(need, maxScroll);
-      if (delta <= 1) return;
-
-      var reduce = window.matchMedia &&
-                   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      if (typeof core.scrollTo === 'function') {
-        core.scrollTo({ top: core.scrollTop + delta, behavior: reduce ? 'auto' : 'smooth' });
-      } else {
-        core.scrollTop = core.scrollTop + delta;
-      }
-    }, 480);                       /* 等 height 过渡（450ms）走完再量 */
+    /* 谱线是绝对定位、贴内容底部往上长，永远落在可视区内，
+       所以不再需要「展开后把它滚进来」—— 那段滚动会把刊头一起顶走。 */
   }
 
   function stop() {
     if (!running) return;
     running = false;
     if (raf) { cancelAnimationFrame(raf); raf = 0; }
-    if (scrollTimer) { clearTimeout(scrollTimer); scrollTimer = 0; }
     if (box) box.classList.remove('on');
     petals.length = 0;
     for (var i = 0; i < BARS; i++) { barLv[i] = 0; barPk[i] = 0; barRaw[i] = 0; }
