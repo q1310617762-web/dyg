@@ -835,6 +835,91 @@
   });
 
   /* ============================================================
+     绘马：点红绳晃、点牌面开收藏（八重皮肤）
+     ------------------------------------------------------------
+     两套热区上下分开：绳子 0–27%，牌面 27–70%，互不重叠。
+     面板内容从 .bm-groups 克隆，不另写一份链接 —— 有机 / 夜幕 / 乐园
+     看到的还是同一份 HTML，只有一处要维护。克隆时把 .bm-l 的类清掉，
+     否则会带进列表那套负边距、行高和 hover 底色。
+     同一张牌子连点要先摘类再强制重排，否则动画不会从头播。
+     用 document 委托 + WeakMap 存定时器：换页时元素会被 importNode
+     重建，绑在元素上的监听和状态都得能跟着旧节点一起走掉。
+     ============================================================ */
+  var emSwing = new WeakMap();
+
+  function emModal() { return document.querySelector('[data-em-modal]'); }
+
+  function openEm(idx) {
+    var modal = emModal();
+    if (!modal) return;
+    var g = document.querySelectorAll('.start-core .bm-g')[idx];
+    if (!g) return;
+
+    var h = g.querySelector('h3');
+    var t = modal.querySelector('[data-em-title]');
+    var box = modal.querySelector('[data-em-links]');
+
+    if (t) t.textContent = h ? h.textContent.trim() : '';
+    if (box) {
+      box.textContent = '';
+      [].forEach.call(g.querySelectorAll('.bm-l'), function (a) {
+        var c = a.cloneNode(true);
+        c.className = '';
+        box.appendChild(c);
+      });
+    }
+
+    modal.hidden = false;
+    var x = modal.querySelector('.em-x');
+    if (x && x.focus) x.focus({ preventScroll: true });
+  }
+
+  function closeEm() {
+    var modal = emModal();
+    if (!modal || modal.hidden) return;
+    modal.hidden = true;
+    /* 焦点还给点开它的那块牌子，免得读屏回到文档开头 */
+    var cur = document.querySelector('[data-em-cat].is-on');
+    if (cur) cur.focus({ preventScroll: true });
+  }
+
+  document.addEventListener('click', function (e) {
+    var t = e.target;
+    if (!t || !t.closest) return;
+
+    var rope = t.closest('[data-em-rope]');
+    if (rope) {
+      var em = rope.closest('[data-em]');
+      if (em) {
+        clearTimeout(emSwing.get(em));
+        em.classList.remove('is-swing');
+        void em.offsetWidth;                /* 强制重排，动画才能重播 */
+        em.classList.add('is-swing');
+        emSwing.set(em, setTimeout(function () {
+          em.classList.remove('is-swing');
+        }, 1700));
+      }
+      return;
+    }
+
+    if (t.closest('[data-em-close]')) { closeEm(); return; }
+
+    var face = t.closest('[data-em-cat]');
+    if (face) {
+      e.preventDefault();
+      [].forEach.call(document.querySelectorAll('[data-em-cat].is-on'), function (b) {
+        b.classList.remove('is-on');
+      });
+      face.classList.add('is-on');
+      openEm(parseInt(face.getAttribute('data-em-cat'), 10) || 0);
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' || e.key === 'Esc') closeEm();
+  });
+
+  /* ============================================================
      站内路由：只换内容区
      ============================================================ */
   var CONTENT_SKIP = '[data-nav], [data-menu], footer';

@@ -9,7 +9,7 @@
 <meta name="theme-color" content="#0b0b0d" />
 <link rel="icon" href="assets/favicon.svg" />
 <link rel="preload" href="assets/fonts/playfair-display.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="theme.css?v=20261031143717" />
+<link rel="stylesheet" href="theme.css?v=20261103203126" />
 <script>
 /* 首屏前定形态：内联同步执行，避免先闪一下起始页再跳博客。
    优先级：URL 的 ?m= > 本次会话记住的 > 默认起始页。
@@ -407,6 +407,59 @@
 
   </div>
 
+  <!-- 绘马：八重皮肤下的收藏入口（其余皮肤 display:none）。
+       四块牌子 = 收藏的四个分组，纸面上写着分组名。
+       - 点牌面（木牌主体那块）→ 弹出该组的链接
+       - 点红绳（顶部 27%）→ 只晃动，不弹面板
+       链接不在这里再写一遍：面板内容是 JS 从上面的 .bm-groups 克隆的，
+       有机 / 夜幕 / 乐园看到的还是同一份列表，只有一份要维护。
+       绝对定位、不进 flex 流 —— 收藏列表撤掉后让出的高度一分不少全给频谱。 -->
+  <div class="emas">
+    <div class="em-col em-col-l">
+      <div class="em em-l1" data-em>
+        <button type="button" class="em-face" data-em-cat="0" aria-label="打开「游戏」收藏">
+          <span>游戏</span>
+        </button>
+        <span class="em-rope" data-em-rope></span>
+      </div>
+      <div class="em em-l2" data-em>
+        <button type="button" class="em-face" data-em-cat="2" aria-label="打开「素材」收藏">
+          <span>素材</span>
+        </button>
+        <span class="em-rope" data-em-rope></span>
+      </div>
+    </div>
+    <div class="em-col em-col-r">
+      <div class="em em-r1" data-em>
+        <button type="button" class="em-face" data-em-cat="1" aria-label="打开「壁纸」收藏">
+          <span>壁纸</span>
+        </button>
+        <span class="em-rope" data-em-rope></span>
+      </div>
+      <div class="em em-r2" data-em>
+        <button type="button" class="em-face" data-em-cat="3" aria-label="打开「看看」收藏">
+          <span>看看</span>
+        </button>
+        <span class="em-rope" data-em-rope></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏面板：内容由 ui.js 从 .bm-groups 克隆进来，这里只留骨架 -->
+  <div class="em-modal" data-em-modal hidden>
+    <div class="em-veil" data-em-close></div>
+    <div class="em-card" role="dialog" aria-modal="true" aria-labelledby="emTitle">
+      <button type="button" class="em-x" data-em-close aria-label="关闭">
+        <svg width="13" height="13" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M2.6 2.6l8.8 8.8M11.4 2.6l-8.8 8.8" stroke="currentColor"
+                stroke-width="1.9" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <h2 class="em-title" id="emTitle" data-em-title></h2>
+      <div class="em-links" data-em-links></div>
+    </div>
+  </div>
+
   <!-- 乐园皮肤右下角那颗大按钮（原图「开始游戏」的位置）。
       别的皮肤 display:none。走路由，不整页重载。 -->
   <a class="ly-cta" href="index.html?m=blog">
@@ -530,13 +583,13 @@
   <footer data-foot></footer>
 </div>
 
-<script src="cursor.js?v=20261031143717"></script>
-<script src="assets/petals.js?v=20261031143717"></script>
-<script src="assets/starfield.js?v=20261031143717"></script>
-<script src="ui.js?v=20261031143717"></script>
-<script src="home.js?v=20261031143717"></script>
-<script src="assets/miko-talk.js?v=20261031143717"></script>
-<script src="assets/viz.js?v=20261031143717"></script>
+<script src="cursor.js?v=20261103203126"></script>
+<script src="assets/petals.js?v=20261103203126"></script>
+<script src="assets/starfield.js?v=20261103203126"></script>
+<script src="ui.js?v=20261103203126"></script>
+<script src="home.js?v=20261103203126"></script>
+<script src="assets/miko-talk.js?v=20261103203126"></script>
+<script src="assets/viz.js?v=20261103203126"></script>
 <script>
 /* 首页相册条：和图集页同一批图，换图改这个数组即可。
    不在解析时构建 —— 这 12 张每张 100K 上下，起始页根本不显示它们，
@@ -567,7 +620,7 @@ window.__dygGallery = function () {
   }).join('');
 };
 </script>
-<script src="fx.js?v=20261031143717"></script>
+<script src="fx.js?v=20261103203126"></script>
 
 <!-- ============================================================
      乐园皮肤开场动画（黄泉 PV，1:54–2:06）

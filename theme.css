@@ -2544,6 +2544,297 @@ html[data-theme="miko"] .mast-miko-wrap { display: block; }
   margin-bottom: 2px;
 }
 
+/* ---------- 绘马：八重专属的收藏入口（2026-11-03） ----------
+
+   收藏列表在八重下整块撤掉，让出的约 205px 直接兑换成频谱高度；
+   绘马挂在刊头两侧的空白里，绝对定位不进流，不会把那 205px 又吃回去。
+
+   四块牌子 = 收藏的四个分组。牌面上的字是 CSS 写的，底图是抠好的
+   **空白**绘马（ema-blank.webp）—— 原来那两行假名已经在图里擦掉了，
+   擦除脚本 _yingma/blank.py 按墨色 [160,114,73] 选像素，
+   别用亮度阈值，那会把纸面左右两条粉色边框一起抹掉。
+
+   为什么只有八重：organic / dark 是窄栏居中版式，没有两侧空白可挂；
+   乐园有自己的三栏网格。四套皮肤共用一份 HTML，所以用 display 切。 */
+
+html[data-theme="miko"] .bm { display: none; }
+
+.emas { display: none; }
+html[data-theme="miko"] .emas {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;               /* 与 .start-core 同级，DOM 在后 → 压在频谱上面 */
+  pointer-events: none;     /* 整层不吃点击，只有牌面和红绳例外 */
+}
+
+/* 左右各一列。用 flex column + space-between 排，而不是给每块写死 top 百分比：
+   牌子高度是 clamp 出来的、跟视口不是线性关系，写死之后 1280×800 会叠到一起。 */
+.em-col {
+  position: absolute;
+  /* 5% 在 1080 上是 54px，可 1100×700 只有 35px —— 挂绳会正好压在
+     「东草莓 DYG」和右上按钮组上。页头固定 24px 顶边 + 40 左右高，
+     所以这里兜一个 68px 下限。 */
+  top: max(5%, 68px);
+  /* 底边 9% 时下排的流苏会压到页脚那一行（1440×900 实测底边 827 / 页脚 800）。
+     12% 之后留出 40px 以上（1440×900 实测列底 792 / 页脚 853），矮屏也够。 */
+  bottom: 12%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* 阴影挂整列而不是每块：6 个 drop-shadow 滤镜在软件渲染下会把换页的
+     View Transition 拖到 1.5 秒以上（实测 1500ms 抓不到新页面），
+     挪到列上只要 2 次，轮廓合在一起肉眼看不出差别。 */
+  filter: drop-shadow(0 3px 4px rgba(110, 40, 72, .15))
+          drop-shadow(0 15px 26px rgba(110, 40, 72, .17));
+}
+.em-col-l { right: calc(50% + 368px); align-items: flex-end; }
+.em-col-r { left:  calc(50% + 368px); align-items: flex-start; }
+
+.em {
+  position: relative;
+  flex: none;               /* 不许被压：一压 aspect-ratio 就变形 */
+  width: var(--w, 120px);
+  aspect-ratio: 320 / 518;
+  background: url("assets/img/ema-blank.webp") center / 100% 100% no-repeat;
+  /* 摆动轴落在绳顶（抠图里绳顶在 50.1%），木牌整体吊着甩而不是原地转 */
+  transform-origin: 50% 0;
+  transform: rotate(var(--r, 0deg));
+}
+
+/* 牌面热区：盖住木牌主体（27%~70%），绳子和流苏都不含在内 */
+.em-face {
+  position: absolute;
+  left: 4%;
+  right: 4%;
+  top: 27%;
+  height: 43%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  /* 木牌上的字按纸面色调走，不用主题的 --text（樱白底上的墨色偏棕） */
+  color: #7a4530;
+  transition: color .16s var(--ease);
+}
+.em-face > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 33.5%;              /* 纸面中心：34.3%~48.5% 的中点，换算到 27%~70% 这块 */
+  transform: translateY(-50%);
+  display: block;
+  text-align: center;
+  font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  font-size: calc(var(--w) * .125);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: .1em;
+  text-indent: .1em;       /* 抵消末字后多出来的那截字距，才是真居中 */
+}
+@media (hover: hover) and (pointer: fine) {
+  .em-face:hover { color: #4e2419; }
+}
+.em-face:active { color: #4e2419; }
+
+/* 红绳热区：横向 22%–78%、纵向 0–27%（27% 正好到木牌上沿）—— 只晃不弹面板 */
+.em-rope {
+  position: absolute;
+  left: 22%;
+  top: 0;
+  width: 56%;
+  height: 27%;
+  pointer-events: auto;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 尺寸跟 vw 走一点：1920 下还按固定值挂，比例上会缩成一小撮挂件。
+   位置由 .em-col 决定，这里只管大小和基础倾角。
+
+   四条 margin 是拿来「打散」的：光靠 space-between，左右两排会顶边齐平、
+   底边齐平，四块牌子像四个钉子。现在每块单独错开一点 ——
+   上排右边那块往下沉、下排两块各自往外偏，角度也拉开到 -11°~+11°。
+   幅度不能大：牌子是固定像素宽，1440×900 的列高只有 700 出头，
+   错开太多两块就会挤在一起。 */
+/* --w 里那串 min() 是「按高度封顶」：一列两块牌子高 1.619w，要塞进
+   列里（top max(5%,68px) / bottom 12% ≈ 0.88vh - 68px），两块加起来 +
+   上下 margin 不能超过它。只按 vw 给宽度的话，1366×620 这种矮窗口
+   两落实打实叠 23px。系数 29.5/24.8/29.5/24.8 就是
+   「(0.88vh - 130px) ÷ (1 + 1/宽高比) ÷ 1.619」解出来的；
+   改 top/bottom 或 margin 都要跟着重算，回归跑 _yingma/_emsweep.mjs。 */
+.em-l1 { --w: min(clamp(168px, 11.2vw, 196px), calc(29.5vh - 44px));
+         --r: -9deg;  --sw: 10deg; margin-top: 0; }
+.em-l2 { --w: min(clamp(146px,  9.6vw, 172px), calc(24.8vh - 40px));
+         --r: 11deg;  --sw: 12deg;
+         margin-right: clamp(0px, 3.2vw, 52px); margin-bottom: clamp(10px, 6.4vh, 62px); }
+/* 左右列刻意不做镜像：右列整体往外压 40px、上排往下坐，
+   下排反而收回来贴中线 —— 四块才不会读成「四个角各一个」。 */
+.em-r1 { --w: min(clamp(180px, 11.6vw, 214px), calc(29.5vh - 44px));
+         --r:  6deg;  --sw: 9deg;
+         margin-top: clamp(12px, 6.4vh, 58px); margin-left: clamp(0px, 2.2vw, 42px); }
+.em-r2 { --w: min(clamp(152px, 10.2vw, 180px), calc(24.8vh - 37px));
+         --r: -11deg; --sw: 12deg;
+         margin-left: 0; margin-bottom: clamp(2px, .5vh, 4px); }
+
+/* ---------- 收藏面板：点牌面弹出来 ---------- */
+
+.em-modal { display: none; }
+.em-modal:not([hidden]) { display: grid; }
+.em-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  place-items: center;
+  padding: 24px;
+}
+
+.em-veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(59, 42, 52, .26);
+  animation: emVeil .2s var(--ease-out) both;
+}
+@keyframes emVeil { from { opacity: 0 } to { opacity: 1 } }
+
+.em-card {
+  position: relative;
+  width: min(560px, 100%);
+  max-height: min(78vh, 640px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  padding: 30px 32px 28px;
+  border-radius: 20px;
+  background: #fdf6f9;
+  box-shadow: 0 28px 64px rgba(70, 30, 50, .26), 0 3px 8px rgba(70, 30, 50, .1);
+  animation: emCard .26s var(--ease-out) both;
+}
+@keyframes emCard {
+  from { opacity: 0; transform: translateY(10px) scale(.985); }
+  to   { opacity: 1; transform: none; }
+}
+
+.em-title {
+  margin: 0 0 18px;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: #3b2a34;
+}
+
+.em-x {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(192, 53, 107, .09);
+  color: #a8466b;
+  cursor: pointer;
+  transition: background .16s, color .16s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .em-x:hover { background: rgba(192, 53, 107, .17); color: #8e2a52; }
+}
+.em-x:active { background: rgba(192, 53, 107, .22); }
+
+.em-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px 20px;
+}
+.em-links a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px 9px 8px;
+  border-radius: 11px;
+  font-size: 14px;
+  color: #5c4451;
+  transition: background .16s, color .16s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .em-links a:hover { background: rgba(192, 53, 107, .07); color: #3b2a34; }
+}
+.em-links a:active { background: rgba(192, 53, 107, .13); }
+.em-links a i {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  font-style: normal;
+  font-size: 11px;
+  border-radius: 8px;
+  background: rgba(192, 53, 107, .1);
+  color: #a8466b;
+  transition: background .16s, color .16s;
+}
+@media (hover: hover) and (pointer: fine) {
+  .em-links a:hover i { background: #c0356b; color: #fff; }
+}
+.em-links a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+/* 钟摆衰减：每一段都是「到极值 → 往回」，振幅每半周期乘 .78。
+   角度全部基于 --r 再叠加 --sw，所以每张牌子各按自己的基础角摆。 */
+@keyframes emaSwing {
+  0%   { transform: rotate(var(--r, 0deg)); }
+  9%   { transform: rotate(calc(var(--r, 0deg) + var(--sw, 8deg))); }
+  20%  { transform: rotate(calc(var(--r, 0deg) - var(--sw, 8deg) * .78)); }
+  31%  { transform: rotate(calc(var(--r, 0deg) + var(--sw, 8deg) * .58)); }
+  42%  { transform: rotate(calc(var(--r, 0deg) - var(--sw, 8deg) * .42)); }
+  53%  { transform: rotate(calc(var(--r, 0deg) + var(--sw, 8deg) * .30)); }
+  64%  { transform: rotate(calc(var(--r, 0deg) - var(--sw, 8deg) * .20)); }
+  76%  { transform: rotate(calc(var(--r, 0deg) + var(--sw, 8deg) * .12)); }
+  88%  { transform: rotate(calc(var(--r, 0deg) - var(--sw, 8deg) * .06)); }
+  100% { transform: rotate(var(--r, 0deg)); }
+}
+.em.is-swing { animation: emaSwing 1.5s cubic-bezier(.4, 0, .6, 1) both; }
+
+/* 减弱动效：摆动直接不发生。别让它走那条全局 .01ms 的兜底 ——
+   那会变成「瞬间闪一下角度就归位」，比不动更难受。 */
+@media (prefers-reduced-motion: reduce) {
+  .em.is-swing { animation: none; }
+}
+
+/* 窄一档就整体缩一档：牌子是固定像素宽，视口一窄两侧的空白就装不下了。
+   不能只隐藏其中一对 —— 那样「素材」「看看」两个分类在窄屏就没入口了。 */
+/* 1400 往下，下排两块的水平错位要收一收 —— 3.2vw 在 1280 时有 41px，
+   左下那块会被推到离屏幕边只剩 34px，投影都没地方放 */
+@media (max-width: 1399px) {
+  .em-l2 { margin-right: clamp(0px, 1.8vw, 26px); }
+}
+@media (max-width: 1439px) {
+  .em-l1 { --w: min(clamp(150px, 12vw,   168px), calc(29.5vh - 44px)); margin-top: 2px; }
+  .em-l2 { --w: min(clamp(130px, 10.4vw, 148px), calc(24.8vh - 40px));
+           margin-right: 0; margin-bottom: clamp(8px, 4.2vh, 30px); }
+  .em-r1 { --w: min(clamp(158px, 12.6vw, 180px), calc(29.5vh - 44px));
+           margin-top: clamp(6px, 3.4vh, 26px); }
+  .em-r2 { --w: min(clamp(136px, 11vw,   154px), calc(24.8vh - 37px));
+           margin-left: 0; margin-bottom: clamp(2px, .5vh, 6px); }
+}
+/* 再窄刊头就要吃掉整个宽度，两侧没有空白可挂 —— 退回原来的四列收藏列表。
+   这条以前是 display:none 了事，等于窄屏彻底没有收藏入口。
+   阈值是 1119 不是 1079：列偏移固定 50%+368px，1120 往下左列就开始出屏
+   （实测 1080 时牌面左边 -4px、右上那块右边 +1px）。 */
+@media (max-width: 1119px) {
+  html[data-theme="miko"] .emas { display: none; }
+  html[data-theme="miko"] .bm { display: block; }
+}
+
 /* ============================================================
    20. 皮肤五：自然有机（Natural Organic）
    ────────────────────────────────────────────────────────────

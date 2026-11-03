@@ -522,6 +522,9 @@
 
   document.addEventListener('keydown', function (e) {
     if (e.metaKey || e.ctrlKey || e.altKey) return;
+    /* 绘马收藏面板开着时是模态层：Tab / 方向键要在面板里走，
+       按 / 也不该把焦点抢到搜索框去 */
+    if (document.querySelector('[data-em-modal]:not([hidden])')) return;
     var t = e.target;
 
     // / 聚焦搜索
