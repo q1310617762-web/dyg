@@ -3893,45 +3893,6 @@ html[data-theme="ly"] .st-clock .tc { flex: 1 1 0; min-width: 0; }
    表现就是「标题跟着一起跑」。 */
 html[data-theme="ly"] .bm { overflow: hidden; }
 
-/* ---------- 双人舞：左栏菜单下方的空地 ----------
-   原先塞在收藏卡里（.bm 底部），但 1440×900 下收藏卡只有 285 高，
-   视频一占位就把收藏链接挤到只剩一行 —— 用户反馈「挡住收藏了」。
-   现在挂到网格 area: menu 的底端：菜单 align-self:start 贴顶，
-   这块 align-self:end 贴底，两者共用一个格位、互不打架。
-   video 用 max-width/max-height 双约束，保比例不裁切。 */
-.bm-duo { display: none; }
-html[data-theme="ly"] .bm-duo {
-  display: flex;
-  /* 右栏上方那块空地（刊头搬走后腾出来的）：绝对定位比网格稳 ——
-     用 <code>grid-row:1/3</code> 时行高会被 150px 的视频顶开，
-     align-self:end 反而失效，元素直接贴到页面顶端。 */
-  position: absolute;
-  /* 右栏横向正中 = 时钟三张卡里 MINUTE 那张的中心（实测 1216 对 1218）。
-     右栏占视口的 72.85%~97.8%，中心 85.3%；用 left+translateX 居中，
-     别写 right —— right 是贴右边缘，不居中。 */
-  left: calc(85.3% + 3px);   /* +3px：MINUTE 卡比旁边两张宽 4px，中心略偏右 */
-  right: auto;
-  top: 72px;
-  transform: translateX(-50%);
-  align-items: flex-end;
-  flex: none;
-  min-height: 0;
-  pointer-events: none;
-}
-/* ★ [hidden] 是 UA 的 display:none，会被下面 display:block 盖掉 ——
-   Safari 回落静帧时会「视频和静帧同时出现」，看起来像四只角色。 */
-html[data-theme="ly"] .bm-duo video[hidden],
-html[data-theme="ly"] .bm-duo img[hidden] { display: none; }
-html[data-theme="ly"] .bm-duo video,
-html[data-theme="ly"] .bm-duo img {
-  display: block;
-  max-width: 100%;
-  max-height: min(150px, 17vh);
-  width: auto;
-  height: auto;
-  pointer-events: none;
-}
-
 html[data-theme="ly"] .bm-head { margin-bottom: 8px; }
 html[data-theme="ly"] .bm-groups { gap: 10px 14px; }
 html[data-theme="ly"] .bm-l { font-size: 12.5px; }
