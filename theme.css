@@ -323,6 +323,10 @@ html[data-switching] * { pointer-events: none !important; }
   gap: 8px;
   font-size: 15px;
   font-weight: 600;
+  /* 窄屏下右上角控件一多，品牌会被挤到只剩一个字宽、竖着排成三行
+     —— 定死不收缩也不折行，宁可让按钮组自己换行。 */
+  flex: none;
+  white-space: nowrap;
 }
 .mark small {
   font-size: 10px;
@@ -1009,6 +1013,12 @@ html[data-soft-switch]::view-transition-new(root) {
 .np {
   display: flex;
   align-items: center;
+  /* 10px 是四套皮肤共用的基础值：乐园那套给按钮和歌名各加了 2.5px 黑描边
+     加 3px 硬投影，描边会吃掉视觉间隙 —— 8px 的时候实际只剩 3px，
+     用户直接反馈「播放器和音乐名黏在一起」。乐园再单独加到 14px。
+     （搜索页那颗原来还多一条 margin-right:2px，已并进这个 gap，
+     否则按钮到歌名 10px、歌名到音量 8px，一宽一窄像没对齐。） */
+  gap: 10px;
   padding: 3px 4px 3px 3px;
   border-radius: var(--r-pill);
   background: var(--layer-1);
@@ -1046,16 +1056,17 @@ html[data-soft-switch]::view-transition-new(root) {
 .np.playing .np-btn:active,
 .np-btn.playing:active { background: var(--accent); }
 
-/* 搜索页右上那颗只留位置：和皮肤键、形态切换同一排，规格完全继承 .np-btn */
-.start-right .np-btn { margin-right: 2px; }
-
 .np-meta {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
   gap: 1px;
-  max-width: 168px;
+  /* 宽度钉死，不写 max-width：默认「播放 / 5 首」短、播放后是真歌名长，
+     用 max-width 时盒子会跟着内容从 ~60px 涨到 168px，整条胶囊跟着抖。
+     flex:none 防它被窄屏的其它子项挤瘦。文字超长由 .np-t/.np-a 截断。 */
+  width: 168px;
+  flex: none;
   padding: 0 12px 0 9px;
   border-radius: var(--r-pill);
   text-align: left;
@@ -1081,6 +1092,51 @@ html[data-soft-switch]::view-transition-new(root) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* ---------- 起始页右上那颗：歌名 + 音量 ----------
+   歌名只读（起始页形态下导航栏连同歌单弹层是 visibility:hidden，
+   做成可点按钮只会得到一个点不开的「歌单」），宽度比导航栏那颗窄。 */
+.np--start .np-meta { width: 118px; }
+.np-meta--ro { pointer-events: none; }
+
+.np-vol {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+  height: 26px;
+  padding: 0 8px;
+  border-radius: var(--r-pill);
+  background: var(--layer-2);
+  color: var(--text-2);
+}
+.np-vol input[type="range"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 52px;
+  height: 4px;
+  margin: 0;
+  border-radius: 2px;
+  background: var(--layer-3);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.np-vol input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.np-vol input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 /* 进度条横贯整条胶囊 */
@@ -1566,7 +1622,8 @@ html.reveal .rv.in { opacity: 1; transform: none; }
 @media (max-width: 900px) {
   /* 原来这里把歌单按钮整个藏了，手机上等于没有音乐列表。
      改成只留歌名一行（去掉艺人），宽度就够塞进胶囊 */
-  .np-meta { max-width: 92px; padding: 0 8px 0 6px; }
+  .np-meta { width: 92px; padding: 0 8px 0 6px; }
+  .np--start .np-meta { width: 92px; }
   .np-a { display: none; }
   .hero-grid { grid-template-columns: 1fr; align-items: start; }
   .hero-fig { max-width: 460px; }
@@ -1791,12 +1848,21 @@ html[data-theme="ly"] .modesw,
 html[data-theme="ly"] .th-btn,
 html[data-theme="ly"] .np-btn,
 html[data-theme="ly"] .np-meta,
+html[data-theme="ly"] .np-vol,
 html[data-theme="ly"] .burger {
   background: #fff;
   outline: 2.5px solid var(--ink);
   outline-offset: 0;
   box-shadow: var(--hard-sm);
 }
+/* 乐园的黄绿底上，轨道和滑块要用黑/深灰才看得清；
+   这里只改颜色，不动盒模型，换肤零位移。 */
+html[data-theme="ly"] .np-vol input[type="range"] { background: rgba(20, 20, 20, .22); }
+html[data-theme="ly"] .np-vol input[type="range"]::-webkit-slider-thumb { background: var(--ink); }
+html[data-theme="ly"] .np-vol input[type="range"]::-moz-range-thumb { background: var(--ink); }
+/* 这套皮肤每个控件都带 2.5px 黑描边 —— 基础 gap 10px 里有一半被描边占掉，
+   播放键和歌名框还是糊成一坨（用户原话「黏在一起」），这里加到 14px。 */
+html[data-theme="ly"] .np { gap: 14px; }
 html[data-theme="ly"] .modesw-thumb { background: var(--acc-fill); outline: 2px solid var(--ink); outline-offset: 0; }
 /* 滑块是荧光黄绿，选中的那个图标必须是黑字。
    基础规则给的是 --on-accent（白），压在这块黄绿上只有 1.5:1，
@@ -4583,4 +4649,58 @@ html[data-theme="ly"] .dm-hint[hidden] { display: none; }
   letter-spacing: .08em;
   color: rgba(255, 255, 255, .55);
   font-family: system-ui, "Microsoft YaHei", sans-serif;
+}
+
+/* ============================================================
+   15. 窄屏起始页：播放器单独占一行
+   ------------------------------------------------------------
+   390 宽上行内可用只有 284px，而「品牌 77 + 播放器 267 + 皮肤 34 +
+   形态切换 82 + 间隙」要 450px：不处理的话品牌被挤成竖排三个字，
+   音量条和形态切换直接跑出屏幕（用户截图里搜不到切换键）。
+   所以 ≤640 时播放器整条下移到第二行铺满。
+
+   这一块必须放在文件最后：
+   - .start-right 的基础规则（display:flex）在文件中部，同权重，
+     写在前面会被它盖掉；
+   - 乐园那套在 @media (max-width:960px) 里给 .start-top 写了
+     display:flex（0,2,1），要压过它只能靠来源顺序 + 同权重。
+   ============================================================ */
+@media (max-width: 640px) {
+  html[data-theme] .start-top {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    grid-template-areas:
+      "mark . skin mode"
+      "np np np np";
+    align-items: center;
+    column-gap: 10px;
+    row-gap: 8px;
+  }
+  /* 乐园在 ≤960 那档把 .start-top 定成 flex，这里再写一次同权重的 */
+  html[data-theme="ly"] .start-top { display: grid; }
+
+  html[data-theme] .mark { grid-area: mark; }
+
+  /* 把三个控件提到 .start-top 的网格层，这样换行只发生一次：
+     若靠 flex-wrap，换行会发生在 .start-right 内部，变成三行。 */
+  html[data-theme] .start-right { display: contents; }
+
+  html[data-theme] .start-right .np--start {
+    grid-area: np;
+    justify-self: stretch;
+  }
+  html[data-theme] .start-right .th-btn { grid-area: skin; }
+  html[data-theme] .start-right .modesw { grid-area: mode; }
+
+  /* 铺满一行后横向有余量，把「艺人 / 首数」那行放回来
+     （≤900 那段为省宽度全局藏了它，导航栏那颗仍然保持单行） */
+  html[data-theme] .np--start .np-a { display: block; }
+
+  /* 铺满一行之后歌名吃掉剩余宽度，音量贴右；长歌名照常省略号截断 */
+  html[data-theme] .np--start .np-meta {
+    width: auto;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  html[data-theme] .np--start .np-vol { margin-left: auto; }
 }

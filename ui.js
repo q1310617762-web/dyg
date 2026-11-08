@@ -587,8 +587,15 @@
     var bar = document.querySelector('[data-np-bar]');
     if (!np) return;
 
-    var titleEl = np.querySelector('[data-np-title]');
-    var artistEl = np.querySelector('[data-np-artist]');
+    /* 歌名有两处：导航栏那个，和起始页右上新加的那个。
+       .start 在路由时会被 importNode 重建，所以跟播放键一样每次现查，
+       不能 boot 时存成数组。 */
+    var titleEls = function () {
+      return [].slice.call(document.querySelectorAll('[data-np-title]'));
+    };
+    var artistEls = function () {
+      return [].slice.call(document.querySelectorAll('[data-np-artist]'));
+    };
     /* 播放键有两处：博客导航栏里那颗，还有起始页顶部那颗。
        起始页形态下整个 .nav 是 visibility:hidden（不接收点击），
        没有起始页这颗就根本播不了歌，可视化也永远出不来。
@@ -603,7 +610,40 @@
 
     audio = new Audio();
     audio.preload = 'none';
-    audio.volume = 0.9;
+
+    /* ---------- 音量 ----------
+       滑块可能在导航栏和起始页两处，且 .start 会被 importNode 重建，
+       所以跟播放键一样「每次现查」。改过的值存 localStorage，刷新不丢。 */
+    var VOL_KEY = 'dyg-volume';
+    var saved = null;
+    try { saved = localStorage.getItem(VOL_KEY); } catch (e) {}
+    var v0 = saved === null ? 0.9 : Number(saved);
+    audio.volume = isFinite(v0) ? Math.max(0, Math.min(1, v0)) : 0.9;
+
+    var volSliders = function () {
+      return [].slice.call(document.querySelectorAll('[data-np-volume]'));
+    };
+    function syncVol() {
+      var v = audio ? audio.volume : 0.9;
+      volSliders().forEach(function (s) {
+        s.value = String(v);
+        s.setAttribute('aria-valuetext', Math.round(v * 100) + '%');
+      });
+    }
+    document.addEventListener('input', function (e) {
+      var s = e.target.closest && e.target.closest('[data-np-volume]');
+      if (!s || !audio) return;
+      audio.volume = Math.max(0, Math.min(1, Number(s.value)));
+      try { localStorage.setItem(VOL_KEY, String(audio.volume)); } catch (err) {}
+      syncVol();
+    });
+    /* 起始页被 importNode 搬进来时是全新节点，滑块会退回 HTML 里的默认值；
+       监听 body 直接子节点变化，把真实音量重新写回去。只听 childList，
+       不听 attributes —— 否则 syncVol 自己改 value 会把自己再触发一遍。 */
+    if (window.MutationObserver) {
+      new MutationObserver(syncVol).observe(document.body, { childList: true });
+    }
+    window.__dygVol = { get: function () { return audio.volume; }, sync: syncVol };
 
     if (menu) {
       menu.innerHTML = TRACKS.map(function (t, i) {
@@ -624,16 +664,14 @@
         b.setAttribute('aria-pressed', playing ? 'true' : 'false');
       });
 
-      if (cur >= 0) {
-        titleEl.textContent = TRACKS[cur].title;
-        /* 音频是 preload:'none'，点下去才开始下载；1.2MB 的曲子在慢网要十几秒。
-           这中间什么都不显示的话，用户看到的就是「按了没反应」——
-           所以缓冲期间明说，别让人以为播放器坏了。 */
-        artistEl.textContent = stalling ? '缓冲中…' : TRACKS[cur].artist;
-      } else {
-        titleEl.textContent = '播放';
-        artistEl.textContent = TRACKS.length + ' 首';
-      }
+      var t = cur >= 0 ? TRACKS[cur].title : '播放';
+      /* 音频是 preload:'none'，点下去才开始下载；1.2MB 的曲子在慢网要十几秒。
+         这中间什么都不显示的话，用户看到的就是「按了没反应」——
+         所以缓冲期间明说，别让人以为播放器坏了。 */
+      var a = cur >= 0 ? (stalling ? '缓冲中…' : TRACKS[cur].artist)
+                       : (TRACKS.length + ' 首');
+      titleEls().forEach(function (el) { el.textContent = t; });
+      artistEls().forEach(function (el) { el.textContent = a; });
 
       if (menu) {
         [].slice.call(menu.querySelectorAll('.np-trk')).forEach(function (b) {
@@ -725,11 +763,12 @@
       else { cur = -1; audio.removeAttribute('src'); paint(); setBar(); }
     });
     audio.addEventListener('error', function () {
-      artistEl.textContent = '加载失败';
+      artistEls().forEach(function (el) { el.textContent = '加载失败'; });
     });
 
     paint();
     setBar();
+    syncVol();
   }
 
   /* ---------- 抽屉 ---------- */
