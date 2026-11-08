@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>《影之刃零》：把武侠做成一记快刀 · 东芽果 DYG</title>
+<meta name="description" content="《影之刃零》推荐：不是魂类，是把武侠片的节奏塞进动作游戏。打起来爽在哪，哪些人可能不适应。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261108211609" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    /* 只认已知皮肤 */
+    var OK = { miko: 1, organic: 1, dark: 1, ly: 1 };
+
+    /* 本次会话手动选过，就听用户的 */
+    var t = sessionStorage.getItem('dyg-theme');
+
+    /* 旧 id 迁移：neu（新拟物）已被「乐园」取代，soft 已被「八重」取代。
+       不映射的话，上一版选过第四套的人一跳页就被判成无效、退回时段默认。 */
+    var ALIAS = { neu: 'ly', soft: 'miko' };
+    if (ALIAS[t]) t = ALIAS[t];
+
+    /* 否则按时段决定默认皮肤：
+       06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
+       只写 sessionStorage 不写 localStorage —— 这样关掉标签页，
+       下次打开又会回到时段默认，而不是永久固定成手动选的那套。 */
+    if (!OK[t]) {
+      var h = new Date().getHours();
+      t = (h >= 6 && h < 18) ? 'miko' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'miko');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+  <article class="article">
+    <div class="article-grid">
+
+      <div>
+        <header class="art-head">
+          <h1>《影之刃零》：把武侠做成一记快刀</h1>
+          <div class="art-meta">
+            <span>东芽果 DYG</span>
+            <span class="dot">/</span>
+            <span>2026.11.08</span>
+            <span class="dot">/</span>
+            <span>约 6 分钟</span>
+          </div>
+        </header>
+
+        <figure class="art-cover">
+          <div class="poster poster--cover" role="img" aria-label="深墨底色上斜过一道朱红刀锋，写着《影之刃零》与数字 66">
+            <span class="poster-blade" aria-hidden="true"></span>
+            <span class="poster-word">影之刃零</span>
+            <span class="poster-num" aria-hidden="true">66</span>
+          </div>
+        </figure>
+
+        <div class="prose">
+          <p>十月二十九日上午十点解锁，中午就坐上了 Steam 全球畅销榜第一。这种热度已经不需要谁再帮忙吆喝了，所以这篇不聊它有多火，只聊一件事：打起来到底爽在哪，以及哪些人可能会不适应。</p>
+
+          <blockquote><p>「它不是让你等破绽，是逼你自己造破绽。」</p></blockquote>
+
+          <h2 id="s1">先把名字说清楚</h2>
+          <p>《影之刃零》是北京灵游坊（S-GAME）自己做、自己发的，创始人梁其伟从 2011 年那家小公司一路做过来，中间是《雨血》和《影之刃》系列。项目 2022 年正式立项，虚幻 5，公开说的研发成本在三四亿这个量级。</p>
+          <p>它借了《雨血》的世界观，但梁其伟特意讲过：人物关系、情感动机全部重做过，不建议套前作设定来读。所以<strong>没玩过前作完全不影响入坑</strong>，这作是独立故事。</p>
+          <p>比较意外的是甄子丹。他不是代言，是从 2023 年起担任监制，参与角色「魔渊」的面部捕捉、动作捕捉和动作设计，甄家班也进了研发流程。灵游坊还和北京理工大学合作做了角色动作匹配的智能动画系统，专门解决高速战斗里动作衔接不自然的问题——这些投入最后都落在手感上，不是落在宣传稿上。</p>
+
+          <h2 id="s2">六十六天</h2>
+          <p>主角叫「魂」，是「组织」七大冥使之一，被构陷成杀害冥主的凶手，遭全员追杀。心脏受重创，被一位神秘医者救回来，代价是<strong>只剩六十六天可活</strong>。一边逃，一边查那场阴谋，时间是明摆着挂在脖子上的。</p>
+          <p>舞台叫「影境」，官方给风格起的名字是<strong>功夫朋克</strong>：中式武术、暗黑美术，掺进蒸汽机械、义肢和工业废墟，配乐里还有现代摇滚。整体偏冷、偏沉，不亮堂，跟那种仙气飘飘的武侠完全两回事。</p>
+
+          <div class="note">这个「六十六天」不只是设定文案：通关之后开放的二周目极限模式就叫这个名字，无手动存档、死亡不可逆。</div>
+
+          <h2 id="s3">打起来是什么手感</h2>
+          <p>先说最容易被误会的一点：<strong>它不是魂类</strong>。普通攻击、闪避、翻滚都不吃体力条，敌人也不会排着队等你出手，节奏更接近《忍龙》《鬼泣》那一路的高速动作游戏。</p>
+          <p>核心资源叫「煞气」，进攻和防守共用同一条：招架、力量爆发、幻刃都从这儿出。武器给得也狠——三十多种主武器各有独立招式，二十多种「幻刃」副武器包括臂炮、重弓、钩斧；连段里切换主武器还能回一截煞气。于是连招不是背固定表，是边打边重组。</p>
+          <p>Boss 战多阶段，但阶段之间放了检查点，死一次不用把已经打过的阶段再打一遍。这个设计很实在：难度留在招式上，不留在跑路上。</p>
+
+          <div class="note">别被「高难度动作游戏」吓退。一周目有「入阵」档，明确是给没怎么玩过动作游戏的人准备的，成就和白金一周目就能解锁。真正想找虐的，等二周目那个「六十六天」。</div>
+
+          <h2 id="s4">不止一条直线</h2>
+          <p>地图不是一整张开放世界，是相互连通的手工区域：岔路、聚落、隐藏区、拿到新能力之后值得回头再走一趟的地方。支线给武器、升级、隐藏 Boss，也会改变你对某些角色的理解。</p>
+          <p>结局有八个，由支线和收集驱动。主线大概 25 到 35 小时，支线和挑战认真清下来接近 45 小时——对一款以战斗为主菜的游戏，这个体量不算注水。</p>
+
+          <h2 id="s5">该知道的一些数字</h2>
+          <ul>
+            <li><strong>发售</strong>：2026 年 10 月 29 日。原定 9 月 9 日，六月宣布延期约五十天打磨</li>
+            <li><strong>平台</strong>：PS5、PC（Steam / Epic，国内另有 WeGame、TapTap PC）。PS5 主机限时独占一年，实体版计划 2027 年</li>
+            <li><strong>定价</strong>：国区标准版 268 元，数字豪华版 328 元</li>
+            <li><strong>评价</strong>：Metacritic 开分 88（PS5）/ 89（PC），IGN 给 9 分，IGN 中国满分</li>
+            <li><strong>容量</strong>：PC 安装约 145 GB，预载建议留 300 GB；带 Denuvo</li>
+          </ul>
+
+          <h2 id="s6">不完美的地方</h2>
+          <p>夸的人基本都夸战斗，挑刺也集中：<strong>叙事讲得不够清楚</strong>，倒叙和闪回被多家媒体点名，悬念铺得够，但故事本身没走出新意。想冲着剧情来的，可能会有点落差。</p>
+          <p>技术上也还在收尾：发售当天补了约 5 GB 的首日补丁修光追和路径追踪，PS5 Pro 上部分 Boss 战有掉帧。关卡结构评价也不一致，有人觉得开阔有岔路，有人仍旧嫌线性。至于 145 GB 加 Denuvo，是 PC 党绕不开的实打实门槛。</p>
+
+          <h2 id="s7">所以推荐给谁</h2>
+          <p>如果你喜欢「快」的动作游戏，愿意为一套招式手感反复练半小时，这款可以直接买，它最贵的那部分钱确实花在刀刃上。喜欢《鬼泣》《忍龙》，又一直嫌西式动作游戏没有武侠味儿的，这作几乎是等着你来的。</p>
+          <p>如果主要是被「国产 3A」这四个字吸引、想看一个讲得漂亮的故事，那建议再等等，先看看别人的实机。它把最难的那件事做成了——让剑快得有来路；但没打算把所有事都做完。</p>
+
+          <p style="margin-top:32px;font-size:12px;color:var(--text-3)">题图由本站用 CSS 绘制，未使用游戏官方素材。</p>
+        </div>
+
+        <div class="tag-cloud" style="margin-top:40px">
+          <a href="tags.html">游戏</a>
+          <a href="tags.html">武侠动作</a>
+          <a href="tags.html">国产单机</a>
+          <a href="tags.html">影之刃零</a>
+        </div>
+
+        <p style="margin-top:clamp(44px,6vw,64px)">
+          <a class="btn-text" href="blog.html">← 全部文章</a>
+        </p>
+      </div>
+
+      <aside>
+        <nav class="toc" data-toc aria-label="目录">
+          <h5>目录</h5>
+          <a href="#s1">先把名字说清楚</a>
+          <a href="#s2">六十六天</a>
+          <a href="#s3">打起来是什么手感</a>
+          <a href="#s4">不止一条直线</a>
+          <a href="#s5">该知道的一些数字</a>
+          <a href="#s6">不完美的地方</a>
+          <a href="#s7">所以推荐给谁</a>
+        </nav>
+
+        <div class="block" style="margin-top:36px">
+          <h4>关于这篇</h4>
+          <dl class="facts">
+            <div class="fact"><dt>发售</dt><dd>2026.10.29</dd></div>
+            <div class="fact"><dt>平台</dt><dd>PS5 / PC</dd></div>
+            <div class="fact"><dt>开发</dt><dd>灵游坊</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+    </div>
+  </article>
+</main>
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261108211609"></script>
+<script src="assets/petals.js?v=20261108211609"></script>
+<script src="assets/starfield.js?v=20261108211609"></script>
+<script src="ui.js?v=20261108211609"></script>
+<script src="fx.js?v=20261108211609"></script>
+</body>
+</html>

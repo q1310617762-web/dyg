@@ -1265,6 +1265,53 @@ html.imgfade .g-item img:not(.loaded) {
   object-fit: cover;
   border-radius: var(--r-card);
 }
+
+/* ---------- 纯 CSS 题图（《影之刃零》那篇专用）----------
+   不引图片素材。配色写死、不跟 --card / --layer 走：四套皮肤里两套是浅底、
+   乐园还是黄绿渐变，跟变量走整块题图会直接消失。
+   深墨底 + 一道朱红斜刃，没有描边、没有荧光、没有光晕。 */
+.poster {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  isolation: isolate;
+  border-radius: 14px;
+  background: linear-gradient(118deg, #1b1a1f 0%, #2f2228 58%, #17161b 100%);
+  color: #f7f2ee;
+}
+.poster-blade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, #b83a4c 0%, #7d2333 100%);
+  clip-path: polygon(74% 0, 100% 0, 100% 100%, 48% 100%);
+}
+.poster-word {
+  position: absolute;
+  left: 6%;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 1;
+  font-weight: 700;
+  letter-spacing: .08em;
+  line-height: 1.1;
+  font-size: clamp(30px, 5.6vw, 64px);
+}
+.poster-num {
+  position: absolute;
+  right: 5%;
+  bottom: 6%;
+  z-index: 1;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-weight: 600;
+  font-size: clamp(20px, 3vw, 40px);
+  color: #f7f2ee;
+  opacity: .92;
+}
+.poster--cover { aspect-ratio: 16 / 9; }
+/* 列表缩略图只有 240px 宽，字号给固定值，别跟着 vw 跳 */
+.poster--row .poster-word { font-size: 21px; letter-spacing: .04em; }
+.poster--row .poster-num  { font-size: 17px; }
+
 .art-head h1 {
   font-size: clamp(27px, 3.8vw, 42px);
   line-height: 1.2;
