@@ -2442,6 +2442,51 @@ html[data-theme="ly"] .file-tip .act {
 }
 html[data-theme="miko"] .mast-miko-wrap { display: block; }
 
+/* ---------- 八重：刊头换成樱花树（替掉 Hello World 两行字） ----------
+   树是从用户给的那张图重画出来的透明底素材（assets/img/sakura-tree.webp，
+   1116×763）。改用 ::before 挂背景而不是塞 <img>：
+   一个元素都不加，路由 importNode 重建 .start 时也不会漏掉。
+   ★ 高度必须跟原来的刊头盒一样高（原来是字撑起来的），否则下面
+     搜索框/时钟/收藏会整体跳半屏。 */
+html[data-theme="miko"] .st-hello,
+html[data-theme="miko"] .st-kicker { display: none; }
+html[data-theme="miko"] .st-mast {
+  /* 34vh 是上限：再高就把下面的频谱（播放时才展开，≥90px）挤没了 */
+  height: clamp(250px, 36vh, 400px);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+html[data-theme="miko"] .st-mast::before {
+  content: "";
+  height: 100%;
+  aspect-ratio: 1116 / 763;
+  background: url("assets/img/sakura-tree.webp") center bottom / contain no-repeat;
+  /* 树根沉到搜索框上沿下面一点，跟原来「看板娘下半身被挡住」同一手法 */
+  margin-bottom: -22px;
+  pointer-events: none;
+  filter: drop-shadow(0 18px 30px rgba(60, 12, 44, .35));
+}
+/* 看板娘站到树右侧：left 换成 right，尺寸按树的比例给 */
+html[data-theme="miko"] .mast-miko-wrap {
+  --mw: clamp(140px, 14.4vw, 196px);
+  left: auto;
+  right: -3%;          /* 站到树冠右缘外一点，别再压着花 */
+  bottom: -30px;
+  height: calc(var(--mw) * .8856);
+}
+html[data-theme="miko"] .mast-miko img { filter: drop-shadow(0 14px 20px rgba(96, 24, 60, .38)); }
+
+@media (max-width: 760px) {
+  html[data-theme="miko"] .st-mast { height: clamp(200px, 30vh, 280px); }
+  html[data-theme="miko"] .st-mast::before { margin-bottom: -14px; }
+  html[data-theme="miko"] .mast-miko-wrap {
+    --mw: clamp(92px, 24vw, 118px);
+    right: 1%;
+    bottom: -12px;
+  }
+}
+
 .mast-miko {
   display: block;
   width: 100%;
