@@ -3781,6 +3781,19 @@ html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin
      包含块就变成那一格而不是 .start 的 padding box，百分比全错。 */
 @media (min-width: 961px) {
   html[data-theme="ly"] .start-right {
+    /* 一行放不下：播放器 267 + 皮肤 34 + 形态切换 82 + 两个间隙 = 403，
+       而主视觉右边缘到视口右边只剩 ~373（1440×900 实测），再往里挤就压到
+       那张黑白大图上（用户截图就是压住了）。改成两行——
+       上面一颗皮肤键 + 形态切换，播放器整条落到第二行，
+       右对齐后左边缘 1094，正好在大图（右边缘 995）右边。 */
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-areas:
+      "skin mode"
+      "np   np";
+    gap: 8px 10px;
+    justify-items: end;
+    align-items: center;
     position: absolute;
     top: calc(24px + env(safe-area-inset-top, 0px));
     right: max(calc(var(--pad) * 2),
@@ -3788,6 +3801,16 @@ html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin
     z-index: 3;
     margin: 0;
   }
+  html[data-theme="ly"] .start-right .np--start { grid-area: np; }
+  html[data-theme="ly"] .start-right .th-btn    { grid-area: skin; }
+  html[data-theme="ly"] .start-right .modesw    { grid-area: mode; }
+}
+
+/* 961~1159 这一档右栏更窄（右栏到视口右边只有 229~292px），
+   带音量条的整条放不下 —— 藏掉音量只留歌名，np 收到 169px，
+   宁可少一个滑块也不压住主视觉。 */
+@media (min-width: 961px) and (max-width: 1159px) {
+  html[data-theme="ly"] .np--start .np-vol { display: none; }
 }
 html[data-theme="ly"] .st-mast     { grid-area: mast;  align-self: center; }
 html[data-theme="ly"] .search      { grid-area: stage; align-self: center; }
