@@ -1100,6 +1100,37 @@ html[data-soft-switch]::view-transition-new(root) {
 .np--start .np-meta { width: 118px; }
 .np-meta--ro { pointer-events: none; }
 
+/* ---------- 起始页播放器：四套皮肤统一成「一条胶囊 + 实心播放键」 ----------
+   乐园那套先把样式定成这个形状（一整条白胶囊、里面不再套小盒子、
+   播放键是实心圆），其它三套跟上，换皮肤时播放器不会突然变成
+   「胶囊里塞两个白盒子」。
+   1) 音量不再单独挂底：miko 是 rgba(192,53,107,.10)、organic 是 #ece3d6、
+      dark 是 rgba(255,255,255,.10) —— 都只比胶囊底色深一点点，
+      读起来像胶囊里多出一块不明区域。
+   2) 播放键用「实心 + 反色图标」= 这里最重的那个动作。原来白圈在
+      深色皮肤里几乎看不见（.10 的白压在 .07 的白上）。
+   选择器带 .start-right（3 个类）才压得过 miko/organic 里给 .np-btn
+   写的 (0,2,1) 规则。 */
+.start-right .np--start .np-vol { background: transparent; }
+.start-right .np--start .np-btn {
+  background: var(--text);
+  color: var(--bg);
+}
+.start-right .np--start .np-btn.playing {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.start-right .np--start .np-btn:active {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .start-right .np--start .np-btn:hover {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+}
+
 .np-vol {
   display: flex;
   align-items: center;
