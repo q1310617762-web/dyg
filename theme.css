@@ -1863,6 +1863,35 @@ html[data-theme="ly"] .np-vol input[type="range"]::-moz-range-thumb { background
 /* 这套皮肤每个控件都带 2.5px 黑描边 —— 基础 gap 10px 里有一半被描边占掉，
    播放键和歌名框还是糊成一坨（用户原话「黏在一起」），这里加到 14px。 */
 html[data-theme="ly"] .np { gap: 14px; }
+/* 起始页那颗播放器在乐园里要读成「一个」控件：原来播放键 / 歌名 / 音量
+   各画一圈 2.5px 黑边 + 硬投影，三个白盒并排，底下还压着一层淡绿底色
+   （.np 自己的 background），四层叠在一起非常碎（用户原话「排列不好看」）。
+   现在整条只留一圈边，里面三块全部透明，靠 14px 间距分区。 */
+html[data-theme="ly"] .np--start {
+  background: #fff;
+  outline: 2.5px solid var(--ink);
+  outline-offset: 0;
+  box-shadow: var(--hard-sm);
+  /* 左边多留 2px：黑圆贴着黑边看着像压线 */
+  padding: 3px 6px 3px 5px;
+}
+html[data-theme="ly"] .np--start .np-btn,
+html[data-theme="ly"] .np--start .np-meta,
+html[data-theme="ly"] .np--start .np-vol {
+  background: transparent;
+  outline: 0;
+  box-shadow: none;
+}
+/* 上面那条把按钮自己的底色也清了，状态色得在更靠后的位置补回来，
+   否则乐园下播放键悬停、按下、播放中全都没有反馈。
+   播放键用实心墨色圆（跟左栏那几颗黑色菜单键同一套），一眼看得出能点；
+   播放中换成黄绿，图标也跟着变 ⏸。 */
+html[data-theme="ly"] .np--start .np-btn { background: var(--ink); color: #fff; }
+html[data-theme="ly"] .np--start .np-btn.playing { background: var(--acc-fill); color: var(--text); }
+html[data-theme="ly"] .np--start .np-btn:active { background: var(--acc-fill); }
+@media (hover: hover) and (pointer: fine) {
+  html[data-theme="ly"] .np--start .np-btn:hover { background: var(--acc-fill); }
+}
 html[data-theme="ly"] .modesw-thumb { background: var(--acc-fill); outline: 2px solid var(--ink); outline-offset: 0; }
 /* 滑块是荧光黄绿，选中的那个图标必须是黑字。
    基础规则给的是 --on-accent（白），压在这块黄绿上只有 1.5:1，
@@ -3787,7 +3816,11 @@ html[data-theme="ly"] .st-greet    { grid-area: greet; align-self: start; margin
        上面一颗皮肤键 + 形态切换，播放器整条落到第二行，
        右对齐后左边缘 1094，正好在大图（右边缘 995）右边。 */
     display: grid;
-    grid-template-columns: auto auto;
+    /* 第一列必须是 1fr，不能写 auto：播放器横跨两列，两列都 auto 时
+       它会把第一列撑到 175px，皮肤键和形态切换被推到两端、中间空出 85px
+       （看起来像两个孤零零的按钮）。1fr 让第一列吃掉剩余宽度、
+       皮肤键 justify-self:end 紧贴形态切换，和别处那种「一排按钮」一致。 */
+    grid-template-columns: 1fr auto;
     grid-template-areas:
       "skin mode"
       "np   np";
