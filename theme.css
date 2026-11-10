@@ -4848,3 +4848,101 @@ html[data-theme="ly"] .dm-hint[hidden] { display: none; }
   }
   html[data-theme] .np--start .np-vol { margin-left: auto; }
 }
+
+/* ==========================================================================
+   乐园 · 手机版重排（≤760）
+   --------------------------------------------------------------------------
+   桌面版是 6 行网格（品牌/封面/菜单/统计/收藏/底注各占格位）。这套东西
+   在 500×800 上会撑成三段高：实测 core 内容 804px、可视 275px，
+   搜索框掉到 y=664，一屏根本看不到搜索 —— 而这是"搜索页"。
+   手机改成一条纵向流，按"先能用、后好看"排：
+     品牌+控件 → 播放器 → 搜索 → 时钟 → 导航 → 封面(压矮) → 收藏 → 底注
+   彩条和统计卡在手机上纯占地方（没有动作意义），收掉。
+   整页滚动（.start 自己滚），不再让 .start-core 内部滚。
+   ========================================================================== */
+@media (max-width: 760px) {
+  html[data-theme="ly"] .start {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+  }
+  /* 让 core 的孩子们直接加入 .start 这条流，才好统一 order */
+  html[data-theme="ly"] .start-core { display: contents; }
+  /* ★ 整列内容比视口高，flex 默认会把每项压扁（导航那行被压成 10px，
+     胶囊只剩一条边）。一律禁止收缩，让 .start 自己滚。 */
+  html[data-theme="ly"] .start > * { flex: none; }
+
+  html[data-theme="ly"] .start-top { order: 1; }
+  html[data-theme="ly"] .start-core > .search {
+    order: 2;
+    width: 100%;
+    margin: 0;
+  }
+  html[data-theme="ly"] .st-clock {
+    order: 3;
+    width: 100%;
+    margin: 0;
+    display: flex;
+    gap: 8px;
+  }
+  /* 三张表在手机上平分宽度，字号跟着掉一档 */
+  html[data-theme="ly"] .tc {
+    flex: 1 1 0;
+    min-width: 0;
+    height: 92px;
+    border-radius: 16px;
+  }
+  html[data-theme="ly"] .tc-n { font-size: 30px; }
+  html[data-theme="ly"] .tc-k { font-size: 10px; }
+  html[data-theme="ly"] .tc-f { font-size: 9.5px; }
+
+  /* 导航改成一条可横滑的药丸行 */
+  html[data-theme="ly"] .ly-menu {
+    order: 4;
+    flex-direction: row;
+    flex-wrap: nowrap;      /* 宁可横滑，也别让第五颗掉到第二行 */
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    padding: 2px 0 4px;
+  }
+  html[data-theme="ly"] .ly-menu::-webkit-scrollbar { display: none; }
+  html[data-theme="ly"] .ly-mi {
+    flex: none;
+    height: 38px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+
+  /* 封面压成一条横幅：留着乐园的味道，但不再吃掉半屏 */
+  html[data-theme="ly"] .st-mast {
+    order: 5;
+    height: 150px;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: 18px;
+    outline: 3px solid var(--ink);
+    outline-offset: 0;
+  }
+  html[data-theme="ly"] .st-mast .st-hello { font-size: 34px; line-height: .9; }
+  html[data-theme="ly"] .st-mast .st-kicker { display: none; }
+
+  html[data-theme="ly"] .st-greet {
+    order: 6;
+    max-width: none;
+    margin: 0;
+  }
+  html[data-theme="ly"] .bm { order: 7; }
+  /* 「进入博客」原来的 DOM 位置在左上，手机上它会跑到最顶上抢位置 → 压到底部 */
+  html[data-theme="ly"] .ly-cta { order: 8; justify-self: stretch; }
+  html[data-theme="ly"] .start-foot { order: 9; }
+
+  /* 彩条、统计卡收掉 */
+  html[data-theme="ly"] .ly-chips,
+  html[data-theme="ly"] .ly-stats { display: none; }
+}
