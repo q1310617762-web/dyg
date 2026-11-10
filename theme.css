@@ -2546,21 +2546,33 @@ html[data-theme="miko"] .mast-miko img { filter: drop-shadow(0 14px 20px rgba(96
    索性把气泡改成屏幕底部的一行字幕：固定定位，不压刊头、不被滚动裁掉，
    视觉上还是「角色在说话」。 */
 @media (max-width: 760px) {
+  /* 手机上不要 fixed：屏幕上没有"底部字幕"的位置，它最后浮在页面中间
+     把收藏列表压掉了（实测 500×800，气泡正好盖在第二列上）。
+     改成跟着角色走 —— 挂在她头顶上方，往左长。 */
   .mast-bubble {
-    position: fixed;
-    left: 50%;
-    right: auto;
-    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%) translateY(6px);
-    max-width: min(84vw, 320px);
-    padding: 7px 13px;
+    position: absolute;
+    left: auto;
+    right: 2px;
+    bottom: calc(100% - 12px);
+    transform: translateY(6px);
+    max-width: min(58vw, 208px);
+    padding: 7px 12px;
     font-size: 12.5px;
     line-height: 1.4;
-    text-align: center;
+    text-align: left;
     z-index: 3;
   }
-  .mast-bubble.on { transform: translateX(-50%); }
+  .mast-bubble.on { transform: none; }
   .mast-bubble::after { display: none; }   /* 不再指着头，尾巴去掉 */
+
+  /* 窄屏上那几片装饰花瓣只剩几个粉色色块，像渲染残留，直接收掉。
+     ★ 选择器必须带 .st-mast：后面 3437 行还有一条
+     `html[data-theme="miko"] .mast-petals{display:flex}`（同权重、更靠后），
+     不加这一层压不过去。 */
+  html[data-theme="miko"] .st-mast .mast-petals { display: none; }
+
+  /* 收藏列表贴着底部提示，给滚动区一点下边距 */
+  .start-core { padding-bottom: 10px; }
 }
 
 /* 樱花层：默认不显示，只有八重皮肤打开（见 21 节）。
