@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-mode="blog">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>这部退队流新番，治好了我的异世界疲劳 · 东芽果 DYG</title>
+<meta name="description" content="《被流放的开挂魔术师讴歌随心所欲第二人生。》观感：被开除的附魔师、一把一万点的铜剑，还有一群被原世界退货的人。" />
+<meta name="color-scheme" content="light" />
+<meta name="theme-color" content="#0b0b0d" />
+<link rel="icon" href="assets/favicon.svg" />
+<link rel="stylesheet" href="theme.css?v=20261112140208" />
+<script>
+/* 首屏前定皮肤：晚一步就会先闪一下深色。与 data-mode 同理，必须内联同步执行。 */
+(function () {
+  try {
+    /* 只认已知皮肤 */
+    var OK = { miko: 1, organic: 1, dark: 1, ly: 1 };
+
+    /* 本次会话手动选过，就听用户的 */
+    var t = sessionStorage.getItem('dyg-theme');
+
+    /* 旧 id 迁移：neu（新拟物）已被「乐园」取代，soft 已被「八重」取代。
+       不映射的话，上一版选过第四套的人一跳页就被判成无效、退回时段默认。 */
+    var ALIAS = { neu: 'ly', soft: 'miko' };
+    if (ALIAS[t]) t = ALIAS[t];
+
+    /* 否则按时段决定默认皮肤：
+       06:00–17:59 用「柔和」（亮色），其余时间用「夜幕」（星空）。
+       只写 sessionStorage 不写 localStorage —— 这样关掉标签页，
+       下次打开又会回到时段默认，而不是永久固定成手动选的那套。 */
+    if (!OK[t]) {
+      var h = new Date().getHours();
+      t = (h >= 6 && h < 18) ? 'miko' : 'dark';
+    }
+    document.documentElement.setAttribute('data-theme', t);
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'miko');
+  }
+})();
+</script>
+</head>
+<body>
+
+<div class="blog">
+<div data-nav></div>
+<div data-menu></div>
+
+<main>
+  <article class="article">
+    <div class="article-grid">
+
+      <div>
+        <header class="art-head">
+          <h1>这部退队流新番，<br />治好了我的异世界疲劳</h1>
+          <div class="art-meta">
+            <span>东芽果 DYG</span>
+            <span class="dot">/</span>
+            <span>2026.11.12</span>
+            <span class="dot">/</span>
+            <span>约 4 分钟</span>
+          </div>
+        </header>
+
+        <figure class="art-cover">
+          <img src="assets/img/cover-cheatmago.webp" alt="《被流放的开挂魔术师讴歌随心所欲第二人生。》主视觉：雷恩与伙伴们站在巨龙与反派之前" />
+        </figure>
+
+        <div class="prose">
+          <p>我对「退队流」已经不抱期待了。被冤枉、被赶走、反手证明自己——这套流程闭着眼都能背下来。十月这部点开时，我是抱着「下饭随便看看」的心态，结果第一集那个开除镜头就把我逗笑了。</p>
+
+          <p>雷恩被会长叫去，听到「你被开除了」，第一反应不是愤怒，也不是隐忍，而是——哦，那我把我加的点数全收回来。这个反应太不讲武德了，也太好笑了。因为他一收，原公会上下所有人的装备同时趴窝。</p>
+
+          <blockquote><p>「真正让我追下去的不是数值，是它敢把爽点当笑点用。」</p></blockquote>
+
+          <h2 id="s1">故事：一个「太能干所以被开除」的人</h2>
+          <p>雷恩·加兰德是「王兽之牙」公会的强化付与魔术师，能力是给武器防具附加「强化点数」，而且这些点数他随时能凭自己的意志解除。公会装备全被他强化到顶了，会长巴里奥斯一拍脑袋，觉得这人没用了，就把他赶了出去。</p>
+          <p>于是雷恩把历年加在同伴装备上的点数全数回收，转手砸进一把廉价铜剑——一万点。铜剑变成传说级武器，普通布衣硬到接近奥利哈钢。</p>
+          <p>片子没有急着让主角打脸，反而一路让他去做更离谱的事：被人找茬时他说「我现在想被揍肚子」。它更像一群疯子在认真地冒险，而不是一个受害者在复仇。</p>
+          <p>还有两个设定值得注意。一是这个世界<strong>魔法与科技共存</strong>，有魔法，也有冲锋枪和黑道，过度依赖科技还会削弱魔力——所以很多桥段没法按套路走，你以为要魔法对轰，对面掏枪了。二是动画改编的是业务用饼的漫画版，原作者六志麻あさ自己打过招呼：「小说版和漫画版内容大概 99% 不同。」拿小说当剧透本，多半会错。</p>
+
+          <figure>
+            <img src="assets/img/post-cheatmago-pv.jpg" alt="主 PV 截帧：雷恩与莉莉、玛格丽特" />
+            <figcaption style="margin-top:10px;font-size:12.5px;line-height:1.6;color:var(--text-3)">主 PV 截帧。这部片子的战斗场面不算华丽，但镜头很敢给怪东西。图片：©六志麻あさ・業務用餅・kisui／講談社／「チー付与」製作委員会，来自 AnimeID 报道页的 PV 素材，仅作介绍用途。</figcaption>
+          </figure>
+
+          <h2 id="s2">角色：一群被原世界退货的人</h2>
+          <p><strong>雷恩</strong>（山下大辉）不是苦大仇深型主角，甚至有点神经。危机里照样讲冷笑话、做让人扶额的举动，队友的吐槽就是观众的嘴。但这份「怪」是有来由的：一个把别人装备强化到极致、自己却连把像样武器都没有的人，本来就没把自己当回事。所以当有人认真对他说「谢谢」的时候，他反而愣住了——这个细节我很吃。</p>
+          <p><strong>莉莉</strong>（Lynn）是 S 级冒险者，履历漂亮，知识和经验都在线，却因为两年前的创伤再也没法战斗。她的看点不是「什么时候恢复实力」，而是她怎么在不能打的前提下，继续当一个冒险者。这种「明明很强却卡住」的设定，比单纯的高冷剑士有意思得多。</p>
+          <p><strong>玛格丽特</strong>（青山吉能）B 级，身边永远跟着一只叫「どんぐり」的狗。她身上有种被保护得很好的千金做派，说话讲究、遇事讲规矩，偏偏总和雷恩的胡来撞在一起。两个人的对话是前期最稳的笑点来源。</p>
+          <p><strong>米拉贝尔</strong>（富田美忧）是由「暗杀之母」养大的杀手，出场自带冷气。她的魅力在于反差：第一次有人不把她当工具，而是当一个普通女孩对待时，她那种不知所措。</p>
+          <p><strong>艾尔茜与妮娜</strong>（潘惠美 / 小原好美）是青之水晶的会长和前台。一个见过世面的前强者，一个嘴上嫌弃却一直在收拾烂摊子。她们让这个「专收怪人的公会」有了家的质感——说白了，雷恩能这么胡来，是因为背后有人兜着。</p>
+
+          <h2 id="s3">观感：它其实在讲「重新过日子」</h2>
+          <p>制作是 P.A.WORKS，监督本间修（《派对浪客诸葛孔明》《深夜重拳》），系列构成米内山阳子，搞笑和煽情两头都稳。OP 是 sumika 的《エンバートーチ》，前奏一响就想跟着晃。</p>
+          <p>它没打算讲多宏大的故事。一群被原来的世界退过货的人，凑在一起重新学着怎么过日子——听着很轻，落在具体的人身上却有分量。</p>
+          <p>如果你也看腻了「复仇爽文」式的退队流，想找一部笑点密、但不刻薄的片子下饭，这部可以试三集。三集之后还没笑，那就真的不是你的菜。</p>
+
+          <div class="note">播出：2026 年 10 月 6 日起，TV 东京系每周二 24:00（即周三凌晨 0 点），AT-X 10 月 8 日起，Crunchyroll 同步。原作六志麻あさ，漫画業務用餅，角色原案 kisui，动画 P.A.WORKS。</div>
+
+          <p style="margin-top:32px;font-size:12px;color:var(--text-3)">题图与正文配图均来自官方公开物料及 ANI-BOX、AnimeID 的报道页，版权归「チー付与」製作委員会所有，仅作介绍用途。</p>
+        </div>
+
+        <div class="tag-cloud" style="margin-top:40px">
+          <a href="tags.html">新番</a>
+          <a href="tags.html">动画推荐</a>
+          <a href="tags.html">退队流</a>
+          <a href="tags.html">P.A.WORKS</a>
+        </div>
+
+        <p style="margin-top:clamp(44px,6vw,64px)">
+          <a class="btn-text" href="blog.html">← 全部文章</a>
+        </p>
+      </div>
+
+      <aside>
+        <nav class="toc" data-toc aria-label="目录">
+          <h5>目录</h5>
+          <a href="#s1">故事：一个「太能干所以被开除」的人</a>
+          <a href="#s2">角色：一群被原世界退货的人</a>
+          <a href="#s3">观感：它其实在讲「重新过日子」</a>
+        </nav>
+
+        <div class="block" style="margin-top:36px">
+          <h4>关于这篇</h4>
+          <dl class="facts">
+            <div class="fact"><dt>播出</dt><dd>2026.10.06</dd></div>
+            <div class="fact"><dt>制作</dt><dd>P.A.WORKS</dd></div>
+            <div class="fact"><dt>原作</dt><dd>六志麻あさ</dd></div>
+          </dl>
+        </div>
+      </aside>
+
+    </div>
+  </article>
+</main>
+
+
+<footer data-foot></footer>
+</div>
+
+<script src="cursor.js?v=20261112140208"></script>
+<script src="assets/petals.js?v=20261112140208"></script>
+<script src="assets/starfield.js?v=20261112140208"></script>
+<script src="ui.js?v=20261112140208"></script>
+<script src="fx.js?v=20261112140208"></script>
+</body>
+</html>
