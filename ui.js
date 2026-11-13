@@ -57,7 +57,6 @@
   var ICON_MOON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.6 9.8A5.9 5.9 0 0 1 6.2 2.4a5.9 5.9 0 1 0 7.4 7.4Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>';
   /* 乐园：一个带黑边的小菱形，对应这套「斜切角 + 粗描边」的形状语言 */
   var ICON_LY = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 2.1l5.4 5.9L8 13.9 2.6 8z" fill="currentColor" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><path d="M8 2.1v11.8M2.6 8h10.8" stroke="#fff" stroke-width="1.1" stroke-linejoin="round"/></svg>';
-  var ICON_ORGANIC = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M13.2 2.8c0 5.2-3.6 8.2-7.1 8.2-1.3 0-2.4-.4-3.2-1.2C2 6.6 5.2 2.8 13.2 2.8Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path d="M2.6 13.4C5 9.8 7.9 7.2 11.4 5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>';
   var ICON_SAKURA = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><g fill="currentColor"><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(72 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(144 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(216 8 8)"/><ellipse cx="8" cy="4.6" rx="1.78" ry="2.1" transform="rotate(288 8 8)"/><circle cx="8" cy="8" r=".95" fill="none" stroke="currentColor" stroke-width="1.1"/></g></svg>';
 
   /* 顺序决定循环顺序；第 0 个是默认皮肤。
@@ -65,7 +64,6 @@
   /* 四套，去掉了两套和白底太像的（报纸 / 扁平） */
   var THEMES = [
     { id: 'miko',    name: '八重',   icon: ICON_SAKURA,  color: '#fdf2f6' },
-    { id: 'organic', name: '有机',   icon: ICON_ORGANIC, color: '#faf6f1' },
     { id: 'dark',    name: '夜幕',   icon: ICON_MOON,    color: '#0b0b0d' },
     { id: 'ly',      name: '乐园',   icon: ICON_LY,      color: '#e9f2c4' }
   ];
@@ -73,7 +71,7 @@
   /* 旧皮肤 id 的迁移表：用户 sessionStorage 里还存着 'neu'（新拟物），
      那套已经被乐园取代了。不映射的话 themeIndex 会返回 0，
      表现就是「上一版选过第四套的人，打开就变回八重」。 */
-  var THEME_ALIAS = { neu: 'ly', soft: 'miko' };
+  var THEME_ALIAS = { neu: 'ly', soft: 'miko', organic: 'miko' };
 
   function themeIndex(id) {
     var k = THEME_ALIAS[id] || id;
@@ -90,7 +88,6 @@
   function themeBtn() {
     return '<button class="th-btn" type="button" data-theme-btn' +
            ' aria-label="切换皮肤" title="切换皮肤">' +
-           '<span class="th-i th-organic">' + ICON_ORGANIC + '</span>' +
            '<span class="th-i th-miko">' + ICON_SAKURA + '</span>' +
            '<span class="th-i th-moon">' + ICON_MOON + '</span>' +
            '<span class="th-i th-ly">' + ICON_LY + '</span>' +

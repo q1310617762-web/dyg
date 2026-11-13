@@ -704,7 +704,6 @@ html[data-vt="ripple"]::view-transition-image-pair(root) { animation: none; }
    深色站点上这就是一下刺眼的白闪，浅色站点看不出来但同样存在。 */
 ::view-transition { background: var(--bg); }
 
-
 /* 真正的圆形揭示由 home.js 每次切换时注入（坐标写死，不依赖变量继承）。
    这里只留一条保底：万一注入失败，宁可淡入，也不要一个圆心在屏幕中间的波纹。 */
 ::view-transition-new(root) {
@@ -1100,16 +1099,16 @@ html[data-soft-switch]::view-transition-new(root) {
 .np--start .np-meta { width: 118px; }
 .np-meta--ro { pointer-events: none; }
 
-/* ---------- 起始页播放器：四套皮肤统一成「一条胶囊 + 实心播放键」 ----------
+/* ---------- 起始页播放器：三套皮肤统一成「一条胶囊 + 实心播放键」 ----------
    乐园那套先把样式定成这个形状（一整条白胶囊、里面不再套小盒子、
-   播放键是实心圆），其它三套跟上，换皮肤时播放器不会突然变成
+   播放键是实心圆），另外两套跟上，换皮肤时播放器不会突然变成
    「胶囊里塞两个白盒子」。
-   1) 音量不再单独挂底：miko 是 rgba(192,53,107,.10)、organic 是 #ece3d6、
+   1) 音量不再单独挂底：miko 是 rgba(192,53,107,.10)、
       dark 是 rgba(255,255,255,.10) —— 都只比胶囊底色深一点点，
       读起来像胶囊里多出一块不明区域。
    2) 播放键用「实心 + 反色图标」= 这里最重的那个动作。原来白圈在
       深色皮肤里几乎看不见（.10 的白压在 .07 的白上）。
-   选择器带 .start-right（3 个类）才压得过 miko/organic 里给 .np-btn
+   选择器带 .start-right（3 个类）才压得过 miko 里给 .np-btn
    写的 (0,2,1) 规则。 */
 .start-right .np--start .np-vol { background: transparent; }
 .start-right .np--start .np-btn {
@@ -2142,14 +2141,8 @@ html[data-theme="dark"] .th-btn .th-paper { display: none; }
 html[data-theme="dark"] .th-btn .th-moon { display: grid; }
 html[data-theme="ly"] .th-btn .th-paper { display: none; }
 html[data-theme="ly"] .th-btn .th-ly { display: grid; }
-html[data-theme="organic"] .th-btn .th-paper { display: none; }
-html[data-theme="organic"] .th-btn .th-organic { display: grid; }
 html[data-theme="miko"] .th-btn .th-paper { display: none; }
-html[data-theme="miko"] .th-btn .th-miko { display: grid; }
-html[data-theme="dark"] .th-btn .th-organic,
-html[data-theme="dark"] .th-btn .th-miko { display: none; }
-html[data-theme="ly"] .th-btn .th-organic,
-html[data-theme="ly"] .th-btn .th-miko { display: none; }
+html[data-theme="miko"] .th-btn .th-miko { display: grid; }html[data-theme="dark"] .th-btn .th-miko{ display: none; }html[data-theme="ly"] .th-btn .th-miko{ display: none; }
 
 /* ---------- 乐园细化：把还平着的块统一成白底黑边 ---------- */
 
@@ -2747,7 +2740,7 @@ html[data-theme="miko"] .mast-miko img { filter: drop-shadow(0 14px 20px rgba(96
    擦除脚本 _yingma/blank.py 按墨色 [160,114,73] 选像素，
    别用亮度阈值，那会把纸面左右两条粉色边框一起抹掉。
 
-   为什么只有八重：organic / dark 是窄栏居中版式，没有两侧空白可挂；
+   为什么只有八重：dark 是窄栏居中版式，没有两侧空白可挂；
    乐园有自己的三栏网格。四套皮肤共用一份 HTML，所以用 display 切。 */
 
 html[data-theme="miko"] .bm { display: none; }
@@ -3037,209 +3030,6 @@ html[data-theme="miko"] .emas {
 @media (max-width: 1119px) {
   html[data-theme="miko"] .emas { display: none; }
   html[data-theme="miko"] .bm { display: block; }
-}
-
-/* ============================================================
-   20. 皮肤五：自然有机（Natural Organic）
-   ────────────────────────────────────────────────────────────
-   大地色、大圆角、衬线标题、缓慢的过渡。
-   底色 #faf6f1 是暖米（不是奶油+赤陶那套），强调色用苔绿 #8b9d77。
-   这里的「慢」是刻意的：过渡 500ms ease-in-out，模拟植物舒展。
-   ============================================================ */
-html[data-theme="organic"] {
-  --bg:        #faf6f1;
-  --bg-lift:   #f3ece2;
-  --card:      #ffffff;
-  --card-2:    #f7f1e8;
-
-  --text:      #292524;   /* stone-800，不是纯黑 */
-  --text-2:    #57534e;   /* stone-600 */
-  --text-3:    #78716c;   /* stone-500 */
-
-  --accent:    #6f7f5c;   /* 苔绿的深一档，白底上 4.8:1 */
-  --on-accent: #ffffff;
-
-  --line:      #e5dccd;
-  --line-2:    #d6c9b5;
-
-  --layer-1:   #f3ece2;
-  --layer-2:   #ece3d6;
-  --layer-3:   #e2d7c6;
-  --hair:      #d6c9b5;
-  --hair-2:    #e5dccd;
-
-  --surface-glass:   rgba(250, 246, 241, .92);
-  --surface-panel:   #fffdfa;
-  --surface-scrim:   rgba(41, 37, 36, .55);
-  --surface-overlay: #fffdfa;
-  --surface-start:   transparent;
-
-  --shadow-color: #5c4033;
-  --shadow:    0 18px 38px -24px rgba(92, 64, 51, .38);
-  --shadow-sm: 0 10px 24px -16px rgba(92, 64, 51, .32);
-
-  /* 有机形状：大而不规则的圆角 */
-  --r-card: 2rem;
-  --r-tile: 1.75rem;
-  --r-pill: 999px;
-
-  --organic-dur: 500ms;
-}
-
-html[data-theme="organic"] body::before,
-html[data-theme="organic"] body::after { display: none; }
-html[data-theme="organic"] body {
-  background: #faf6f1;
-  /* 极淡的纸纤维质感，用重复渐变叠出纹理，不用图片 */
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(212, 163, 115, .05) 0 1px, transparent 1px),
-    radial-gradient(circle at 70% 60%, rgba(139, 157, 119, .05) 0 1px, transparent 1px);
-  background-size: 22px 22px, 26px 26px;
-}
-
-/* 衬线标题 */
-html[data-theme="organic"] .hero h1,
-html[data-theme="organic"] .page-head h1,
-html[data-theme="organic"] .sec-head h2,
-html[data-theme="organic"] .bm-g h3,
-html[data-theme="organic"] .row-main h3 {
-  font-family: Georgia, "Songti SC", "STSong", "SimSun", serif;
-  font-weight: 600;
-  letter-spacing: -.01em;
-}
-
-/* 导航：奶白胶囊 + 轻阴影 */
-html[data-theme="organic"] .nav-inner {
-  background: rgba(255, 253, 250, .94);
-  backdrop-filter: blur(18px) saturate(150%);
-  -webkit-backdrop-filter: blur(18px) saturate(150%);
-  box-shadow: var(--shadow-sm);
-  outline: 1px solid var(--line);
-  outline-offset: 0;
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="organic"] .nav-links a:hover { background: var(--layer-2); color: var(--text); }
-}
-html[data-theme="organic"] .nav-links a { border-radius: 999px; }
-html[data-theme="organic"] .nav-links a[aria-current="page"] {
-  background: var(--accent);
-  color: #fff;
-}
-
-/* 卡片与瓦片：大圆角 + 柔和阴影，hover 微微下沉 */
-/* 发丝描边同样用 outline：1px 的 border 看着不起眼，
-   但它让文章行整行高 2px、导航右侧控件宽 2px，切皮肤时照样是能看出来的挪动。 */
-html[data-theme="organic"] .g-item,
-html[data-theme="organic"] .row,
-html[data-theme="organic"] .tag,
-html[data-theme="organic"] .chip {
-  border-radius: var(--r-card);
-  box-shadow: var(--shadow-sm);
-  outline: 1px solid var(--line);
-  outline-offset: 0;
-  transition: transform var(--organic-dur) ease-in-out,
-              box-shadow var(--organic-dur) ease-in-out;
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="organic"] .g-item:hover,
-  html[data-theme="organic"] .row:hover {
-    transform: translateY(2px);
-    box-shadow: var(--shadow);
-  }
-  html[data-theme="organic"] .tag:hover,
-  html[data-theme="organic"] .chip:hover { background: var(--layer-2); }
-}
-html[data-theme="organic"] .chip.on,
-html[data-theme="organic"] .tag.on { background: var(--accent); color: #fff; outline-color: var(--accent); }
-html[data-theme="organic"] .g-item img { border-radius: var(--r-card); }
-
-/* 按钮与开关 */
-html[data-theme="organic"] .np-btn,
-html[data-theme="organic"] .th-btn,
-html[data-theme="organic"] .burger,
-html[data-theme="organic"] .lb-btn {
-  background: #fffdfa;
-  outline: 1px solid var(--line);
-  outline-offset: 0;
-  box-shadow: var(--shadow-sm);
-  transition: background var(--organic-dur) ease-in-out;
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="organic"] .np-btn:hover,
-  html[data-theme="organic"] .th-btn:hover,
-  html[data-theme="organic"] .burger:hover,
-  html[data-theme="organic"] .lb-btn:hover { background: var(--layer-2); }
-}
-html[data-theme="organic"] .modesw { background: var(--layer-1); outline: 1px solid var(--line); outline-offset: 0; }
-html[data-theme="organic"] .modesw-thumb { background: #fffdfa; box-shadow: var(--shadow-sm); }
-html[data-theme="organic"] .modesw a.on,
-html[data-theme="organic"] .modesw button.on { color: var(--accent); }
-
-/* 搜索框：胶囊 + 柔边 */
-html[data-theme="organic"] .search {
-  background: #fffdfa;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  box-shadow: var(--shadow-sm);
-}
-html[data-theme="organic"] .search:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(111, 127, 92, .18);
-}
-html[data-theme="organic"] .search kbd { background: var(--layer-2); border-radius: 999px; }
-
-/* 收藏条目：圆角 + 悬停米色底 */
-html[data-theme="organic"] .bm-l {
-  border-radius: 999px;
-  transition: background var(--organic-dur) ease-in-out;
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="organic"] .bm-l:hover { background: var(--layer-2); color: var(--text); }
-}
-html[data-theme="organic"] .bm-l i {
-  background: var(--layer-3);
-  color: #4a3f36;
-  border-radius: 999px;
-}
-@media (hover: hover) and (pointer: fine) {
-  html[data-theme="organic"] .bm-l:hover i { background: var(--accent); color: #fff; }
-}
-
-/* 刊头与时钟 */
-html[data-theme="organic"] .st-kicker { color: var(--text-3); letter-spacing: .16em; }
-html[data-theme="organic"] .clock-ring .cr-track { stroke: var(--line-2); }
-html[data-theme="organic"] .clock-ring .cr-fill {
-  stroke: var(--accent);
-  stroke-width: 3;
-  transition: stroke-dashoffset 1200ms ease-in-out;
-}
-html[data-theme="organic"] .clock-time {
-  font-family: Georgia, "Songti SC", serif;
-  font-weight: 400;
-  color: var(--text);
-}
-html[data-theme="organic"] .clock-date { color: var(--text-3); }
-html[data-theme="organic"] .st-greet { color: var(--text-2); }
-
-/* 页脚与链接 */
-html[data-theme="organic"] .start-foot { color: var(--text-3); }
-html[data-theme="organic"] .start-foot kbd { background: var(--layer-2); border-radius: 999px; }
-html[data-theme="organic"] .prose a { color: var(--accent); border-bottom-color: var(--line-2); }
-html[data-theme="organic"] .nav-prog i { background: var(--accent); }
-html[data-theme="organic"] ::selection { background: var(--accent); color: #fff; }
-
-/* 过渡放慢到自然生长的速度（环境光层与动画层不受影响） */
-html[data-theme="organic"] .bm-l,
-html[data-theme="organic"] .tag,
-html[data-theme="organic"] .chip,
-html[data-theme="organic"] .nav-links a {
-  transition-duration: var(--organic-dur) !important;
-  transition-timing-function: ease-in-out !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html[data-theme="organic"] .g-item:hover,
-  html[data-theme="organic"] .row:hover { transform: none; }
 }
 
 /* ============================================================
@@ -3582,7 +3372,6 @@ html[data-theme="miko"] .bm-g h3::before {
    所以改成纯 indigo——有颜色，但不违规。 */
 html[data-theme="miko"] .clock-ring .cr-track { stroke: #f2dbe6; }
 html[data-theme="miko"] .clock-time { color: var(--accent); }
-
 
 /* ---------- 星野背景（夜色皮肤专属）----------
    canvas 由 assets/starfield.js 动态插入 body，
@@ -4487,16 +4276,7 @@ html[data-theme="ly"] .start-foot > span:last-child { opacity: .7; }
    ------------------------------------------------------------
    .np-btn.playing 在基础样式里写的是 background:--accent + color:--on-accent。
    但这两套皮肤的 `html[data-theme=x] .np-btn{background:#fff}` 特异性更强
-   （0,2,1 > 0,2,0），底色被改回白色，而 color 没被覆盖、仍是 --on-accent（白）
-   → 白底白三角，等于隐身。实测对比度 organic 1.02、乐园 1.00。
-   八重（miko）那套歪打正着没坏：它的皮肤规则把 color 也定了（--text-2），
-   所以播放中仍是白底深图标 —— 能看见，就不动它。
-   ============================================================ */
-/* 底色钉死一个更深的苔绿：#6f7f5c 配白字只有 4.3:1，压线不过 AA；
-   而且实测播放态的底色被别的规则抬亮到了 rgb(144,156,129)（只有 2.89:1），
-   所以这里不用变量，直接写值。这个绿配白字 6.4:1。 */
-html[data-theme="organic"] .np-btn.playing,
-html[data-theme="organic"] .np.playing .np-btn {
+   （0,2,1 > 0,2{
   background: #4f5c41;
   color: #fff;
 }
