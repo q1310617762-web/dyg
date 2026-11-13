@@ -46,12 +46,19 @@ const CODE = 'dyg-code-' + V;   /* HTML / CSS / JS：随代码版本走 */
    v3 → v4：音乐重编码成 Opus 立体声 40k，并换了一首（删《晚祷的钟声》、
    加《乐园漫记》）。内容变了必须手动加一，否则老访客的 Cache Storage 里
    一直是旧音频 —— 那个缓存是按文件名存的，同名换内容它根本不知道。 */
-const ASSET = 'dyg-asset-v7';   /* 图片 / 字体 / 音频：不随代码版本走，
+const ASSET = 'dyg-asset-v8';   /* 图片 / 字体 / 音频：不随代码版本走，
                                    只有这些文件真的换内容了才手动把 -vN 加一 */
 
 /* GitHub Pages 的 HTTP 缓存头改不了，固定 max-age=600。
    在这窗口里 SWR 没有意义：拉回来的一定是同一份字节。 */
 const FRESH_MS = 10 * 60 * 1000;
+
+/* HTML 宁可稍旧也不要让用户干等：网络超过这个时间就先把缓存那页给出去，
+   网络那份继续在后台跑、跑完照样写进缓存，下一次打开就是新的。
+   为什么敢这么做：ui.js 里有一道版本自检 —— 页面 load 之后会悄悄取一次
+   最新 HTML 比对 theme.css?v=，对不上就带 ?r= 重载一次。所以最坏情况是
+   「先看到上一版，几秒后自己跳成新版」，而不是「一直看到旧的」。 */
+const HTML_TIMEOUT = 1500;
 
 /* 页面 idle 后慢慢补的资源。
  *
@@ -208,18 +215,40 @@ self.addEventListener('fetch', e => {
          断网时才回落到缓存。流过的那份顺手存进 CODE。 ---- */
   if (wantsHtml) {
     e.respondWith((async () => {
+      const c = await caches.open(CODE);
+      /* 用「源 + 路径」当键，丢掉查询串。
+         HTML 的内容跟 ?m= / ?t= 这些参数无关（形态是 JS 在运行时决定的），
+         而按完整 URL 存的话，?m=start 与 ?m=blog 在缓存里是两份、
+         带个随机参数就永远命中不了 —— 超时兜底等于白写。 */
+      let htmlKey = req.url;
+      try { const u = new URL(req.url); htmlKey = u.origin + u.pathname; } catch (e) {}
+      let cached = null;
+      try { cached = await c.match(htmlKey); } catch (e) {}
+
+      /* ★ cache:'no-cache' 是关键，别去掉。
+         GitHub Pages 给 HTML 固定 max-age=600，默认 fetch 会直接吃浏览器 HTTP
+         缓存 —— 十分钟内 F5 拿到的还是旧 HTML，里面带着旧的 ?v=，于是加载的
+         还是旧 CSS / 旧 JS。表现就是「改了代码，用户刷新还是老样子」，
+         非得 Ctrl+Shift+R 才看得到。no-cache 是「每次向服务器校验」，
+         没变时回 304，代价很小。 */
+      const netP = fetch(req, { cache: 'no-cache' })
+        .then((r) => { if (r && r.ok) putByUrl(c, htmlKey, r.clone()); return r; });
+
+      /* 有缓存时：网络优先，最多等 HTML_TIMEOUT。
+         超时就把手里这份先给出去（线路抖的时候，这一下能省 2~5 秒），
+         网络那份不取消，回来后照常写缓存。 */
+      if (cached) {
+        const win = await Promise.race([
+          netP.catch(() => null),
+          new Promise((r) => setTimeout(() => r(null), HTML_TIMEOUT))
+        ]);
+        if (win) return win;
+        return cached;
+      }
+
       try {
-        /* ★ cache:'no-cache' 是关键，别去掉。
-           GitHub Pages 给 HTML 固定 max-age=600，默认 fetch 会直接吃浏览器 HTTP
-           缓存 —— 十分钟内 F5 拿到的还是旧 HTML，里面带着旧的 ?v=，于是加载的
-           还是旧 CSS / 旧 JS。表现就是「改了代码，用户刷新还是老样子」，
-           非得 Ctrl+Shift+R 才看得到。no-cache 是「每次向服务器校验」，
-           没变时回 304，代价很小。 */
-        const net = await fetch(req, { cache: 'no-cache' });
-        put(await caches.open(CODE), req, net.clone());
-        return net;
+        return await netP;
       } catch (err) {
-        const c = await caches.open(CODE);
         const hit = (await c.match(req)) ||
                     (await c.match('./index.html')) ||
                     (await c.match('index.html'));
