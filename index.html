@@ -59,6 +59,9 @@
     if (document.documentElement.getAttribute('data-theme') === 'miko' &&
         document.documentElement.getAttribute('data-mode') === 'start') {
       [['assets/img/miko.webp', 'image', ''],
+       /* 樱花树是 CSS 背景，要等 CSS 解析完、发现 .st-mast::before 才发起请求；
+          提前 preload 能省掉那一轮。只在八重 + 起始页要它。 */
+       ['assets/img/sakura-tree.webp', 'image', ''],
        ['assets/fonts/mast-cherry-bomb-one.woff2', 'font', 'font/woff2']]
       .forEach(function (r) {
         var l = document.createElement('link');
@@ -248,7 +251,7 @@
                默认就动，所以静帧那条去掉了（miko-still.webp 先留着，
                以后要用回来改这一行即可）。 -->
           <img data-src="assets/img/miko.webp" alt="" aria-hidden="true"
-               width="717" height="635" decoding="async">
+               width="717" height="635" decoding="async" loading="lazy">
         </picture>
         <p class="mast-bubble" data-bubble aria-hidden="true"></p>
       </div>

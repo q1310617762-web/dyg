@@ -46,7 +46,7 @@ const CODE = 'dyg-code-' + V;   /* HTML / CSS / JS：随代码版本走 */
    v3 → v4：音乐重编码成 Opus 立体声 40k，并换了一首（删《晚祷的钟声》、
    加《乐园漫记》）。内容变了必须手动加一，否则老访客的 Cache Storage 里
    一直是旧音频 —— 那个缓存是按文件名存的，同名换内容它根本不知道。 */
-const ASSET = 'dyg-asset-v6';   /* 图片 / 字体 / 音频：不随代码版本走，
+const ASSET = 'dyg-asset-v7';   /* 图片 / 字体 / 音频：不随代码版本走，
                                    只有这些文件真的换内容了才手动把 -vN 加一 */
 
 /* GitHub Pages 的 HTTP 缓存头改不了，固定 max-age=600。
